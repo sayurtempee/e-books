@@ -44,5 +44,13 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
             'role' => 'buyer'
         ]);
+
+        User::factory()->create([
+            'nik' => '3271051203980004',
+            'name' => 'Salma Aulia',
+            'email' => 'moons@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'buyer'
+        ]);
     }
 }
