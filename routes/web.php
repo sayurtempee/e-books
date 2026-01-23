@@ -12,6 +12,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TransactionController;
 
+
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
@@ -102,6 +103,9 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         Route::get('/seller/approval', [TransactionController::class, 'indexApproval'])->name('seller.approval.index');
         Route::put('/seller/approval/{order}', [TransactionController::class, 'updateApproval'])->name('seller.approval.update');
         Route::delete('/seller/approval/{order}', [TransactionController::class, 'deleteRefundedOrder'])->name('seller.approval.delete');
+
+        // Laporan
+        Route::get('/seller/reports', [ReportController::class, 'index'])->name('seller.reports.index');
     });
 
     // --- BUYER ---

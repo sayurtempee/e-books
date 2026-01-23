@@ -20,4 +20,11 @@
         <i class="bi bi-check-square-fill"></i>
         <span>Produk Buku</span>
     </a>
+
+    <a href="{{ route('seller.reports.index') }}"
+        class="flex items-center gap-3 px-4 py-2 rounded-lg
+        {{ request()->routeIs('seller.reports.*') ? $activeClass : $inactiveClass }}">
+        <i class="bi bi-graph-up-arrow"></i>
+        <span>Laporan Penjualan</span>
+    </a>
 </nav>
