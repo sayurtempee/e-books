@@ -116,25 +116,51 @@
                                             substr($wordsActive[0], 0, 1) .
                                                 (isset($wordsActive[1]) ? substr($wordsActive[1], 0, 1) : ''),
                                         );
+
+                                        // LOGIKA ONLINE: Anggap online jika aktivitas terakhir kurang dari 2 menit yang lalu
+                                        $isOnline =
+                                            $activeContact->last_seen &&
+                                            $activeContact->last_seen->diffInMinutes(now()) < 2;
                                     @endphp
+
                                     <div
                                         class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-white font-bold text-xs shadow-md border-2 border-white">
                                         {{ $initialsActive }}
                                     </div>
+
                                     <div>
                                         <p class="text-[15px] font-bold text-gray-800 leading-tight">
-                                            {{ $activeContact->name }}</p>
-                                        <div class="flex items-center gap-1">
-                                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                                            <p class="text-[11px] text-green-600 font-medium italic">Online</p>
+                                            {{ $activeContact->name }}
+                                        </p>
+
+                                        <div class="flex items-center gap-1.5">
+                                            @if ($isOnline)
+                                                {{-- Status Online dengan animasi ping --}}
+                                                <span class="relative flex h-2 w-2">
+                                                    <span
+                                                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                                    <span
+                                                        class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                                </span>
+                                                <p class="text-[11px] text-green-600 font-bold uppercase tracking-tighter">
+                                                    Online</p>
+                                            @else
+                                                {{-- Status Offline dengan keterangan waktu --}}
+                                                <span class="h-2 w-2 rounded-full bg-gray-400"></span>
+                                                <p class="text-[11px] text-gray-500 font-medium italic">
+                                                    Terakhir dilihat
+                                                    {{ $activeContact->last_seen ? $activeContact->last_seen->diffForHumans() : 'tidak diketahui' }}
+                                                </p>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="flex gap-5 text-gray-500">
-                                    <i class="bi bi-search cursor-pointer"></i>
-                                    <i class="bi bi-paperclip cursor-pointer"></i>
-                                    <i class="bi bi-three-dots-vertical cursor-pointer"></i>
+                                    <i class="bi bi-search cursor-pointer hover:text-teal-600 transition-colors"></i>
+                                    <i class="bi bi-paperclip cursor-pointer hover:text-teal-600 transition-colors"></i>
+                                    <i
+                                        class="bi bi-three-dots-vertical cursor-pointer hover:text-teal-600 transition-colors"></i>
                                 </div>
                             </div>
 

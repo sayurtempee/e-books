@@ -42,31 +42,28 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         ->middleware('throttle:60,1')
         ->name('account.update');
 
+    // 1. Statis dulu (PENTING: Harus di atas parameter {id})
+    Route::get('/notifications/mark-read', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+        return back()->with('success', 'Semua notifikasi ditandai dibaca.');
+    })->name('markNotificationsRead');
+
+    Route::delete('/notifications/clear-all', function () {
+        auth()->user()->notifications()->delete();
+        return back()->with('success', 'Semua riwayat notifikasi telah dihapus.');
+    })->name('notifications.clearAll');
+
+    // 2. Baru yang pakai Parameter {id}
     Route::get('/notifications/{id}/read', function ($id) {
         $notification = auth()->user()->notifications()->findOrFail($id);
         $notification->markAsRead();
-
-        // Redirect ke URL yang ada di data notifikasi
         return redirect($notification->data['url'] ?? '/');
     })->name('notifications.readSingle');
 
-    // Notifikasi
-    Route::get('/notifications/read', function () {
-        auth()->user()->unreadNotifications->markAsRead();
-        return back();
-    })->name('markNotificationsRead');
-
-    // Hapus satu notifikasi
     Route::delete('/notifications/{id}', function ($id) {
         auth()->user()->notifications()->findOrFail($id)->delete();
         return back();
     })->name('notifications.destroy');
-
-    // Hapus SEMUA notifikasi (baik yang sudah dibaca maupun belum)
-    Route::delete('/notifications/clear-all', function () {
-        auth()->user()->notifications()->delete();
-        return back();
-    })->name('notifications.clearAll');
 
     // Chat & Message
     Route::get('/chat/{id?}', [MessageController::class, 'index'])->name('chat.index');

@@ -90,7 +90,13 @@ class AuthController extends Controller
 
             $user = Auth::user();
 
-            // KIRIM NOTIFIKASI SAMBUTAN (Hanya muncul di sesi login ini jika belum dibaca)
+            // 1. UPDATE LAST SEEN SAAT LOGIN
+            // Ini memastikan status langsung "Online" begitu masuk dashboard
+            $user->update([
+                'last_seen' => now()
+            ]);
+
+            // 2. KIRIM NOTIFIKASI SAMBUTAN
             $user->notify(new GeneralNotification([
                 'title' => 'Selamat Datang Kembali!',
                 'message' => "Halo {$user->name}, senang melihat Anda kembali di Miimoys E-Books.",
@@ -99,10 +105,11 @@ class AuthController extends Controller
                 'url' => '#',
             ]));
 
+            // 3. REDIRECT BERDASARKAN ROLE
             return match ($user->role) {
-                'admin'  => redirect()->route('admin.dashboard')->with('success', 'Login berhasil sebagai Admin'),
-                'seller' => redirect()->route('seller.dashboard')->with('success', 'Login berhasil sebagai Seller'),
-                'buyer'  => redirect()->route('buyer.dashboard')->with('success', 'Login berhasil sebagai Buyer'),
+                'admin'  => redirect()->route('admin.dashboard')->with('success', 'Selamat datang, Admin!'),
+                'seller' => redirect()->route('seller.dashboard')->with('success', 'Halo Seller, siap berjualan?'),
+                'buyer'  => redirect()->route('buyer.dashboard')->with('success', 'Ayo cari buku favoritmu!'),
                 default  => redirect()->route('dashboard')->with('success', 'Login berhasil'),
             };
         }
@@ -173,11 +180,19 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        auth()->logout();
+        $user = auth()->user();
 
+        if ($user) {
+            // Menghapus jejak waktu, status akan jadi "Offline" tanpa waktu di Blade
+            $user->update([
+                'last_seen' => null
+            ]);
+        }
+
+        auth()->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('success', 'You have been logged out.');
+        return redirect()->route('login')->with('success', 'Berhasil keluar.');
     }
 }

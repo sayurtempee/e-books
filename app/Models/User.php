@@ -25,6 +25,7 @@ class User extends Authenticatable
         'role',
         'foto_profile',
         'address',
+        'last_seen'
     ];
 
     /**

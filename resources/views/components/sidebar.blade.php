@@ -179,16 +179,16 @@
 
                     {{-- FOOTER --}}
                     <div class="bg-gray-50 px-5 py-3 flex justify-between items-center border-t">
-                        {{-- Tombol Mark Read --}}
-                        @if ($unreadCount > 0)
+                        {{-- Tombol Mark Read (Gunakan Tag <a> untuk Route GET) --}}
+                        @if (auth()->user()->unreadNotifications->count() > 0)
                             <a href="{{ route('markNotificationsRead') }}"
                                 class="text-[10px] font-bold text-teal-600 hover:text-teal-700 uppercase">
                                 Tandai Dibaca
                             </a>
                         @endif
 
-                        {{-- Tombol Hapus Semua --}}
-                        @if ($notifications->count() > 0)
+                        {{-- Tombol Hapus Semua (Gunakan Form untuk Route DELETE) --}}
+                        @if (auth()->user()->notifications->count() > 0)
                             <form action="{{ route('notifications.clearAll') }}" method="POST"
                                 onsubmit="return confirm('Hapus semua riwayat notifikasi?')">
                                 @csrf
