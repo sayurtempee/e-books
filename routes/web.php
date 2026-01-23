@@ -3,10 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AccountController;
-use App\Http\Controllers\CartController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DashboardController;
@@ -66,6 +68,11 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         return back();
     })->name('notifications.clearAll');
 
+    // Chat & Message
+    Route::get('/chat/{id?}', [MessageController::class, 'index'])->name('chat.index');
+    Route::post('/send-message', [MessageController::class, 'sendMessage'])->name('messages.send');
+    Route::post('/chat/activity', [MessageController::class, 'activity'])->name('chat.activity');
+
     // --- ADMIN ---
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/admin/dashboard', [DashboardController::class, 'admin'])->name('admin.dashboard');
@@ -106,6 +113,7 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
 
         // Laporan
         Route::get('/seller/reports', [ReportController::class, 'index'])->name('seller.reports.index');
+        Route::get('/seller/reports/download', [ReportController::class, 'download'])->name('seller.reports.download');
     });
 
     // --- BUYER ---

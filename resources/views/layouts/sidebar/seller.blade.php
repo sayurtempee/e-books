@@ -23,8 +23,15 @@
 
     <a href="{{ route('seller.reports.index') }}"
         class="flex items-center gap-3 px-4 py-2 rounded-lg
-        {{ request()->routeIs('seller.reports.*') ? $activeClass : $inactiveClass }}">
+        {{ request()->routeIs('seller.reports.index') ? $activeClass : $inactiveClass }}">
         <i class="bi bi-graph-up-arrow"></i>
         <span>Laporan Penjualan</span>
+    </a>
+
+    <a href="{{ route('chat.index') }}"
+        class="flex items-center gap-3 px-4 py-2 rounded-lg
+        {{ request()->routeIs('chat.*') ? $activeClass : $inactiveClass }}">
+        <i class="bi bi-chat-dots-fill"></i>
+        <span>Pesan Chat</span>
     </a>
 </nav>

@@ -26,4 +26,11 @@
         <i class="bi bi-truck"></i>
         <span>Lacak Paket</span>
     </a>
+
+    <a href="{{ route('chat.index') }}"
+        class="flex items-center gap-3 px-4 py-2 rounded-lg
+        {{ request()->routeIs('chat.*') ? $activeClass : $inactiveClass }}">
+        <i class="bi bi-chat-dots-fill"></i>
+        <span>Pesan Chat</span>
+    </a>
 </nav>

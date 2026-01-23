@@ -41,4 +41,13 @@ class GeneralNotification extends Notification
             'url'     => $this->details['url'] ?? '#',
         ];
     }
+
+    public function readSingle($id)
+    {
+        $notification = auth()->user()->notifications()->findOrFail($id);
+        $notification->markAsRead();
+
+        // Redirect ke URL chat atau URL pesanan yang disimpan di data notifikasi
+        return redirect($notification->data['url'] ?? url('/'));
+    }
 }
