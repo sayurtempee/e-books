@@ -1,114 +1,117 @@
 <x-app>
-    @section('title', 'List Buku')
+    @section('title', 'Manajemen Buku')
 
     @section('body-content')
         <x-sidebar>
-            <div class="p-6">
+            <div class="p-8 bg-gray-50 min-h-screen">
 
-                {{-- Title --}}
-                <h1 class="text-2xl font-bold text-teal-600 mb-6">
-                    Halaman Daftar Buku
-                </h1>
+                {{-- Header Section --}}
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                    <div>
+                        <h1 class="text-3xl font-black text-gray-800 tracking-tight">
+                            Manajemen <span class="text-teal-600">Buku</span>
+                        </h1>
+                        <p class="text-gray-500 text-sm">Kelola stok dan pantau keuntungan penjualan Anda.</p>
+                    </div>
 
-                {{-- Add Book --}}
-                <div x-data="{ openAddBookModal: false }">
-                    @include('seller.book.add')
-
-                    <button @click="openAddBookModal = true"
-                        class="inline-flex items-center gap-2
-                               bg-teal-600 hover:bg-teal-700
-                               text-white px-4 py-2
-                               rounded-lg shadow
-                               font-semibold transition">
-                        <i class="bi bi-plus-lg"></i>
-                        Tambah Buku
-                    </button>
+                    <div x-data="{ openAddBookModal: false }">
+                        @include('seller.book.add')
+                        <button @click="openAddBookModal = true"
+                            class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-xl shadow-lg shadow-teal-200 font-bold transition-all active:scale-95">
+                            <i class="bi bi-plus-circle-fill"></i>
+                            Tambah Produk Baru
+                        </button>
+                    </div>
                 </div>
 
-
-                {{-- Book Table --}}
-                <div class="mt-6">
+                {{-- Table Card --}}
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table
-                            class="min-w-full border border-teal-200
-                                       rounded-lg overflow-hidden">
-
-                            {{-- Head --}}
-                            <thead class="bg-teal-500 text-white">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-100">
                                 <tr>
-                                    <th class="px-4 py-3 text-left w-16">No</th>
-                                    <th class="px-4 py-3 text-left">Judul Buku</th>
-                                    <th class="px-4 py-3 text-left">Kategori Buku</th>
-                                    <th class="px-4 py-3 text-left">Stok Buku</th>
-                                    {{--  <th class="px-4 py-3 text-left">Harga Jual Buku</th>  --}}
-                                    <th class="px-4 py-3 text-left">Harga Buku</th>
-                                    {{--  <th class="px-4 py-3 text-left">Margin</th>  --}}
-                                    <th class="px-4 py-3 text-left">Keuntungan</th>
-                                    <th class="px-4 py-3 text-center">Action</th>
+                                    <th
+                                        class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">
+                                        No</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">
+                                        Informasi Buku</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">
+                                        Kategori</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Stok
+                                    </th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Harga
+                                        Jual</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">
+                                        Estimasi Profit</th>
+                                    <th
+                                        class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">
+                                        Aksi</th>
                                 </tr>
                             </thead>
 
-                            {{-- Body --}}
-                            <tbody class="bg-white divide-y divide-teal-100">
-                                @foreach ($books as $index => $book)
-                                    <tr class="hover:bg-teal-50 transition">
-
-                                        <td class="px-4 py-3">
+                            <tbody class="divide-y divide-gray-50">
+                                @forelse ($books as $index => $book)
+                                    <tr class="hover:bg-teal-50/30 transition-colors group">
+                                        <td class="px-6 py-4 text-center text-sm font-bold text-gray-400">
                                             {{ $index + 1 }}
                                         </td>
 
-                                        <td class="px-4 py-3 font-medium text-gray-800">
-                                            {{ $book->title }}
-                                        </td>
-
-                                        <td class="px-4 py-3 font-medium text-gray-800">
-                                            {{ $book->category->title }}
-                                        </td>
-
-                                        <td class="px-4 py-3 {{ $book->stock == 0 ? 'text-red-600' : 'text-green-600' }}">
-                                            {{ $book->stock }} {{ $book->unit }}
-                                        </td>
-
-                                        {{--  <td class="px-4 py-3 text-gray-600">
-                                            Rp {{ number_format($book->capital, 0, ',', '.') }}
-                                        </td>  --}}
-
-                                        <td class="px-4 py-3 text-gray-600">
-                                            Rp {{ number_format($book->price, 0, ',', '.') }}
-                                        </td>
-
-                                        {{--  <td class="px-4 py-3 text-gray-600">
-                                            {{ number_format($book->margin, 2, ',', '.') }}%
-                                        </td>  --}}
-
-                                        <td class="px-4 py-3 font-medium text-gray-800">
-                                            <div class="flex flex-col">
-                                                {{-- Keuntungan Kumulatif (Dari penjualan yang sudah terjadi) --}}
-                                                <span class="text-teal-600">
-                                                    Rp {{ number_format($book->total_real_profit ?? 0, 0, ',', '.') }}
-                                                </span>
-
-                                                {{-- Info tambahan: Profit per unit (Opsional) --}}
-                                                <span class="text-[10px] text-gray-400 italic">
-                                                    Per unit: Rp
-                                                    {{ number_format($book->price - $book->capital, 0, ',', '.') }}
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <img src="{{ asset('storage/' . $book->photos_product) }}"
+                                                    class="w-12 h-12 rounded-lg object-cover border border-gray-100 shadow-sm">
+                                                <span
+                                                    class="font-bold text-gray-800 group-hover:text-teal-600 transition-colors">
+                                                    {{ $book->title }}
                                                 </span>
                                             </div>
                                         </td>
 
-                                        {{-- Action --}}
-                                        <td class="px-4 py-3 text-center">
-                                            <div class="flex items-center justify-center gap-4">
+                                        <td class="px-6 py-4">
+                                            <span
+                                                class="px-3 py-1 bg-gray-100 text-gray-600 text-[10px] font-black uppercase rounded-full">
+                                                {{ $book->category->title }}
+                                            </span>
+                                        </td>
 
+                                        <td class="px-6 py-4">
+                                            <div class="flex flex-col">
+                                                <span
+                                                    class="font-bold {{ $book->stock <= 5 ? 'text-rose-600' : 'text-gray-700' }}">
+                                                    {{ $book->stock }} {{ $book->unit }}
+                                                </span>
+                                                @if ($book->stock <= 5)
+                                                    <span
+                                                        class="text-[9px] text-rose-400 font-bold uppercase tracking-tighter italic">Stok
+                                                        Hampir Habis!</span>
+                                                @endif
+                                            </div>
+                                        </td>
+
+                                        <td class="px-6 py-4 font-bold text-gray-900">
+                                            Rp{{ number_format($book->price, 0, ',', '.') }}
+                                        </td>
+
+                                        <td class="px-6 py-4">
+                                            <div class="flex flex-col">
+                                                <span class="text-teal-600 font-black">
+                                                    Rp{{ number_format($book->total_real_profit ?? 0, 0, ',', '.') }}
+                                                </span>
+                                                <span class="text-[10px] text-gray-400 font-medium italic">
+                                                    Margin:
+                                                    Rp{{ number_format($book->price - $book->capital, 0, ',', '.') }}
+                                                </span>
+                                            </div>
+                                        </td>
+
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center justify-center gap-2">
                                                 {{-- Detail --}}
                                                 <div x-data="{ openDetailBookModal: false }">
-                                                    @include('seller.book.detail', [
-                                                        'book' => $book,
-                                                    ])
-
-                                                    <button @click="openDetailBookModal = true" type="button"
-                                                        class="text-blue-500 hover:text-blue-600 transition" title="Detail">
-                                                        <i class="bi bi-eye cursor-pointer"></i>
+                                                    @include('seller.book.detail', ['book' => $book])
+                                                    <button @click="openDetailBookModal = true"
+                                                        class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white transition-all">
+                                                        <i class="bi bi-eye-fill"></i>
                                                     </button>
                                                 </div>
 
@@ -118,32 +121,38 @@
                                                         'book' => $book,
                                                         'categories' => $categories,
                                                     ])
-
                                                     <button @click="openEditBookModal = true"
-                                                        class="text-yellow-500 hover:text-yellow-600 transition"
-                                                        title="Edit">
-                                                        <i class="bi bi-pencil-square cursor-pointer"></i>
+                                                        class="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-500 hover:text-white transition-all">
+                                                        <i class="bi bi-pencil-square"></i>
                                                     </button>
                                                 </div>
 
                                                 {{-- Delete --}}
                                                 <form id="deleteBookForm-{{ $book->id }}" method="POST"
-                                                    action="{{ route('seller.book.delete', $book->id) }}" class="inline">
+                                                    action="{{ route('seller.book.delete', $book->id) }}">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="button"
                                                         onclick="confirmDeleteBook({{ $book->id }}, '{{ $book->title }}')"
-                                                        class="text-red-500 hover:text-red-600 transition" title="Delete">
-                                                        <i class="bi bi-trash cursor-pointer"></i>
+                                                        class="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all">
+                                                        <i class="bi bi-trash-fill"></i>
                                                     </button>
                                                 </form>
                                             </div>
                                         </td>
-
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="px-6 py-20 text-center">
+                                            <div class="flex flex-col items-center">
+                                                <i class="bi bi-journal-x text-5xl text-gray-200 mb-4"></i>
+                                                <p class="text-gray-400 font-bold uppercase tracking-widest text-xs">Belum
+                                                    ada buku yang Anda jual</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
-
                         </table>
                     </div>
                 </div>

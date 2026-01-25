@@ -25,49 +25,35 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|string|in:admin,seller,buyer',
             'address' => 'nullable|string',
+            'no_rek' => 'nullable|string|min:10|max:20|unique:users,no_rek',
+            'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
         ], [
-            'nik.required' => 'NIK is required',
-            'nik.size' => 'NIK must be exactly 16 digits',
-            'nik.unique' => 'This NIK is already registered',
-            'name.required' => 'Name is required',
-            'email.required' => 'Email is required',
-            'email.email' => 'Please enter a valid email address',
-            'email.unique' => 'This email is already registered',
-            'password.required' => 'Password is required',
-            'password.min' => 'Password must be at least 8 characters',
-            'password.confirmed' => 'Password confirmation does not match',
-            'address.string' => 'Address must be a valid string',
+            'nik.required' => 'NIK wajib diisi',
+            'nik.size' => 'NIK harus tepat 16 digit',
+            'no_rek.unique' => 'Nomor rekening ini sudah terdaftar',
+            'password.confirmed' => 'Konfirmasi password tidak cocok',
         ]);
 
-        if ($validationData['password'] !== $request->input('password_confirmation')) {
-            return back()->withErrors(['password_confirmation' => 'The password confirmation does not match.'])->withInput();
-        }
-
-        if (!preg_match('/^\d{16}$/', $validationData['nik'])) {
-            return back()->withErrors(['nik' => 'NIK must be exactly 16 digits'])->withInput();
-        }
-
-        if (isset($validationData['address'])) {
-            $validationData['address'] = $request->input('address');
-        }
-
-        // dd($validationData);
-
-        User::create([
+        // Simpan User Baru
+        $user = User::create([
             'name' => $validationData['name'],
             'email' => $validationData['email'],
             'password' => Hash::make($validationData['password']),
             'role' => $validationData['role'],
             'nik' => $validationData['nik'],
-            'address' => $validationData['address'],
+            'address' => $validationData['address'] ?? null,
+            'no_rek' => $validationData['no_rek'] ?? null,
+            'bank_name' => $validationData['bank_name'] ?? null,
+            'isOnline' => false, // Default awal saat register
         ]);
 
+        // Notifikasi pendaftaran
         $user->notify(new GeneralNotification([
             'title' => 'Akun Berhasil Dibuat',
-            'message' => 'Selamat bergabung! Silakan lengkapi profil Anda untuk mulai bertransaksi.',
+            'message' => 'Selamat bergabung! Silakan login untuk mulai bertransaksi.',
             'icon' => '🎊',
             'color' => 'bg-emerald-100 text-emerald-600',
-            'url' => route('my-account'), // Jika ada route profil
+            'url' => route('login'),
         ]));
 
         return redirect()->route('login')->with('success', 'Registration successful! Please login.');
@@ -87,36 +73,30 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-
             $user = Auth::user();
 
-            // 1. UPDATE LAST SEEN SAAT LOGIN
-            // Ini memastikan status langsung "Online" begitu masuk dashboard
+            // UPDATE STATUS ONLINE & LAST SEEN
             $user->update([
-                'last_seen' => now()
+                'isOnline' => true,
             ]);
 
-            // 2. KIRIM NOTIFIKASI SAMBUTAN
             $user->notify(new GeneralNotification([
                 'title' => 'Selamat Datang Kembali!',
-                'message' => "Halo {$user->name}, senang melihat Anda kembali di Miimoys E-Books.",
+                'message' => "Halo {$user->name}, senang melihat Anda kembali.",
                 'icon' => '👋',
                 'color' => 'bg-teal-100 text-teal-600',
                 'url' => '#',
             ]));
 
-            // 3. REDIRECT BERDASARKAN ROLE
             return match ($user->role) {
-                'admin'  => redirect()->route('admin.dashboard')->with('success', 'Selamat datang, Admin!'),
-                'seller' => redirect()->route('seller.dashboard')->with('success', 'Halo Seller, siap berjualan?'),
-                'buyer'  => redirect()->route('buyer.dashboard')->with('success', 'Ayo cari buku favoritmu!'),
-                default  => redirect()->route('dashboard')->with('success', 'Login berhasil'),
+                'admin'  => redirect()->route('admin.dashboard'),
+                'seller' => redirect()->route('seller.dashboard'),
+                'buyer'  => redirect()->route('buyer.dashboard'),
+                default  => redirect()->route('dashboard'),
             };
         }
 
-        return back()->withErrors([
-            'email' => 'Email atau password salah',
-        ]);
+        return back()->withErrors(['email' => 'Email atau password salah']);
     }
 
     public function showForgotPassword()
@@ -180,16 +160,16 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         if ($user) {
-            // Menghapus jejak waktu, status akan jadi "Offline" tanpa waktu di Blade
+            // SET OFFLINE SAAT LOGOUT
             $user->update([
-                'last_seen' => null
+                'isOnline' => false,
             ]);
         }
 
-        auth()->logout();
+        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

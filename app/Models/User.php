@@ -25,7 +25,9 @@ class User extends Authenticatable
         'role',
         'foto_profile',
         'address',
-        'last_seen'
+        'isOnline',
+        'no_rek',
+        'bank_name',
     ];
 
     /**
@@ -48,7 +50,28 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'last_seen' => 'datetime',
         ];
+    }
+
+    public function books()
+    {
+        // Asumsi: Di tabel 'books' ada kolom 'user_id' untuk menandai pemilik buku
+        return $this->hasMany(Book::class, 'user_id');
+    }
+
+    public function getSoldCountAttribute()
+    {
+        // Mengambil semua order_items melalui buku yang dimiliki user
+        // Hanya menghitung jika status order adalah 'approved' atau 'completed'
+        return OrderItem::whereHas('book', function ($query) {
+            $query->where('user_id', $this->id);
+        })->whereHas('order', function ($query) {
+            $query->whereNotNull('approved_at'); // Mengasumsikan jika sudah di-approve = terjual
+        })->sum('qty');
+    }
+
+    public function getBooksCountAttribute()
+    {
+        return $this->books()->count();
     }
 }

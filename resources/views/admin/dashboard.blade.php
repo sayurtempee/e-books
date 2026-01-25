@@ -83,6 +83,20 @@
                             </div>
 
                             <div class="flex justify-between items-center">
+                                <span class="text-gray-500">Bank</span>
+                                <span class="font-medium text-gray-800">
+                                    {{ auth()->user()->bank_name ?? 'Not set' }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-500">Account Number</span>
+                                <span class="font-medium text-gray-800 font-mono">
+                                    {{ auth()->user()->no_rek ?? 'Not set' }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between items-center">
                                 <span class="text-gray-500">Level</span>
                                 <span class="font-medium text-gray-800 capitalize">
                                     {{ auth()->user()->role }}

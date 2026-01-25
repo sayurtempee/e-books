@@ -16,12 +16,27 @@ class TransactionController extends Controller
 {
     public function indexApproval()
     {
-        // Mengambil semua order milik seller (atau semua order) beserta item dan bukunya
-        $orders = Order::with(['items.book', 'user'])->get();
+        $sellerId = auth()->id();
+
+        $orders = Order::whereHas('items.book', function ($query) use ($sellerId) {
+            // Hanya ambil Order yang didalamnya ada buku milik seller ini
+            $query->where('user_id', $sellerId);
+        })
+            ->with([
+                'user',
+                'items' => function ($query) use ($sellerId) {
+                    // FILTER UTAMA: Hanya ambil "Items" yang bukunya milik seller ini
+                    $query->whereHas('book', function ($q) use ($sellerId) {
+                        $q->where('user_id', $sellerId);
+                    });
+                },
+                'items.book' // Load detail bukunya
+            ])
+            ->latest()
+            ->get();
 
         return view('seller.approval.index', compact('orders'));
     }
-
     public function updateApproval(Request $request, Order $order)
     {
         $request->validate([

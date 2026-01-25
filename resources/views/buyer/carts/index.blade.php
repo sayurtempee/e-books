@@ -105,11 +105,34 @@
                                     </div>
 
                                     {{-- Bagian Metode Pembayaran --}}
-                                    <div>
+                                    @php
+                                        $total = 0;
+                                        $cart = session('cart', []);
+                                        $seller = null;
+
+                                        if (count($cart) > 0) {
+                                            // Ambil ID buku pertama
+                                            $firstBookId = array_key_first($cart);
+
+                                            // Cari buku. Jika session simpan ID sebagai key, find($firstBookId) sudah benar.
+                                            $book = \App\Models\Book::find($firstBookId);
+
+                                            if ($book && $book->user) {
+                                                // Kita ambil user-nya dulu tanpa cek role di awal untuk testing
+                                                $potentialSeller = $book->user;
+
+                                                // Cek apakah rolenya benar 'seller' (sesuai isi database di gambar kamu)
+                                                if (trim(strtolower($potentialSeller->role)) === 'seller') {
+                                                    $seller = $potentialSeller;
+                                                }
+                                            }
+                                        }
+                                    @endphp
+                                    <div x-data="{ paymentMethod: '' }">
                                         <label class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
                                             Metode Pembayaran
                                         </label>
-                                        <select name="payment_method" required
+                                        <select name="payment_method" x-model="paymentMethod" required
                                             class="w-full border-teal-200 rounded-xl shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm p-4">
                                             <option value="" disabled selected>Pilih Metode Pembayaran</option>
                                             <option value="gopay">GoPay</option>
@@ -117,48 +140,101 @@
                                             <option value="qris">QRIS</option>
                                             <option value="transfer">Bank Transfer (Manual)</option>
                                         </select>
-                                        <p class="text-[11px] text-teal-600 mt-3 flex items-center gap-1">
-                                            <i class="bi bi-info-circle-fill"></i>
-                                            Instruksi pembayaran akan muncul setelah Anda klik Checkout.
-                                        </p>
-                                    </div>
-                                </div>
 
-                                <div
-                                    class="flex flex-col md:flex-row justify-between items-center gap-6 border-t border-teal-200 pt-8">
-                                    <div>
-                                        <span class="text-gray-500 font-medium">Total Estimasi Pembayaran:</span>
-                                        <div class="text-3xl font-black text-teal-700">
-                                            Rp {{ number_format($total, 0, ',', '.') }}
+                                        {{-- Tampilan Rekening Seller --}}
+                                        <div x-show="paymentMethod === 'transfer'"
+                                            x-transition:enter="transition ease-out duration-300"
+                                            x-transition:enter-start="opacity-0 transform -translate-y-2"
+                                            x-transition:enter-end="opacity-100 transform translate-y-0"
+                                            class="mt-4 p-5 bg-teal-50 border border-teal-200 rounded-xl">
+
+                                            <h4 class="text-[10px] font-black text-teal-700 uppercase tracking-widest mb-4">
+                                                <i class="bi bi-bank me-1"></i> Informasi Rekening Tujuan (Seller)
+                                            </h4>
+
+                                            @if ($seller)
+                                                <div class="space-y-3">
+                                                    <div
+                                                        class="flex justify-between items-center p-3 bg-white rounded-lg border border-teal-100">
+                                                        <div>
+                                                            <p class="text-[9px] text-gray-400 uppercase font-bold">Bank</p>
+                                                            <p class="text-sm font-bold text-gray-800">
+                                                                {{ $seller->bank_name ?? 'BCA' }}</p>
+                                                        </div>
+                                                        <i class="bi bi-wallet2 text-teal-300"></i>
+                                                    </div>
+
+                                                    <div
+                                                        class="flex justify-between items-center p-3 bg-white rounded-lg border border-teal-100">
+                                                        <div>
+                                                            <p class="text-[9px] text-gray-400 uppercase font-bold">Nomor
+                                                                Rekening</p>
+                                                            <p
+                                                                class="text-lg font-mono font-black text-teal-700 tracking-wider">
+                                                                {{ $seller->no_rek ?? '-' }}</p>
+                                                        </div>
+                                                        <button type="button"
+                                                            onclick="navigator.clipboard.writeText('{{ $seller->no_rek }}')"
+                                                            class="text-[10px] bg-teal-100 text-teal-600 px-2 py-1 rounded hover:bg-teal-200 transition-all font-bold">
+                                                            SALIN
+                                                        </button>
+                                                    </div>
+
+                                                    <div class="p-3 bg-white rounded-lg border border-teal-100">
+                                                        <p class="text-[9px] text-gray-400 uppercase font-bold">Atas Nama
+                                                        </p>
+                                                        <p class="text-sm font-bold text-gray-800">{{ $seller->name }}</p>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <p class="text-xs text-rose-500 italic">Data rekening seller tidak
+                                                    ditemukan.</p>
+                                            @endif
                                         </div>
                                     </div>
 
-                                    <div class="flex items-center gap-4">
-                                        <a href="{{ route('buyer.orders.index') }}"
-                                            class="px-6 py-3 bg-white border-2 border-teal-600 text-teal-600 rounded-xl hover:bg-teal-50 transition-all font-bold">
-                                            Lanjut Belanja
-                                        </a>
-                                        <button type="submit"
-                                            class="px-10 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 shadow-xl shadow-teal-200 transition-all font-black uppercase tracking-widest transform hover:-translate-y-1">
-                                            Checkout Sekarang
-                                        </button>
-                                    </div>
+                                    <p class="text-[11px] text-teal-600 mt-3 flex items-center gap-1">
+                                        <i class="bi bi-info-circle-fill"></i>
+                                        Instruksi pembayaran akan muncul setelah Anda klik Checkout.
+                                    </p>
                                 </div>
-                            </form>
                         </div>
+
+                        <div
+                            class="flex flex-col md:flex-row justify-between items-center gap-6 border-t border-teal-200 pt-8">
+                            <div>
+                                <span class="text-gray-500 font-medium">Total Estimasi Pembayaran:</span>
+                                <div class="text-3xl font-black text-teal-700">
+                                    Rp {{ number_format($total, 0, ',', '.') }}
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <a href="{{ route('buyer.orders.index') }}"
+                                    class="px-6 py-3 bg-white border-2 border-teal-600 text-teal-600 rounded-xl hover:bg-teal-50 transition-all font-bold">
+                                    Lanjut Belanja
+                                </a>
+                                <button type="submit"
+                                    class="px-10 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 shadow-xl shadow-teal-200 transition-all font-black uppercase tracking-widest transform hover:-translate-y-1">
+                                    Checkout Sekarang
+                                </button>
+                            </div>
+                        </div>
+                        </form>
                     </div>
-                @else
-                    {{-- Tampilan Jika Keranjang Kosong --}}
-                    <div class="bg-white p-12 rounded-xl border border-dashed border-gray-300 text-center">
-                        <div class="text-5xl mb-4">🛒</div>
-                        <h2 class="text-xl font-bold text-gray-800">Keranjangmu masih kosong</h2>
-                        <p class="text-gray-500 mb-6">Ayo cari buku favoritmu dan mulai belanja!</p>
-                        <a href="{{ route('buyer.orders.index') }}"
-                            class="inline-block bg-teal-600 text-white px-8 py-3 rounded-full font-bold hover:bg-teal-700 transition-all">
-                            Lihat Koleksi Buku
-                        </a>
-                    </div>
-                @endif
+            </div>
+        @else
+            {{-- Tampilan Jika Keranjang Kosong --}}
+            <div class="bg-white p-12 rounded-xl border border-dashed border-gray-300 text-center">
+                <div class="text-5xl mb-4">🛒</div>
+                <h2 class="text-xl font-bold text-gray-800">Keranjangmu masih kosong</h2>
+                <p class="text-gray-500 mb-6">Ayo cari buku favoritmu dan mulai belanja!</p>
+                <a href="{{ route('buyer.orders.index') }}"
+                    class="inline-block bg-teal-600 text-white px-8 py-3 rounded-full font-bold hover:bg-teal-700 transition-all">
+                    Lihat Koleksi Buku
+                </a>
+            </div>
+            @endif
             </div>
 
             {{--  Invoice Modal --}}
@@ -204,15 +280,24 @@
                                         nominal sesuai total di atas melalui aplikasi
                                         {{ ucfirst($currentOrder->payment_method) }} Anda</p>
                                 @else
-                                    {{-- Transfer Bank --}}
-                                    <div class="text-center py-2">
-                                        <p class="text-lg font-mono font-black text-gray-800 tracking-widest">123-456-7890
-                                        </p>
-                                        <p class="text-xs text-gray-600 font-bold uppercase">BANK MANDIRI a/n BOOKSTORE ID
-                                        </p>
-                                        <p class="text-[10px] text-red-500 mt-2 italic">*Pastikan nominal transfer presisi
-                                            hingga digit terakhir</p>
-                                    </div>
+                                    @php
+                                        $order = \App\Models\Order::with('user')->findOrFail(session('order_id'));
+                                    @endphp
+
+                                    @if ($order->payment_method === 'transfer')
+                                        <div class="text-center">
+                                            <p class="text-xs font-bold">TRANSFER DARI</p>
+                                            <p class="text-2xl font-mono font-black">
+                                                {{ $order->user->no_rek }}
+                                            </p>
+                                            <p class="text-xs font-bold">
+                                                BANK {{ $order->user->bank_name }}
+                                            </p>
+                                            <p class="text-xs text-gray-500">
+                                                A/N {{ $order->user->name }}
+                                            </p>
+                                        </div>
+                                    @endif
                                 @endif
                             </div>
                         </div>

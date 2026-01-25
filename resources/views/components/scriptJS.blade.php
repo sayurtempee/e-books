@@ -26,25 +26,35 @@
 
     @if (session('success'))
         customSwal.fire({
+            toast: true,
+            position: 'bottom-end',
+            backdrop: false, // ⬅️ WAJIB
             icon: 'success',
-            title: 'Success',
-            text: @json(session('success')),
+            title: @json(session('success')),
             timer: 3000,
             timerProgressBar: true,
             showConfirmButton: false,
             iconColor: '#14b8a6',
+            customClass: {
+                popup: 'rounded-xl shadow-lg'
+            }
         });
     @endif
 
     @if (session('error'))
         customSwal.fire({
+            toast: true,
+            position: 'bottom-end',
+            backdrop: false, // ⬅️ WAJIB
             icon: 'error',
-            title: 'Error',
-            text: @json(session('error')),
+            title: @json(session('error')),
             timer: 3000,
             timerProgressBar: true,
             showConfirmButton: false,
-            iconColor: '#f97316',
+            iconColor: '#0f766e',
+            customClass: {
+                popup: 'rounded-xl shadow-lg'
+            }
         });
     @endif
 
@@ -301,28 +311,6 @@
         }
     }
 
-    {{--  Error Message  --}}
-    // 1. Alert untuk Pesan Error (dari session 'error')
-    @if (session('error'))
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: "{{ session('error') }}",
-            confirmButtonColor: '#3085d6',
-        });
-    @endif
-
-    // 2. Alert untuk Pesan Sukses (dari session 'success')
-    @if (session('success'))
-        Swal.fire({
-            icon: 'success',
-            title: 'Berhasil!',
-            text: "{{ session('success') }}",
-            timer: 3000,
-            showConfirmButton: false
-        });
-    @endif
-
     // 3. Alert untuk Validasi Laravel (dari $errors)
     @if ($errors->any())
         Swal.fire({
@@ -337,4 +325,10 @@
             `,
         });
     @endif
+
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text);
+        alert('Nomor rekening berhasil disalin!');
+    }
 </script>

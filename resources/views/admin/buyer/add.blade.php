@@ -73,6 +73,31 @@
                     placeholder="Your NIK">
             </div>
 
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {{-- BANK NAME --}}
+                <div>
+                    <label class="block text-gray-600 mb-1">Bank Name</label>
+                    <select name="bank_name"
+                        class="w-full h-11 px-4 rounded-xl border border-gray-300
+                               focus:border-teal-500 focus:ring-teal-500 bg-white">
+                        <option value="" disabled selected>Pilih Bank</option>
+                        <option value="BCA">BCA</option>
+                        <option value="Mandiri">Mandiri</option>
+                        <option value="BNI">BNI</option>
+                        <option value="BRI">BRI</option>
+                    </select>
+                </div>
+
+                {{-- NO REKENING --}}
+                <div>
+                    <label class="block text-gray-600 mb-1">Nomor Rekening</label>
+                    <input type="text" name="no_rek"
+                        class="w-full h-11 px-4 rounded-xl border border-gray-300
+                               focus:border-teal-500 focus:ring-teal-500"
+                        placeholder="Contoh: 12345678">
+                </div>
+            </div>
+
             {{-- PASSWORD --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

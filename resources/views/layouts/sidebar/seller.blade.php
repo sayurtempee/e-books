@@ -18,7 +18,7 @@
         class="flex items-center gap-3 px-4 py-2 rounded-lg
     {{ request()->routeIs('seller.approval.index') ? $activeClass : $inactiveClass }}">
         <i class="bi bi-check-square-fill"></i>
-        <span>Produk Buku</span>
+        <span>Approval</span>
     </a>
 
     <a href="{{ route('seller.reports.index') }}"

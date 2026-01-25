@@ -72,6 +72,35 @@
                     value="{{ old('name', auth()->user()->name) }}">
             </div>
 
+            {{-- BANK NAME (READONLY) --}}
+            <div>
+                <label class="block text-gray-500 mb-1">
+                    Bank Name
+                </label>
+                <input type="text" readonly
+                    class="w-full h-11 px-4 rounded-xl
+               bg-gray-100/80
+               border border-gray-200
+               text-gray-500
+               cursor-not-allowed"
+                    value="{{ auth()->user()->bank_name ?? 'Not set' }}">
+            </div>
+
+            {{-- NO REKENING (READONLY) --}}
+            <div>
+                <label class="block text-gray-500 mb-1">
+                    Account Number
+                </label>
+                <input type="text" readonly
+                    class="w-full h-11 px-4 rounded-xl
+               bg-gray-100/80
+               border border-gray-200
+               text-gray-500
+               tracking-widest
+               cursor-not-allowed"
+                    value="{{ auth()->user()->no_rek ?? 'Not set' }}">
+            </div>
+
             {{-- EMAIL --}}
             <div>
                 <label class="block text-gray-600 mb-1">

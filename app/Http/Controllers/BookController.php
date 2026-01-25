@@ -13,9 +13,10 @@ class BookController extends Controller
     // Seller
     public function index()
     {
-        // Mengambil buku dengan kategori dan menjumlahkan profit dari relasi orderItems
-        $books = Book::with('category')
-            ->withSum('items as total_real_profit', 'profit')
+        // Mengambil buku hanya milik user yang sedang login
+        $books = Book::where('user_id', auth()->id())
+            ->with('category') // Eager load kategori agar tidak lambat
+            ->latest()
             ->get();
 
         $categories = Category::all();
@@ -28,6 +29,7 @@ class BookController extends Controller
         $validated = $request->validate([
             'category_id'    => 'required|exists:categories,id',
             'photos_product' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'user_id'     => 'required|exists:users,id',
             'title'          => 'required|string|max:255',
             'description'    => 'nullable|string',
             'stock'          => 'required|integer|min:0',
@@ -36,6 +38,8 @@ class BookController extends Controller
             'price'          => 'required|numeric|min:0|gte:capital',
             'margin'         => 'nullable|numeric',
         ]);
+
+        $validated['user_id'] = auth()->id();
 
         $validated['photos_product'] =
             $request->file('photos_product')->store('books', 'public');
@@ -68,6 +72,8 @@ class BookController extends Controller
 
         $validated = $request->validate([
             'category_id'    => 'required|exists:categories,id',
+            'photos_product' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'user_id'     => 'required|exists:users,id',
             'title'          => 'required|string|max:255',
             'description'    => 'nullable|string',
             'stock'          => 'required|integer|min:0',
@@ -75,8 +81,9 @@ class BookController extends Controller
             'capital'        => 'required|numeric|min:0',
             'price'          => 'required|numeric|min:0|gte:capital',
             'margin'         => 'nullable|numeric',
-            'photos_product' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
+
+        $validated['user_id'] = auth()->id();
 
         if ($request->hasFile('photos_product')) {
             if ($book->photos_product) {

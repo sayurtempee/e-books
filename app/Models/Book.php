@@ -11,6 +11,7 @@ class Book extends Model
     use Notifiable;
 
     protected $fillable = [
+        'user_id',
         'category_id',
         'photos_product',
         'title',
@@ -31,5 +32,11 @@ class Book extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function user()
+    {
+        // Menghubungkan kolom user_id di tabel books ke tabel users
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

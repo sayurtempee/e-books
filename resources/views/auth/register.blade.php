@@ -61,6 +61,39 @@
                             placeholder="Your NIK" autofocus required>
                     </div>
 
+                    {{-- Bank Name --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">
+                            Bank Name
+                        </label>
+                        <div class="relative">
+                            <select name="bank_name"
+                                class="w-full mt-1 px-4 py-2 rounded-lg
+                                bg-white/70 focus:bg-white
+                                border border-gray-300
+                                focus:ring-2 focus:ring-teal-400 focus:outline-none transition">
+                                <option value="" disabled selected>Pilih Bank</option>
+                                <option value="BCA">BCA</option>
+                                <option value="Mandiri">Mandiri</option>
+                                <option value="BNI">BNI</option>
+                                <option value="BRI">BRI</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- No Rekening --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">
+                            Nomor Rekening
+                        </label>
+                        <input type="text" name="no_rek" value="{{ old('no_rek') }}"
+                            class="w-full mt-1 px-4 py-2 rounded-lg
+                            bg-white/70 focus:bg-white
+                            border border-gray-300
+                            focus:ring-2 focus:ring-teal-400 focus:outline-none"
+                            placeholder="Contoh: 1234567890">
+                    </div>
+
                     {{-- Name --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700">

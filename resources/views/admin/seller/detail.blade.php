@@ -117,6 +117,25 @@
                         </div>
                     </div>
 
+                    {{-- BANK INFO --}}
+                    <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors">
+                        <div
+                            class="flex-shrink-0 w-10 h-10 rounded-lg
+                            bg-gradient-to-br from-emerald-400 to-emerald-500
+                            flex items-center justify-center shadow-sm">
+                            <i class="bi bi-bank2 text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs text-gray-500 font-medium mb-0.5">Informasi Bank</p>
+                            <p class="text-sm text-gray-800 font-medium">
+                                {{ $user->bank_name ?? '-' }}
+                            </p>
+                            <p class="text-xs text-teal-600 font-mono tracking-wider">
+                                {{ $user->no_rek ?? 'Belum diatur' }}
+                            </p>
+                        </div>
+                    </div>
+
                     {{-- JOINED DATE (optional) --}}
                     @if ($user->created_at ?? false)
                         <div
@@ -139,25 +158,23 @@
                 </div>
 
                 {{-- FOOTER INFO (OPTIONAL STATS) --}}
-                {{--  <div class="mt-6 pt-4 border-t border-gray-100">
-                    <div class="flex items-center justify-center gap-6 text-center">
+                <div class="mt-6 pt-4 border-t border-gray-100">
+                    <div class="flex items-center justify-center gap-10 text-center">
                         <div>
-                            <p class="text-lg font-bold text-teal-600">{{ $user->products_count ?? 0 }}</p>
-                            <p class="text-xs text-gray-500">Produk</p>
+                            {{-- Menggunakan Accessor getBooksCountAttribute --}}
+                            <p class="text-lg font-bold text-teal-600">{{ $user->books_count }}</p>
+                            <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Total Buku</p>
                         </div>
+
                         <div class="w-px h-8 bg-gray-200"></div>
+
                         <div>
-                            <p class="text-lg font-bold text-cyan-600">{{ $user->orders_count ?? 0 }}</p>
-                            <p class="text-xs text-gray-500">Pesanan</p>
-                        </div>
-                        <div class="w-px h-8 bg-gray-200"></div>
-                        <div>
-                            <p class="text-lg font-bold text-purple-600">4.8</p>
-                            <p class="text-xs text-gray-500">Rating</p>
+                            {{-- Menggunakan Accessor getSoldCountAttribute --}}
+                            <p class="text-lg font-bold text-cyan-600">{{ $user->sold_count }}</p>
+                            <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Item Terjual</p>
                         </div>
                     </div>
-                </div>  --}}
-
+                </div>
             </div>
         </div>
 

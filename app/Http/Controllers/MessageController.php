@@ -44,12 +44,10 @@ class MessageController extends Controller
                 ->update(['is_read' => true]);
 
             // 4. LOGIKA PEMBERSIH LONCENG: Tandai notifikasi terkait chat ini sebagai dibaca
-            $user->unreadNotifications->each(function ($notification) use ($id) {
-                // Kita cek apakah URL di dalam notifikasi mengandung ID chat ini
-                if (isset($notification->data['url']) && str_contains($notification->data['url'], "/chat/{$id}")) {
-                    $notification->markAsRead();
-                }
-            });
+            $user->unreadNotifications()
+                ->where('data->url', route('chat.index', $id))
+                ->get()
+                ->each->markAsRead();
         }
 
         return view('chat.index', compact('contacts', 'activeContact', 'messages'));
@@ -92,7 +90,7 @@ class MessageController extends Controller
                 'message' => $sender->name . ': ' . Str::limit($request->message, 45),
                 'icon'    => '<i class="bi bi-chat-right-text-fill"></i>',
                 'color'   => 'bg-blue-100 text-blue-600',
-                'url'     => route('chat.index', $sender->id),
+                'url'     => route('chat.index', $sender->id) . '#last-message',
             ]));
         }
 

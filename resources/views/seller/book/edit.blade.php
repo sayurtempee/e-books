@@ -59,6 +59,8 @@
             @csrf
             @method('PUT')
 
+            <input type="hidden" name="user_id" value="{{ auth()->id() }}">
+
             {{-- PHOTO --}}
             <div class="col-span-1">
                 <label class="block mb-1 font-medium">Foto Buku</label>

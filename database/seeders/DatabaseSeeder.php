@@ -19,10 +19,14 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
+        // Bank Name = 'BCA', 'Mandiri', 'BNI', 'BRI'
+
         // Sudah bisa forgot dan reset password langsung ke email active.
 
         User::factory()->create([
             'nik' => '3271051203980001',
+            'bank_name' => 'BCA',
+            'no_rek' => '1234567890', // BCA
             'name' => 'Super Admin',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
@@ -31,6 +35,8 @@ class DatabaseSeeder extends Seeder
 
         User::factory()->create([
             'nik' => '3271051203980002',
+            'bank_name' => 'Mandiri',
+            'no_rek' => '9000012345678', // Mandiri
             'name' => 'Seller Buku',
             'email' => 'seller@example.com',
             'password' => Hash::make('password'),
@@ -39,18 +45,22 @@ class DatabaseSeeder extends Seeder
 
         User::factory()->create([
             'nik' => '3271051203980003',
+            'bank_name' => 'BRI',
+            'no_rek' => '011101000123507', // BRI
             'name' => 'Buyer Buku',
             'email' => 'buyer@example.com',
             'password' => Hash::make('password'),
             'role' => 'buyer'
         ]);
 
-        User::factory()->create([
-            'nik' => '3271051203980004',
-            'name' => 'Salma Aulia',
-            'email' => 'moons@example.com',
-            'password' => Hash::make('password'),
-            'role' => 'buyer'
-        ]);
+        // User::factory()->create([
+        //     'nik' => '3271051203980004',
+        //     'bank_name' => 'BNI',
+        //     'no_rek' => '6700012345', // BNI
+        //     'name' => 'Salma Aulia',
+        //     'email' => 'moons@example.com',
+        //     'password' => Hash::make('password'),
+        //     'role' => 'buyer'
+        // ]);
     }
 }

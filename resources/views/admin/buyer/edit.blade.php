@@ -71,10 +71,39 @@
                    focus:border-teal-500 focus:ring-teal-500">
             </div>
 
+            {{-- GRID UNTUK INFO BANK (READONLY) --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {{-- BANK NAME --}}
+                <div>
+                    <label class="block text-gray-500 mb-1 text-left">Bank Name</label>
+                    <input type="text" readonly
+                        class="w-full h-11 px-4 rounded-xl
+                   bg-gray-100/80
+                   border border-gray-200
+                   text-gray-500
+                   cursor-not-allowed"
+                        value="{{ $user->bank_name ?? 'Not set' }}">
+                </div>
+
+                {{-- NO REKENING --}}
+                <div>
+                    <label class="block text-gray-500 mb-1 text-left">No. Rekening</label>
+                    <input type="text" readonly
+                        class="w-full h-11 px-4 rounded-xl
+                   bg-gray-100/80
+                   border border-gray-200
+                   text-gray-500
+                   font-mono
+                   cursor-not-allowed"
+                        value="{{ $user->no_rek ?? 'Not set' }}">
+                </div>
+            </div>
+
             {{-- ADDRESS --}}
             <div>
                 <label class="block text-gray-600 mb-1 text-left">Alamat</label>
-                <input type="text" name="address" value="{{ old('address', $user->address ?? 'Address has not been entered') }}"
+                <input type="text" name="address"
+                    value="{{ old('address', $user->address ?? 'Address has not been entered') }}"
                     class="w-full h-11 px-4 rounded-xl
                    bg-gray-100/80
                    border border-gray-200

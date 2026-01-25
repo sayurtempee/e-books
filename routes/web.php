@@ -132,7 +132,13 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
 
         // Track Package
         Route::get('/track-package', function () {
-            return view('buyer.track_package.index');
+            $trackedOrders = \App\Models\Order::where('user_id', auth()->id())
+                ->whereIn('status', ['approved', 'shipping'])
+                ->with(['items.book.user']) // Load data buku dan pemiliknya (seller)
+                ->latest()
+                ->get();
+
+            return view('buyer.track_package.index', compact('trackedOrders'));
         })->name('buyer.orders.tracking');
     });
 });
