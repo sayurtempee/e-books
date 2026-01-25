@@ -154,6 +154,7 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         Route::post('/buyer/checkout', [CheckoutController::class, 'checkout'])->middleware('throttle:60,1')->name('buyer.checkout');
 
         // Payment & Invoice
+        Route::get('/buyer/payment', [CheckoutController::class, 'payment'])->name('buyer.payment');
         Route::post('/orders/{order}/payment-upload', [OrderController::class, 'uploadPayment'])->middleware('throttle:60,1')->name('buyer.payment.upload');
         Route::get('/orders/invoice/{order}/download', [OrderController::class, 'downloadInvoice'])->name('buyer.invoice.download');
 

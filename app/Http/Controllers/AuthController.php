@@ -94,6 +94,8 @@ class AuthController extends Controller
                     'isOnline' => true,
                 ]);
 
+                session(['last_activity' => now()]);
+
                 $user->notify(new GeneralNotification([
                     'title' => 'Selamat Datang!',
                     'message' => "Halo {$user->name}, Anda berhasil masuk.",
@@ -110,7 +112,6 @@ class AuthController extends Controller
                 };
             }
         }
-
         return back()->withErrors(['email' => 'Email atau password salah']);
     }
 

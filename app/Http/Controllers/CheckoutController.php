@@ -26,13 +26,11 @@ class CheckoutController extends Controller
         try {
             DB::transaction(function () use ($request, $cart, &$order) {
 
-                // 1️⃣ Update profil user
                 $user = $request->user();
                 $user->update([
                     'address' => $request->address,
                 ]);
 
-                // 2️⃣ Buat order
                 $order = Order::create([
                     'user_id' => $user->id,
                     'total_price' => collect($cart)->sum(fn($i) => $i['price'] * $i['qty']),
@@ -41,7 +39,6 @@ class CheckoutController extends Controller
                     'payment_method' => $request->payment_method,
                 ]);
 
-                // 3️⃣ Simpan item & kelola stok
                 foreach ($cart as $item) {
                     $book = Book::lockForUpdate()->findOrFail($item['id']);
 
@@ -59,42 +56,30 @@ class CheckoutController extends Controller
 
                     $book->decrement('stock', $item['qty']);
 
-                    // 4️⃣ Trigger notifikasi stok habis
                     if ($book->fresh()->stock === 0) {
                         $this->notifySellerStockOut($book);
                     }
                 }
             });
 
-            // 5️⃣ Notifikasi ke BUYER
+            // SIMPAN ORDER KE SESSION
+            session()->put('order_id', $order->id);
+
+            // Notifikasi buyer
             auth()->user()->notify(new GeneralNotification([
                 'title' => 'Checkout Berhasil 🛒',
-                'message' => "Pesanan #ORD-{$order->id} berhasil dibuat. Silakan lanjutkan pembayaran.",
+                'message' => "Pesanan #ORD-{$order->id} berhasil dibuat.",
                 'icon' => '🧾',
                 'color' => 'bg-teal-100 text-teal-700',
-                'url' => route('buyer.orders.index'),
+                'url' => route('buyer.payment'),
             ]));
 
-            // 6️⃣ Notifikasi ke SELLER & ADMIN (order masuk)
-            User::whereIn('role', ['admin', 'seller'])->each(function ($user) use ($order) {
-                $user->notify(new GeneralNotification([
-                    'title' => 'Pesanan Baru 📦',
-                    'message' => "Order #ORD-{$order->id} dari {$order->user->name}",
-                    'icon' => '📦',
-                    'color' => 'bg-blue-100 text-blue-700',
-                    'url' => route('seller.approval.index'),
-                ]));
-            });
-
-            // 7️⃣ Bersihkan cart
+            // Bersihkan cart
             session()->forget('cart');
 
             return redirect()
                 ->route('buyer.carts.index')
-                ->with([
-                    'checkout_success' => true,
-                    'order_id' => $order->id,
-                ]);
+                ->with('checkout_success', true);
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -114,5 +99,18 @@ class CheckoutController extends Controller
                 'url' => route('seller.book.index'),
             ]));
         });
+    }
+
+    public function payment()
+    {
+        $orderId = session('order_id');
+
+        if (!$orderId) abort(404);
+
+        $order = Order::with([
+            'items.book.user'
+        ])->findOrFail($orderId);
+
+        return view('buyer.payment.index', compact('order'));
     }
 }
