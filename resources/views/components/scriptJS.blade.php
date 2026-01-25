@@ -331,4 +331,26 @@
         navigator.clipboard.writeText(text);
         alert('Nomor rekening berhasil disalin!');
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Munculkan Toast jika ada pesan sukses (seperti logout berhasil)
+        @if (session('success'))
+            toastSwal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: "{{ session('success') }}",
+            });
+        @endif
+
+        // 2. Munculkan Modal Teal jika akses ditolak (karena sedang online)
+        @if ($errors->has('login'))
+            customSwal.fire({
+                icon: 'warning',
+                iconColor: '#008080',
+                title: 'Akses Ditolak',
+                text: "{{ $errors->first('login') }}",
+                confirmButtonText: 'Saya Mengerti',
+            });
+        @endif
+    });
 </script>

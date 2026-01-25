@@ -71,29 +71,44 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            $user = Auth::user();
+        // 1. Cari user berdasarkan email
+        $user = User::where('email', $request->email)->first();
 
-            // UPDATE STATUS ONLINE & LAST SEEN
-            $user->update([
-                'isOnline' => true,
-            ]);
+        if ($user && Hash::check($request->password, $user->password)) {
 
-            $user->notify(new GeneralNotification([
-                'title' => 'Selamat Datang Kembali!',
-                'message' => "Halo {$user->name}, senang melihat Anda kembali.",
-                'icon' => '👋',
-                'color' => 'bg-teal-100 text-teal-600',
-                'url' => '#',
-            ]));
+            // 2. CEK APAKAH USER SEDANG ONLINE
+            // Jika isOnline true, maka tolak login baru
+            if ($user->isOnline) {
+                return back()->withErrors([
+                    'login' => 'Akun ini sedang digunakan di perangkat lain. Silakan logout terlebih dahulu dari perangkat tersebut.'
+                ]);
+            }
 
-            return match ($user->role) {
-                'admin'  => redirect()->route('admin.dashboard'),
-                'seller' => redirect()->route('seller.dashboard'),
-                'buyer'  => redirect()->route('buyer.dashboard'),
-                default  => redirect()->route('dashboard'),
-            };
+            // 3. Jika tidak online, lanjutkan proses login biasa
+            if (Auth::attempt($credentials)) {
+                $request->session()->regenerate();
+                $user = Auth::user();
+
+                // Update status jadi Online
+                $user->update([
+                    'isOnline' => true,
+                ]);
+
+                $user->notify(new GeneralNotification([
+                    'title' => 'Selamat Datang!',
+                    'message' => "Halo {$user->name}, Anda berhasil masuk.",
+                    'icon' => '👋',
+                    'color' => 'bg-teal-100 text-teal-600',
+                    'url' => '#',
+                ]));
+
+                return match ($user->role) {
+                    'admin'  => redirect()->route('admin.dashboard'),
+                    'seller' => redirect()->route('seller.dashboard'),
+                    'buyer'  => redirect()->route('buyer.dashboard'),
+                    default  => redirect()->route('dashboard'),
+                };
+            }
         }
 
         return back()->withErrors(['email' => 'Email atau password salah']);

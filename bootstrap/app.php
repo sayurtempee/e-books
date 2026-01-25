@@ -14,12 +14,22 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias([
+    $middleware->web(append: [
+        \Illuminate\Session\Middleware\AuthenticateSession::class,
+    ]);
+
+    $middleware->alias([
             'role' => RoleMiddleware::class,
             'user.exists' => EnsureUserExists::class,
             'last_seen' => UpdateLastSeen::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+    $exceptions->respond(function ($response, $e, $request) {
+        // Jika user "ditendang" karena sesi tidak valid (Authentication Exception)
+        if ($response->getStatusCode() === 401 || ($e instanceof \Illuminate\Auth\AuthenticationException)) {
+            return redirect()->route('login')->with('status', 'session_expired');
+        }
+        return $response;
+    });
     })->create();
