@@ -4,12 +4,68 @@
     @section('body-content')
         <x-sidebar>
             <div class="p-4 md:p-6 bg-[#e7ebf0] min-h-screen font-sans">
+                {{-- TOP BAR: Notifikasi & Status (Tambahan agar Fitur Notifikasi Terlihat) --}}
+                <div class="max-w-7xl mx-auto mb-4 flex justify-end gap-3">
+                    <div class="relative group">
+                        <button class="bg-white p-2 rounded-full shadow-sm hover:bg-gray-50 relative">
+                            <i class="bi bi-bell text-[#008B8B]"></i>
+                            @if (auth()->user()->unreadNotifications->count() > 0)
+                                <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                            @endif
+                        </button>
+
+                        {{-- DROPDOWN NOTIFIKASI --}}
+                        <div
+                            class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 hidden group-hover:block z-50 overflow-hidden">
+                            <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+                                <h3 class="text-sm font-black text-gray-700">NOTIFIKASI</h3>
+                                <div class="flex gap-2">
+                                    <a href="{{ route('notifications.markAllRead') }}"
+                                        class="text-[10px] font-bold text-[#008B8B] hover:underline">
+                                        BACA SEMUA
+                                    </a>
+                                    <form action="{{ route('notifications.clearAll') }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="text-[10px] font-bold text-red-500 hover:underline uppercase">
+                                            Hapus Semua
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto custom-scrollbar">
+                                @forelse(auth()->user()->notifications as $notification)
+                                    <div
+                                        class="p-3 border-b hover:bg-teal-50/50 flex justify-between items-start group/item {{ $notification->read_at ? 'opacity-60' : 'bg-white' }}">
+                                        <a href="{{ route('notifications.readSingle', $notification->id) }}" class="flex-1">
+                                            <p class="text-[13px] font-bold text-gray-800 leading-tight">
+                                                {{ $notification->data['title'] ?? 'Notifikasi Baru' }}</p>
+                                            <p class="text-[11px] text-gray-500 mt-0.5 line-clamp-1">
+                                                {{ $notification->data['message'] ?? '' }}</p>
+                                        </a>
+                                        <form action="{{ route('notifications.destroy', $notification->id) }}"
+                                            method="POST">
+                                            @csrf @method('DELETE')
+                                            <button type="submit"
+                                                class="text-gray-300 hover:text-red-500 transition-colors ml-2">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                @empty
+                                    <div class="p-8 text-center text-gray-400 text-xs">Tidak ada notifikasi</div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div
                     class="flex h-[88vh] bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 animate-slide-up">
 
                     {{-- SIDEBAR KONTAK (Telegram Style) --}}
                     <div class="w-1/3 border-r border-gray-100 flex flex-col bg-white">
-                        {{-- Header Sidebar --}}
                         <div class="p-4 flex items-center gap-3 bg-white">
                             <button class="p-2 hover:bg-gray-100 rounded-full transition-colors">
                                 <i class="bi bi-list text-xl text-gray-500"></i>
@@ -23,7 +79,6 @@
                             </div>
                         </div>
 
-                        {{-- List Kontak --}}
                         <div class="flex-1 overflow-y-auto custom-scrollbar">
                             @forelse($contacts as $contact)
                                 @php
@@ -55,8 +110,9 @@
                                     <div class="flex-1 min-w-0">
                                         <div class="flex justify-between items-baseline">
                                             <h4 class="text-[15px] font-bold truncate">{{ $contact->name }}</h4>
-                                            <span
-                                                class="text-[11px] {{ $isActive ? 'text-white/70' : 'text-gray-400' }}">12:45</span>
+                                            <span class="text-[11px] {{ $isActive ? 'text-white/70' : 'text-gray-400' }}">
+                                                {{ $contact->last_message_time ?? '12:45' }}
+                                            </span>
                                         </div>
                                         <div class="flex justify-between items-center mt-0.5">
                                             <p
@@ -80,10 +136,9 @@
                         </div>
                     </div>
 
-                    {{-- AREA PERCAKAPAN (Teal Theme) --}}
+                    {{-- AREA PERCAKAPAN --}}
                     <div class="flex-1 flex flex-col bg-[#e7ebf0] relative">
                         @if (isset($activeContact))
-                            {{-- Header --}}
                             <div class="px-5 py-2 bg-white flex items-center justify-between shadow-sm z-10">
                                 <div
                                     class="flex items-center gap-3 cursor-pointer p-1 rounded-lg hover:bg-gray-50 transition-colors">
@@ -110,7 +165,6 @@
                                 </div>
                             </div>
 
-                            {{-- Chat Body --}}
                             <div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-3 custom-scrollbar" id="chatWindow">
                                 @foreach ($messages as $msg)
                                     <div
@@ -118,16 +172,11 @@
                                         <div class="relative max-w-[70%] group">
                                             <div
                                                 class="px-4 py-2 rounded-2xl shadow-sm text-[14.5px] leading-relaxed
-                                                {{ $msg->sender_id == auth()->id()
-                                                    ? 'bg-[#effdde] text-gray-800 rounded-tr-none'
-                                                    : 'bg-white text-gray-800 rounded-tl-none' }}">
-
+                                                {{ $msg->sender_id == auth()->id() ? 'bg-[#effdde] text-gray-800 rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none' }}">
                                                 {{ $msg->message }}
-
                                                 <div class="flex items-center justify-end gap-1 mt-1 -mr-1">
-                                                    <span class="text-[10px] text-gray-400">
-                                                        {{ $msg->created_at->format('H:i') }}
-                                                    </span>
+                                                    <span
+                                                        class="text-[10px] text-gray-400">{{ $msg->created_at->format('H:i') }}</span>
                                                     @if ($msg->sender_id == auth()->id())
                                                         <i
                                                             class="bi bi-check2-all text-[14px] {{ $msg->is_read ? 'text-[#4fc3f7]' : 'text-gray-300' }}"></i>
@@ -139,29 +188,24 @@
                                 @endforeach
                             </div>
 
-                            {{-- Input Box --}}
                             <div class="p-4 bg-white md:bg-transparent">
                                 <form action="{{ route('messages.send') }}" method="POST"
                                     class="max-w-4xl mx-auto flex items-end gap-2">
                                     @csrf
                                     <input type="hidden" name="receiver_id" value="{{ $activeContact->id }}">
-
                                     <div
                                         class="flex-1 bg-white rounded-2xl shadow-md flex items-center px-4 py-1 border border-gray-100">
                                         <button type="button"
-                                            class="text-gray-400 hover:text-[#008B8B] transition-colors p-2">
-                                            <i class="bi bi-emoji-smile text-xl"></i>
-                                        </button>
+                                            class="text-gray-400 hover:text-[#008B8B] transition-colors p-2"><i
+                                                class="bi bi-emoji-smile text-xl"></i></button>
                                         <input type="text" name="message" autocomplete="off"
                                             placeholder="Write a message..."
                                             class="flex-1 border-none focus:ring-0 text-sm py-3 px-2 bg-transparent"
                                             required>
                                         <button type="button"
-                                            class="text-gray-400 hover:text-[#008B8B] transition-colors p-2">
-                                            <i class="bi bi-paperclip text-xl"></i>
-                                        </button>
+                                            class="text-gray-400 hover:text-[#008B8B] transition-colors p-2"><i
+                                                class="bi bi-paperclip text-xl"></i></button>
                                     </div>
-
                                     <button type="submit"
                                         class="w-12 h-12 bg-[#008B8B] text-white rounded-full flex items-center justify-center hover:bg-[#007373] shadow-lg transition-all active:scale-90 shrink-0">
                                         <i class="bi bi-send-fill text-lg ml-0.5"></i>
@@ -169,19 +213,17 @@
                                 </form>
                             </div>
                         @else
-                            {{-- Welcome State --}}
                             <div class="flex-1 flex flex-col items-center justify-center">
-                                <div class="bg-black/5 px-4 py-1 rounded-full text-gray-500 text-sm">
-                                    Select a chat to start messaging
-                                </div>
+                                <div class="bg-black/5 px-4 py-1 rounded-full text-gray-500 text-sm">Select a chat to start
+                                    messaging</div>
                             </div>
                         @endif
                     </div>
                 </div>
             </div>
 
+            {{-- CSS & JS SAMA SEPERTI SEBELUMNYA (ANIMASI & SCROLL) --}}
             <style>
-                /* ANIMATIONS */
                 @keyframes slideUp {
                     from {
                         opacity: 0;
@@ -214,7 +256,6 @@
                     animation: pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                 }
 
-                /* CUSTOM SCROLLBAR */
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 5px;
                 }
@@ -228,11 +269,6 @@
                     border-radius: 10px;
                 }
 
-                .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-                    background: rgba(0, 0, 0, 0.2);
-                }
-
-                /* CHAT BUBBLE TAIL (Optional subtle styling) */
                 .rounded-tr-none {
                     border-top-right-radius: 4px !important;
                 }
@@ -246,31 +282,25 @@
                 const chatWindow = document.getElementById('chatWindow');
                 if (chatWindow) chatWindow.scrollTop = chatWindow.scrollHeight;
 
-                const scrollToBottom = () => {
-                    chatWindow.scrollTo({
-                        top: chatWindow.scrollHeight,
-                        behavior: 'smooth'
-                    });
-                }
-
-                // Echo Listener (Pastikan Laravel Echo Terpasang)
                 @if (isset($activeContact))
                     window.Echo.channel('chat.{{ auth()->id() }}')
                         .listen('.message.sent', (e) => {
                             if (e.message.sender_id == {{ $activeContact->id }}) {
-                                const msgHtml = `
-                                    <div class="flex justify-start animate-pop">
-                                        <div class="relative max-w-[70%]">
-                                            <div class="px-4 py-2 rounded-2xl shadow-sm text-[14.5px] bg-white text-gray-800 rounded-tl-none">
-                                                ${e.message.message}
-                                                <div class="flex items-center justify-end gap-1 mt-1 -mr-1">
-                                                    <span class="text-[10px] text-gray-400 uppercase">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                                </div>
+                                const msgHtml = `<div class="flex justify-start animate-pop">
+                                    <div class="relative max-w-[70%]">
+                                        <div class="px-4 py-2 rounded-2xl shadow-sm text-[14.5px] bg-white text-gray-800 rounded-tl-none">
+                                            ${e.message.message}
+                                            <div class="flex items-center justify-end gap-1 mt-1 -mr-1">
+                                                <span class="text-[10px] text-gray-400 uppercase">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                             </div>
                                         </div>
-                                    </div>`;
+                                    </div>
+                                </div>`;
                                 chatWindow.insertAdjacentHTML('beforeend', msgHtml);
-                                scrollToBottom();
+                                chatWindow.scrollTo({
+                                    top: chatWindow.scrollHeight,
+                                    behavior: 'smooth'
+                                });
                             }
                         });
                 @endif

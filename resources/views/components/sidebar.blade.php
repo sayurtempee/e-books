@@ -132,7 +132,8 @@
 
                                 {{-- Link ke URL Notifikasi --}}
                                 <a href="{{ route('notifications.readSingle', $notification->id) }}"
-                                    class="flex flex-1 gap-3">
+                                    class="flex flex-1 gap-3 hover:bg-gray-50 transition-colors p-2 rounded-lg">
+
                                     <div
                                         class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center {{ $notification->data['color'] ?? 'bg-teal-100 text-teal-600' }}">
                                         {!! $notification->data['icon'] ?? '🔔' !!}
@@ -140,13 +141,14 @@
 
                                     <div class="flex-1">
                                         <p
-                                            class="font-medium text-gray-800 {{ !$notification->read_at ? 'font-bold' : '' }}">
+                                            class="font-medium text-gray-800 {{ !$notification->read_at ? 'font-black text-teal-900' : 'text-gray-600' }}">
                                             {{ $notification->data['title'] }}
                                         </p>
-                                        <p class="text-xs text-gray-500">
+                                        <p class="text-[11px] text-gray-500 line-clamp-2">
                                             {{ $notification->data['message'] }}
                                         </p>
-                                        <p class="text-[10px] text-gray-400 mt-1">
+                                        <p class="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                                            <i class="bi bi-clock"></i>
                                             {{ $notification->created_at->diffForHumans() }}
                                         </p>
                                     </div>
@@ -181,7 +183,7 @@
                     <div class="bg-gray-50 px-5 py-3 flex justify-between items-center border-t">
                         {{-- Tombol Mark Read (Gunakan Tag <a> untuk Route GET) --}}
                         @if (auth()->user()->unreadNotifications->count() > 0)
-                            <a href="{{ route('markNotificationsRead') }}"
+                            <a href="{{ route('notifications.markAllRead') }}"
                                 class="text-[10px] font-bold text-teal-600 hover:text-teal-700 uppercase">
                                 Tandai Dibaca
                             </a>

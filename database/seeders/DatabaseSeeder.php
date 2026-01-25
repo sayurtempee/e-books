@@ -30,7 +30,8 @@ class DatabaseSeeder extends Seeder
             'name' => 'Super Admin',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
-            'role' => 'admin'
+            'role' => 'admin',
+            'isOnline' => false,
         ]);
 
         User::factory()->create([
@@ -50,7 +51,8 @@ class DatabaseSeeder extends Seeder
             'name' => 'Buyer Buku',
             'email' => 'buyer@example.com',
             'password' => Hash::make('password'),
-            'role' => 'buyer'
+            'role' => 'buyer',
+            'isOnline' => false
         ]);
 
         // User::factory()->create([
@@ -60,7 +62,8 @@ class DatabaseSeeder extends Seeder
         //     'name' => 'Salma Aulia',
         //     'email' => 'moons@example.com',
         //     'password' => Hash::make('password'),
-        //     'role' => 'buyer'
+        //     'role' => 'buyer',
+        //     'isOnline' => false
         // ]);
     }
 }
