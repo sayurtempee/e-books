@@ -141,7 +141,7 @@
                         </div>
 
                         <div
-                            class="flex flex-col md:flex-row justify-between items-center gap-6 border-t border-teal-200 pt-8">
+                            class="flex flex-col md:flex-row justify-between items-center gap-6 border-t border-teal-200 pt-8 ml-4 -mt-4">
                             <div>
                                 <span class="text-gray-500 font-medium">Total Estimasi Pembayaran:</span>
                                 <div class="text-3xl font-black text-teal-700">
