@@ -14,45 +14,59 @@
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                         {{-- List Item (Sisi Kiri) --}}
-                        <div class="lg:col-span-2 space-y-4">
+                        <div class="lg:col-span-2 space-y-8">
                             @php $total = 0 @endphp
-                            @foreach (session('cart') as $id => $details)
-                                @php $total += $details['price'] * $details['qty'] @endphp
-                                <div
-                                    class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 hover:shadow-sm transition">
-                                    <img src="{{ asset('storage/' . $details['photos_product']) }}"
-                                        class="w-20 h-20 object-cover rounded-lg">
 
-                                    <div class="flex-1">
-                                        <h3 class="font-bold text-gray-800 text-sm md:text-base">{{ $details['title'] }}
-                                        </h3>
-                                        <p class="text-teal-600 font-bold text-sm">Rp
-                                            {{ number_format($details['price'], 0, ',', '.') }}</p>
+                            {{-- PENGELOMPOKAN BERDASARKAN SELLER --}}
+                            @foreach (collect(session('cart'))->groupBy('seller_name') as $sellerName => $items)
+                                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                                    {{-- Header Toko --}}
+                                    <div class="bg-gray-50/50 px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                                        <i class="bi bi-shop text-teal-600"></i>
+                                        <span class="text-xs font-bold text-gray-700 uppercase tracking-wide">Toko:
+                                            {{ $sellerName }}</span>
                                     </div>
 
-                                    <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-1 border border-gray-100">
-                                        {{-- Kurangi --}}
-                                        <form action="{{ route('buyer.carts.destroy', $id) }}" method="POST">
-                                            @csrf @method('DELETE')
-                                            <button
-                                                class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-rose-600 transition">
-                                                <i class="bi bi-dash"></i>
-                                            </button>
-                                        </form>
-                                        <span
-                                            class="text-sm font-bold text-gray-700 w-5 text-center">{{ $details['qty'] }}</span>
-                                        {{-- Tambah --}}
-                                        <form action="{{ route('buyer.carts.store') }}" method="POST">
-                                            @csrf
-                                            <input type="hidden" name="book_id" value="{{ $id }}">
-                                            <input type="hidden" name="title" value="{{ $details['title'] }}">
-                                            <input type="hidden" name="price" value="{{ $details['price'] }}">
-                                            <input type="hidden" name="photo" value="{{ $details['photos_product'] }}">
-                                            <button
-                                                class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-teal-600 transition">
-                                                <i class="bi bi-plus"></i>
-                                            </button>
-                                        </form>
+                                    <div class="divide-y divide-gray-50">
+                                        @foreach ($items as $id => $details)
+                                            @php $total += $details['price'] * $details['qty'] @endphp
+                                            <div class="p-4 flex items-center gap-4 hover:bg-gray-50/30 transition">
+                                                <img src="{{ asset('storage/' . $details['photos_product']) }}"
+                                                    class="w-16 h-16 object-cover rounded-lg border">
+
+                                                <div class="flex-1">
+                                                    <h3 class="font-bold text-gray-800 text-sm">{{ $details['title'] }}</h3>
+                                                    <p class="text-teal-600 font-bold text-xs">Rp
+                                                        {{ number_format($details['price'], 0, ',', '.') }}</p>
+                                                </div>
+
+                                                <div
+                                                    class="flex items-center gap-3 bg-white rounded-lg p-1 border border-gray-200">
+                                                    {{-- Tombol Kurangi --}}
+                                                    <form action="{{ route('buyer.carts.destroy', $details['id']) }}"
+                                                        method="POST">
+                                                        @csrf @method('DELETE')
+                                                        <button
+                                                            class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-rose-600 transition">
+                                                            <i class="bi bi-dash"></i>
+                                                        </button>
+                                                    </form>
+
+                                                    <span
+                                                        class="text-xs font-bold text-gray-700 w-4 text-center">{{ $details['qty'] }}</span>
+
+                                                    {{-- Tombol Tambah --}}
+                                                    <form action="{{ route('buyer.carts.store') }}" method="POST">
+                                                        @csrf
+                                                        <input type="hidden" name="book_id" value="{{ $details['id'] }}">
+                                                        <button
+                                                            class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-teal-600 transition">
+                                                            <i class="bi bi-plus"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
                             @endforeach

@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Notifications\GeneralNotification;
+use App\Models\Book;
 use Illuminate\Http\Request;
+use App\Notifications\GeneralNotification;
 
 class CartController extends Controller
 {
@@ -14,8 +15,8 @@ class CartController extends Controller
 
     public function store(Request $request)
     {
-        // Jika data tidak lengkap, coba cari dari database berdasarkan ID
-        $book = \App\Models\Book::find($request->book_id);
+        // Ambil data buku beserta relasi user (seller)
+        $book = Book::with('user')->find($request->book_id);
 
         if (!$book) return back()->with('error', 'Produk tidak ditemukan');
 
@@ -23,7 +24,6 @@ class CartController extends Controller
         $id = $book->id;
 
         if (isset($cart[$id])) {
-            // Cek Stok: Jangan biarkan tambah jika stok habis
             if ($book->stock <= $cart[$id]['qty']) {
                 return back()->with('error', 'Stok tidak mencukupi!');
             }
@@ -34,7 +34,9 @@ class CartController extends Controller
                 "title" => $book->title,
                 "qty" => 1,
                 "price" => $book->price,
-                "photos_product" => $book->photos_product
+                "photos_product" => $book->photos_product,
+                "seller_id" => $book->user_id, // Simpan ID Seller
+                "seller_name" => $book->user->name // Simpan Nama Seller untuk tampilan
             ];
         }
 
