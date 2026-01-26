@@ -146,7 +146,7 @@
                     </td>
                     <td>{{ $order->user->name }}</td>
                     <td>{{ $order->created_at->format('d/m/Y') }}</td>
-                    <td style="font-weight: bold;">Rp {{ number_format($order->total_price, 0, ',', '.') }}</td>
+                    <td style="font-weight: bold;">Rp Rp {{ number_format($order->subtotal, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>

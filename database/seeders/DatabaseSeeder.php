@@ -38,7 +38,7 @@ class DatabaseSeeder extends Seeder
             'nik' => '3271051203980002',
             'bank_name' => 'Mandiri',
             'no_rek' => '9000012345678', // Mandiri
-            'name' => 'Mii Buku',
+            'name' => 'Bu Azizah',
             'email' => 'seller@example.com',
             'password' => Hash::make('password'),
             'role' => 'seller'
@@ -48,10 +48,10 @@ class DatabaseSeeder extends Seeder
             'nik' => '3271051203980003',
             'bank_name' => 'BRI',
             'no_rek' => '011101000123507', // BRI
-            'name' => 'Salma Aulia',
-            'email' => 'moons@example.com',
+            'name' => 'Bu Nanda',
+            'email' => 'seller1@example.com',
             'password' => Hash::make('password'),
-            'role' => 'buyer',
+            'role' => 'seller',
             'isOnline' => false
         ]);
 
@@ -59,11 +59,12 @@ class DatabaseSeeder extends Seeder
             'nik' => '3271051203980004',
             'bank_name' => 'BNI',
             'no_rek' => '6700012345', // BNI
-            'name' => 'Moon Buku',
-            'email' => 'seller1@example.com',
+            'name' => 'Salma Aulia',
+            'email' => 'moons@example.com',
             'password' => Hash::make('password'),
-            'role' => 'seller',
+            'role' => 'buyer',
             'isOnline' => false
         ]);
     }
 }
+

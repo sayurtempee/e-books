@@ -137,8 +137,7 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
 
         // Approval
         Route::get('/seller/approval', [TransactionController::class, 'indexApproval'])->name('seller.approval.index');
-        Route::put('/seller/approval/{order}', [TransactionController::class, 'updateApproval'])->name('seller.approval.update');
-        Route::delete('/seller/approval/{order}', [TransactionController::class, 'deleteRefundedOrder'])->name('seller.approval.delete');
+        Route::put('/seller/approval/{item}', [TransactionController::class, 'updateApproval'])->name('seller.approval.update');
 
         // Laporan
         Route::get('/seller/reports', [ReportController::class, 'index'])->name('seller.reports.index');
@@ -165,13 +164,18 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
 
         // Track Package
         Route::get('/track-package', function () {
-            $trackedOrders = \App\Models\Order::where('user_id', auth()->id())
+            $items = \App\Models\OrderItem::whereHas('order', function ($q) {
+                $q->where('user_id', auth()->id());
+            })
                 ->whereIn('status', ['approved', 'shipping'])
-                ->with(['items.book.user']) // Load data buku dan pemiliknya (seller)
+                ->with([
+                    'order',
+                    'book.user',
+                ])
                 ->latest()
                 ->get();
 
-            return view('buyer.track_package.index', compact('trackedOrders'));
+            return view('buyer.track_package.index', compact('items'));
         })->name('buyer.orders.tracking');
     });
 });

@@ -2,112 +2,121 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Book;
-use App\Models\User;
-use App\Models\Order;
-use App\Models\Category;
-use Illuminate\Support\Str;
+use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Jobs\DeleteRefundedOrderJob;
+use Illuminate\Support\Str;
 use App\Notifications\GeneralNotification;
 
 class TransactionController extends Controller
 {
+    /**
+     * LIST ITEM UNTUK SELLER
+     */
     public function indexApproval()
     {
-        $sellerId = auth()->id();
-
-        $orders = Order::whereHas('items.book', function ($query) use ($sellerId) {
-            // Hanya ambil Order yang didalamnya ada buku milik seller ini
-            $query->where('user_id', $sellerId);
-        })
+        $items = OrderItem::where('seller_id', auth()->id())
+            ->where('status', '!=', 'refunded')
             ->with([
-                'user',
-                'items' => function ($query) use ($sellerId) {
-                    // FILTER UTAMA: Hanya ambil "Items" yang bukunya milik seller ini
-                    $query->whereHas('book', function ($q) use ($sellerId) {
-                        $q->where('user_id', $sellerId);
-                    });
-                },
-                'items.book' // Load detail bukunya
+            'order.user',
+            'book',
             ])
             ->latest()
             ->get();
 
-        return view('seller.approval.index', compact('orders'));
+        return view('seller.approval.index', compact('items'));
     }
-    public function updateApproval(Request $request, Order $order)
+
+    /**
+     * UPDATE STATUS ITEM (APPROVE / SHIPPING / REFUND)
+     */
+    public function updateApproval(Request $request, OrderItem $item)
     {
+        // 🔐 VALIDASI KEPEMILIKAN (SUMBER KEBENARAN = seller_id)
+        abort_if(
+            $item->seller_id !== auth()->id(),
+            403,
+            'Unauthorized'
+        );
+
         $request->validate([
             'status' => 'required|in:pending,approved,shipping,refunded',
-            'tracking_number' => 'nullable|string|max:100|unique:orders,tracking_number,' . $order->id,
+            'tracking_number' => 'nullable|string|max:100|unique:order_items,tracking_number,' . $item->id,
         ]);
 
-        $data = ['status' => $request->status];
+        DB::transaction(function () use ($request, $item) {
 
-        // Persiapkan variabel untuk isi notifikasi
-        $notifDetails = [
-            'title' => '',
-            'message' => '',
-            'icon' => '🔔',
-            'color' => 'bg-teal-100 text-teal-600',
-            'url' => route('buyer.orders.index'), // Arahkan buyer ke riwayat pesanan
-        ];
+            $data = [
+                'status' => $request->status,
+            ];
 
-        if ($request->status === 'approved') {
-            // Logika jika pesanan disetujui (sedang disiapkan)
-            if ($order->approved_at === null) $data['approved_at'] = now();
-            $data['tracking_number'] = null; // Belum ada resi saat disiapkan
-
-            $notifDetails['title'] = 'Pesanan Disetujui';
-            $notifDetails['message'] = "Pembayaran Anda valid. Pesanan #ORD-{$order->id} sedang kami siapkan.";
-            $notifDetails['icon'] = '✅';
-            $notifDetails['color'] = 'bg-teal-100 text-teal-600';
-        } elseif ($request->status === 'shipping') {
-            // Logika jika pesanan dikirim
-            $data['tracking_number'] = $request->tracking_number ?? 'JNE' . strtoupper(Str::random(10));
-
-            $notifDetails['title'] = 'Pesanan Dalam Pengiriman';
-            $notifDetails['message'] = "Hore! Pesanan #ORD-{$order->id} telah dikirim dengan resi: {$data['tracking_number']}.";
-            $notifDetails['icon'] = '🚚';
-            $notifDetails['color'] = 'bg-blue-100 text-blue-600';
-        } elseif ($request->status === 'refunded') {
-            $data['refunded_at'] = now();
-
-            $notifDetails['title'] = 'Pesanan Dibatalkan/Refund';
-            $notifDetails['message'] = "Maaf, pesanan #ORD-{$order->id} telah dibatalkan dan sedang diproses refund.";
-            $notifDetails['icon'] = '❌';
-            $notifDetails['color'] = 'bg-red-100 text-red-600';
-        }
-
-        $order->update($data);
-
-        // KIRIM NOTIFIKASI KE BUYER
-        if ($notifDetails['title'] !== '') {
-            $order->user->notify(new GeneralNotification($notifDetails));
-        }
-
-        // Logika Job Refund (Tetap sama)
-        if ($request->status === 'refunded') {
-            DeleteRefundedOrderJob::dispatch($order)->delay(now()->addSeconds(20));
-            return redirect()->route('seller.approval.index')->with('success', 'Status Refunded. Notifikasi telah dikirim ke buyer.');
-        }
-
-        return redirect()->route('seller.approval.index')->with('success', 'Order diperbarui dan buyer telah dinotifikasi.');
-    }
-
-    public function deleteRefundedOrder(Order $order)
-    {
-        if ($order->status !== 'refunded') abort(403);
-
-        DB::transaction(function () use ($order) {
-            foreach ($order->items as $item) {
-                if ($item->book) $item->book->increment('stock', (int) $item->qty);
+            // ================= APPROVED =================
+            if ($request->status === 'approved') {
+                $data['approved_at'] = now();
+                $data['tracking_number'] = null;
             }
-            $order->delete();
+
+            // ================= SHIPPING =================
+            if ($request->status === 'shipping') {
+                $data['tracking_number'] =
+                    $request->tracking_number
+                    ?? 'JNE' . strtoupper(Str::random(10));
+            }
+
+            // ================= REFUNDED =================
+            if ($request->status === 'refunded') {
+                $data['refunded_at'] = now();
+
+                // ⬆️ KEMBALIKAN STOK (AMAN)
+                if ($item->book) {
+                    $item->book->increment('stock', (int) $item->qty);
+                }
+            }
+
+            $item->update($data);
+
+            // 🔔 NOTIFIKASI BUYER (PER ITEM)
+            $this->notifyBuyer($item);
         });
 
-        return redirect()->route('seller.approval.index')->with('success', 'Order dihapus permanen.');
+        return back()->with('success', 'Status item berhasil diperbarui.');
+    }
+
+    /**
+     * NOTIFIKASI BUYER
+     */
+    private function notifyBuyer(OrderItem $item)
+    {
+        if (!$item->book || !$item->order) return;
+
+        $map = [
+            'approved' => [
+                'title' => 'Item Disetujui',
+                'message' => "Item \"{$item->book->title}\" sedang diproses oleh seller.",
+                'icon' => '✅',
+                'color' => 'bg-teal-100 text-teal-600',
+            ],
+            'shipping' => [
+                'title' => 'Item Dikirim',
+                'message' => "Item \"{$item->book->title}\" dikirim. Resi: {$item->tracking_number}",
+                'icon' => '🚚',
+                'color' => 'bg-blue-100 text-blue-600',
+            ],
+            'refunded' => [
+                'title' => 'Item Direfund',
+                'message' => "Item \"{$item->book->title}\" dibatalkan & refund diproses.",
+                'icon' => '❌',
+                'color' => 'bg-red-100 text-red-600',
+            ],
+        ];
+
+        if (!isset($map[$item->status])) return;
+
+        $item->order->user->notify(
+            new GeneralNotification([
+                ...$map[$item->status],
+                'url' => route('buyer.orders.index'),
+            ])
+        );
     }
 }

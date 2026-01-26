@@ -13,10 +13,15 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'book_id',
+        'seller_id',
         'qty',
         'price',
         'capital',
-        'profit'
+        'profit',
+        'status',
+        'approved_at',
+        'refunded_at',
+        'tracking_number',
     ];
 
     public function order()
@@ -26,6 +31,15 @@ class OrderItem extends Model
 
     public function book()
     {
-        return $this->belongsTo(Book::class, 'book_id');
+        return $this->belongsTo(Book::class);
     }
+
+    public function seller()
+    {
+        return $this->belongsTo(User::class, 'seller_id');
+    }
+
+    protected $casts = [
+        'approved_at' => 'datetime',
+    ];
 }

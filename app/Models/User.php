@@ -28,6 +28,7 @@ class User extends Authenticatable
         'isOnline',
         'no_rek',
         'bank_name',
+        'last_activity_at'
     ];
 
     /**
@@ -49,6 +50,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_activity_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

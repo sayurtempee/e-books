@@ -13,25 +13,36 @@ class Order extends Model
     protected $fillable = [
         'user_id',
         'total_price',
-        'status',
-        'tracking_number',
-        'approved_at',
         'payment_proof',
-        'refunded_at',
         'payment_method'
     ];
 
-    protected $casts = [
-        'approved_at' => 'datetime'
-    ];
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function items()
     {
         return $this->hasMany(OrderItem::class, 'order_id');
     }
 
-    public function user()
+    public function getStatusAttribute()
     {
-        return $this->belongsTo(User::class);
+        $statuses = $this->items->pluck('status');
+
+        if ($statuses->every(fn($s) => $s === 'refunded')) {
+            return 'refunded';
+        }
+
+        if ($statuses->contains('shipping')) {
+            return 'shipping';
+        }
+
+        if ($statuses->contains('approved')) {
+            return 'approved';
+        }
+
+        return 'pending';
     }
 }

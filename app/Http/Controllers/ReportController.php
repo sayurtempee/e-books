@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -12,8 +13,13 @@ class ReportController extends Controller
     {
         // 1. Ambil semua pesanan yang statusnya sudah valid (Approved atau Shipping)
         // Kita pusingkan (eager load) relasi items dan book untuk menghitung profit
-        $orders = Order::whereIn('status', ['approved', 'shipping'])
-            ->with('items.book')
+        $orders = Order::whereHas('items', function ($q) {
+            $q->whereIn('status', ['approved', 'shipping']);
+        })
+            ->with(['items' => function ($q) {
+                $q->whereIn('status', ['approved', 'shipping'])
+                    ->with('book');
+            }])
             ->get();
 
         // 2. Hitung statistik ringkas untuk Card di dashboard
@@ -31,9 +37,13 @@ class ReportController extends Controller
             $days->push(now()->subDays($i)->translatedFormat('l')); // Nama hari (Senin, Selasa, dst)
 
             // Hitung total profit pada tanggal tersebut
-            $dailyProfit = Order::whereIn('status', ['approved', 'shipping'])
-                ->whereDate('created_at', $date)
-                ->with('items')
+            $dailyProfit = Order::whereDate('created_at', $date)
+                ->whereHas('items', function ($q) {
+                    $q->whereIn('status', ['approved', 'shipping']);
+                })
+                ->with(['items' => function ($q) {
+                    $q->whereIn('status', ['approved', 'shipping']);
+                }])
                 ->get()
                 ->flatMap->items
                 ->sum('profit');
@@ -53,21 +63,35 @@ class ReportController extends Controller
 
     public function download()
     {
-        // 1. Ambil data pesanan yang sukses saja
-        $orders = Order::whereIn('status', ['approved', 'shipping'])
-            ->with(['user', 'items.book'])
-            ->latest()
+        $sellerId = auth()->id();
+
+        // Ambil item yang valid untuk laporan
+        $items = OrderItem::with(['order.user', 'book'])
+            ->where('seller_id', $sellerId)
+            ->whereIn('status', ['approved', 'shipping'])
             ->get();
 
-        // 2. Hitung total untuk ringkasan di PDF
-        $totalRevenue = $orders->sum('total_price');
-        $totalProfit = $orders->flatMap->items->sum('profit');
+        // ================= STATISTIK =================
+        $totalRevenue = $items->sum(fn($i) => $i->price * $i->qty);
+        $totalProfit  = $items->sum('profit');
 
-        // 3. Load view khusus untuk PDF
-        $pdf = Pdf::loadView('seller.report.pdf', compact('orders', 'totalRevenue', 'totalProfit'))
-            ->setPaper('a4', 'portrait');
+        // Group per order (untuk tabel utama PDF)
+        $orders = $items->groupBy('order_id')->map(function ($items) {
+            return (object) [
+                'id' => $items->first()->order->id,
+                'user' => $items->first()->order->user,
+                'created_at' => $items->first()->order->created_at,
+                'items' => $items,
+                'subtotal' => $items->sum(fn($i) => $i->price * $i->qty),
+            ];
+        });
 
-        // 4. Download file
-        return $pdf->download('Laporan-Penjualan-' . now()->format('Y-m-d') . '.pdf');
+        $pdf = Pdf::loadView('seller.report.pdf', [
+            'orders'        => $orders,
+            'totalRevenue' => $totalRevenue,
+            'totalProfit'  => $totalProfit,
+        ])->setPaper('A4', 'portrait');
+
+        return $pdf->download('laporan-penjualan-' . now()->format('Y-m') . '.pdf');
     }
 }

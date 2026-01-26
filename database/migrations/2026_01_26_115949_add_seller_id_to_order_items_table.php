@@ -12,7 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('order_items', function (Blueprint $table) {
-            $table->timestamp('refunded_at')->nullable();
+            if (!Schema::hasColumn('order_items', 'seller_id')) {
+                $table->foreignId('seller_id')
+                    ->after('book_id')
+                    ->constrained('users')
+                    ->cascadeOnDelete();
+            } else {
+                $table->foreign('seller_id')
+                    ->references('id')
+                    ->on('users')
+                    ->cascadeOnDelete();
+            }
         });
     }
 
@@ -22,7 +32,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('order_items', function (Blueprint $table) {
-            $table->dropColumn('refunded_at');
+            $table->dropForeign(['seller_id']);
         });
     }
 };

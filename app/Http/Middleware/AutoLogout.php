@@ -18,32 +18,37 @@ class AutoLogout
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check()) {
-
+            $user = Auth::user();
             $lastActivity = session('last_activity');
 
             if ($lastActivity) {
-                $inactiveMinutes = Carbon::now()->diffInMinutes($lastActivity);
+                // Hitung durasi tidak aktif (30 menit)
+                if (now()->diffInMinutes($lastActivity) >= 30) {
 
-                if ($inactiveMinutes >= 30) {
-
-                    // SET OFFLINE
-                    Auth::user()->update([
+                    // Update DB ke Offline sebelum logout
+                    $user->update([
                         'isOnline' => false,
                     ]);
 
                     Auth::logout();
-                    session()->invalidate();
-                    session()->regenerateToken();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
 
-                    return redirect()->route('login')
-                        ->withErrors([
-                            'login' => 'Anda otomatis logout karena tidak aktif selama 30 menit.'
-                        ]);
+                    return redirect()->route('login')->withErrors([
+                        'login' => 'Sesi berakhir karena Anda tidak aktif selama 30 menit.'
+                    ]);
                 }
             }
 
-            // Update waktu aktivitas terakhir
-            session(['last_activity' => Carbon::now()]);
+            // JIKA MASIH AKTIF:
+            // 1. Update session untuk pengecekan berikutnya
+            session(['last_activity' => now()]);
+
+            // 2. Update database (Heartbeat) agar loginSubmit tahu user ini masih ada
+            $user->update([
+                'isOnline' => true,
+                'last_activity_at' => now(),
+            ]);
         }
         return $next($request);
     }

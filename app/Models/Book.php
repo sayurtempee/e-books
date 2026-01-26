@@ -29,7 +29,7 @@ class Book extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function items()
+    public function item()
     {
         return $this->hasMany(OrderItem::class);
     }

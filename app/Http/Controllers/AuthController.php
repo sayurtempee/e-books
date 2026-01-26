@@ -71,31 +71,36 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        // 1. Cari user berdasarkan email
         $user = User::where('email', $request->email)->first();
 
         if ($user && Hash::check($request->password, $user->password)) {
 
-            // 2. CEK APAKAH USER SEDANG ONLINE
-            // Jika isOnline true, maka tolak login baru
-            if ($user->isOnline) {
+            // LOGIKA SINGLE LOGIN
+            // Cek jika isOnline true DAN aktivitas terakhir masih di bawah 30 menit
+            $isReallyOnline = $user->isOnline &&
+                $user->last_activity_at &&
+                $user->last_activity_at->diffInMinutes(now()) < 30;
+
+            if ($isReallyOnline) {
                 return back()->withErrors([
-                    'login' => 'Akun ini sedang digunakan di perangkat lain. Silakan logout terlebih dahulu dari perangkat tersebut.'
+                    'login' => 'Akun ini sedang aktif di perangkat lain. Silakan logout terlebih dahulu.'
                 ]);
             }
 
-            // 3. Jika tidak online, lanjutkan proses login biasa
+            // Jalankan Login jika lolos pengecekan
             if (Auth::attempt($credentials)) {
                 $request->session()->regenerate();
-                $user = Auth::user();
 
-                // Update status jadi Online
+                $user = Auth::user();
                 $user->update([
                     'isOnline' => true,
+                    'last_activity_at' => now(),
                 ]);
 
+                // Set session awal agar middleware langsung mengenalinya
                 session(['last_activity' => now()]);
 
+                // Notifikasi (Opsional)
                 $user->notify(new GeneralNotification([
                     'title' => 'Selamat Datang!',
                     'message' => "Halo {$user->name}, Anda berhasil masuk.",
@@ -112,6 +117,7 @@ class AuthController extends Controller
                 };
             }
         }
+
         return back()->withErrors(['email' => 'Email atau password salah']);
     }
 
@@ -177,11 +183,10 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $user = Auth::user();
-
         if ($user) {
-            // SET OFFLINE SAAT LOGOUT
             $user->update([
                 'isOnline' => false,
+                'last_activity_at' => null,
             ]);
         }
 
@@ -189,6 +194,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('success', 'Berhasil keluar.');
+        return redirect()->route('login');
     }
 }
