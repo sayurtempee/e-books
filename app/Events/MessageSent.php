@@ -2,28 +2,53 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use App\Models\Message;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 
-class MessageSent implements ShouldBroadcast
+class MessageSent implements ShouldBroadcastNow
 {
-    use SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $message;
 
-    public function __construct($message)
+    public function __construct(Message $message)
     {
-        $this->message = $message;
+        // Sangat Penting: Pastikan relasi di-load agar broadcastWith tidak error/kosong
+        $this->message = $message->load(['sender', 'receiver']);
     }
 
-    public function broadcastOn()
+    public function broadcastOn(): array
     {
-        return new Channel('chat.' . $this->message->receiver_id);
+        // Menggunakan array agar sesuai dengan standar Laravel terbaru
+        return [
+            new PrivateChannel('chat.' . $this->message->receiver_id),
+        ];
     }
 
-    public function broadcastAs()
+    public function broadcastAs(): string
     {
         return 'message.sent';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'message' => [
+                'id'         => $this->message->id,
+                'sender_id'   => $this->message->sender_id,
+                'receiver_id' => $this->message->receiver_id,
+                'message'     => $this->message->message,
+                'created_at'  => $this->message->created_at->diffForHumans(),
+                'sender' => [
+                    'name'         => $this->message->sender->name,
+                    'foto_profile' => $this->message->sender->foto_profile ?? null
+                ],
+                // Tambahkan data receiver jika dibutuhkan di frontend
+            ],
+        ];
     }
 }

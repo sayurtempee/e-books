@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
+    {{--  Vite JS  --}}
+    @vite(['resources/js/app.js'])
+    
     <!-- Google Font: Lato -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +27,7 @@
 
     <!-- Link CDN AlpineJS -->
     <script src="//unpkg.com/alpinejs" defer></script>
+
 
     <!-- Title -->
     <title>@yield('title') | E - BOOKS</title>

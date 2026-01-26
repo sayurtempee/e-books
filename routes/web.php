@@ -106,7 +106,6 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
     // Chat & Message
     Route::get('/chat/{id?}', [MessageController::class, 'index'])->name('chat.index');
     Route::post('/send-message', [MessageController::class, 'sendMessage'])->name('messages.send');
-    Route::post('/chat/activity', [MessageController::class, 'activity'])->name('chat.activity');
 
     // --- ADMIN ---
     Route::middleware(['role:admin'])->group(function () {

@@ -82,4 +82,14 @@ class User extends Authenticatable
     {
         return $this->books()->count();
     }
+
+    public function isOnline(): bool
+    {
+        return $this->last_activity_at &&
+            $this->last_activity_at->gt(now()->subMinutes(2));
+    }
+    public function receivedMessages()
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
+    }
 }
