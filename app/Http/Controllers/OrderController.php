@@ -76,7 +76,7 @@ class OrderController extends Controller
     {
         // 1. Keamanan: Pastikan hanya pemilik yang bisa akses
         if ($order->user_id !== auth()->id()) {
-            abort(403, 'Akses ditolak.');
+            abort(403);
         }
 
         // 2. Load relasi agar data buku dan user muncul di PDF

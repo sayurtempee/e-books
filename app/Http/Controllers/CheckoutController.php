@@ -11,12 +11,24 @@ use App\Notifications\GeneralNotification;
 
 class CheckoutController extends Controller
 {
+    public function confirmPage()
+    {
+        $cart = session('cart');
+        if (!$cart || count($cart) === 0) {
+            return redirect()->route('buyer.carts.index')->with('error', 'Keranjang belanja kosong.');
+        }
+
+        $sellerIds = collect($cart)->pluck('seller_id')->unique();
+        $sellers = User::whereIn('id', $sellerIds)->get();
+
+        return view('buyer.checkout.confirm', compact('cart', 'sellers'));
+    }
+
     public function checkout(Request $request)
     {
         $cart = session('cart');
-
         if (!$cart || count($cart) === 0) {
-            return back()->with('error', 'Keranjang belanja kosong.');
+            return redirect()->route('buyer.carts.index')->with('error', 'Keranjang belanja kosong.');
         }
 
         $request->validate([
@@ -25,29 +37,20 @@ class CheckoutController extends Controller
         ]);
 
         try {
+            $order = null;
             DB::transaction(function () use ($request, $cart, &$order) {
-
                 $user = $request->user();
+                $user->update(['address' => $request->address]);
 
-                // SIMPAN ALAMAT TERAKHIR
-                $user->update([
-                    'address' => $request->address,
-                ]);
-
-                // ================= CREATE ORDER =================
                 $order = Order::create([
                     'user_id' => $user->id,
-                    'total_price' => collect($cart)->sum(
-                        fn($i) => $i['price'] * $i['qty']
-                    ),
+                    'total_price' => collect($cart)->sum(fn($i) => $i['price'] * $i['qty']),
                     'payment_method' => $request->payment_method,
                     'address' => $request->address,
                 ]);
 
-                // ================= CREATE ORDER ITEMS =================
                 foreach ($cart as $item) {
-                    $book = Book::lockForUpdate()->findOrFail($item['id']);
-
+                    $book = Book::lockForUpdate()->findOrFail($item['id'] ?? $item['book_id']);
                     if ($book->stock < $item['qty']) {
                         throw new \Exception("Stok {$book->title} tidak mencukupi.");
                     }
@@ -61,33 +64,23 @@ class CheckoutController extends Controller
                         'profit'    => ($item['price'] - $book->capital) * $item['qty'],
                         'status'    => 'pending',
                     ]);
-
-                    // KURANGI STOK
                     $book->decrement('stock', $item['qty']);
                 }
             });
 
-            // SIMPAN ORDER KE SESSION
             session()->put('order_id', $order->id);
-
-            // NOTIFIKASI BUYER
             auth()->user()->notify(new GeneralNotification([
                 'title' => 'Checkout Berhasil 🛒',
                 'message' => "Pesanan #ORD-{$order->id} berhasil dibuat.",
                 'icon' => '🧾',
                 'color' => 'bg-teal-100 text-teal-700',
-                'url' => route('buyer.payment'),
+                'url' => route('buyer.orders.index'),
             ]));
 
             session()->forget('cart');
-
-            return redirect()
-                ->route('buyer.carts.index')
-                ->with('checkout_success', true);
+            return redirect()->route('buyer.carts.index')->with('checkout_success', true);
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return redirect()->route('buyer.carts.index')->with('error', $e->getMessage());
         }
     }
 }
-
-

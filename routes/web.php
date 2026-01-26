@@ -9,6 +9,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DashboardController;
@@ -148,13 +149,17 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
     Route::middleware(['role:buyer'])->group(function () {
         Route::get('/buyer/dashboard', [DashboardController::class, 'buyer'])->name('buyer.dashboard');
 
-        // Order & Checkout
+        // Order
         Route::get('/buyer/order', [OrderController::class, 'index'])->name('buyer.orders.index');
+
+        // Checkout
+        Route::get('/buyer/checkout/confirm', [CheckoutController::class, 'confirmPage'])->name('buyer.checkout.confirm');
         Route::post('/buyer/checkout', [CheckoutController::class, 'checkout'])->middleware('throttle:60,1')->name('buyer.checkout');
 
-        // Payment & Invoice
-        Route::get('/buyer/payment', [CheckoutController::class, 'payment'])->name('buyer.payment');
-        Route::post('/orders/{order}/payment-upload', [OrderController::class, 'uploadPayment'])->middleware('throttle:60,1')->name('buyer.payment.upload');
+        // Payment
+        Route::post('/orders/{order}/payment-upload', [PaymentController::class, 'uploadPayment'])->name('buyer.payment.upload');
+
+        // invoice
         Route::get('/orders/invoice/{order}/download', [OrderController::class, 'downloadInvoice'])->name('buyer.invoice.download');
 
         // Cart (60 request per menit untuk kemudahan +/- jumlah)

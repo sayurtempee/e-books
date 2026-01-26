@@ -31,6 +31,7 @@
                                 <th class="px-6 py-4 text-center">Aksi</th>
                             </tr>
                         </thead>
+                        {{-- GANTI BAGIAN TABLE BODY --}}
                         <tbody class="divide-y divide-gray-100">
                             @forelse ($items as $item)
                                 <tr class="hover:bg-gray-50/50 transition">
@@ -47,10 +48,15 @@
                                     </td>
 
                                     <td class="px-6 py-4 text-center">
-                                        <button onclick="openModal('{{ asset('storage/' . $item->order->payment_proof) }}')"
-                                            class="p-2 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white transition-all active:scale-90 shadow-sm border border-teal-100">
-                                            <i class="bi bi-receipt text-lg"></i>
-                                        </button>
+                                        {{-- PERBAIKAN: Mengambil path dari $item, bukan dari $item->order --}}
+                                        @if ($item->payment_proof)
+                                            <button onclick="openModal('{{ asset('storage/' . $item->payment_proof) }}')"
+                                                class="p-2 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-600 hover:text-white transition-all active:scale-90 shadow-sm border border-teal-100">
+                                                <i class="bi bi-receipt text-lg"></i>
+                                            </button>
+                                        @else
+                                            <span class="text-[10px] font-bold text-gray-400 italic">Belum Upload</span>
+                                        @endif
                                     </td>
 
                                     <td class="px-6 py-4 font-bold text-sm">x{{ $item->qty }}</td>
@@ -58,8 +64,13 @@
                                     <td class="px-6 py-4">
                                         <form action="{{ route('seller.approval.update', $item->id) }}" method="POST">
                                             @csrf @method('PUT')
+                                            {{-- PERBAIKAN: Warna dropdown berubah sesuai status agar seller lebih mudah memantau --}}
                                             <select name="status" onchange="this.form.submit()"
-                                                class="text-[11px] font-bold rounded-lg border-gray-200 focus:ring-teal-500 focus:border-teal-500 py-1 px-2 bg-white">
+                                                class="text-[11px] font-bold rounded-lg border-gray-200 py-1 px-2 bg-white
+                        {{ $item->status === 'pending' ? 'text-amber-600' : '' }}
+                        {{ $item->status === 'approved' ? 'text-emerald-600' : '' }}
+                        {{ $item->status === 'shipping' ? 'text-blue-600' : '' }}">
+
                                                 @foreach (['pending', 'approved', 'shipping', 'refunded'] as $st)
                                                     <option value="{{ $st }}"
                                                         {{ $item->status === $st ? 'selected' : '' }}>
@@ -70,7 +81,6 @@
                                         </form>
                                     </td>
 
-                                    {{-- BAGIAN RESI --}}
                                     <td class="px-6 py-4">
                                         @if ($item->tracking_number)
                                             <div class="bg-gray-100 px-2 py-1 rounded border border-gray-200 inline-block">

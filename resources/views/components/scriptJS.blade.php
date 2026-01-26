@@ -267,40 +267,78 @@
         });
     }
 
-    {{--  Modal Bukti Pembayaran  --}}
-
+    /**
+     * Fungsi untuk membuka modal bukti pembayaran
+     * @param {string} imageUrl - URL path gambar dari storage
+     */
     function openModal(imageUrl) {
         const modal = document.getElementById('imageModal');
         const content = document.getElementById('modalContent');
         const image = document.getElementById('modalImage');
 
+        if (!modal || !image) return; // Guard clause jika elemen tidak ada
+
+        // Set src gambar sebelum ditampilkan
         image.src = imageUrl;
+
+        // Tampilkan modal (menggunakan flex karena Tailwind)
         modal.classList.remove('hidden');
         modal.classList.add('flex');
 
-        setTimeout(() => {
+        // Trigger animasi (opacity dan scale)
+        // Gunakan requestAnimationFrame untuk performa animasi yang lebih baik daripada setTimeout(50)
+        requestAnimationFrame(() => {
             content.classList.remove('scale-95', 'opacity-0');
             content.classList.add('scale-100', 'opacity-100');
-        }, 50);
+        });
     }
 
+    /**
+     * Fungsi untuk menutup modal
+     */
     function closeModal() {
         const modal = document.getElementById('imageModal');
         const content = document.getElementById('modalContent');
+        const image = document.getElementById('modalImage');
 
+        if (!modal || !content) return;
+
+        // Jalankan animasi keluar
         content.classList.add('scale-95', 'opacity-0');
         content.classList.remove('scale-100', 'opacity-100');
 
+        // Sembunyikan elemen setelah animasi selesai (durasi 250ms sesuai transisi Tailwind)
         setTimeout(() => {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-            document.getElementById('modalImage').src = '';
+
+            // Hapus src gambar agar saat modal dibuka lagi tidak muncul gambar lama sesaat
+            image.src = '';
         }, 250);
     }
 
-    // Tutup dengan tombol ESC
+    // 1. Tutup dengan tombol ESC
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeModal();
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('imageModal');
+            if (modal && !modal.classList.contains('hidden')) {
+                closeModal();
+            }
+        }
+    });
+
+    // 2. Tutup saat klik area luar (Overlay)
+    // Pastikan elemen #imageModal adalah background gelapnya
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('imageModal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                // Jika yang diklik adalah background (bukan konten putih di tengah)
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+        }
     });
 
     {{--  Toogle untuk deskripsi (order)  --}}

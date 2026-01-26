@@ -20,14 +20,19 @@
                     @forelse ($items as $item)
                         @php
                             $hasResi = !empty($item->tracking_number);
+                            $isPending = $item->status === 'pending';
                             $isApproved = $item->status === 'approved';
                             $isShipping = $item->status === 'shipping';
+                            $hasProof = !empty($item->payment_proof); // Cek bukti transfer per item
 
-                            $progressWidth = '33%';
+                            // Logika Progress Bar
+                            $progressWidth = '25%'; // Default: Dipesan
                             if ($isShipping && $hasResi) {
                                 $progressWidth = '100%';
-                            } elseif ($isApproved || $hasResi) {
-                                $progressWidth = '66%';
+                            } elseif ($isApproved || $isShipping) {
+                                $progressWidth = '75%';
+                            } elseif ($hasProof) {
+                                $progressWidth = '50%';
                             }
                         @endphp
 
@@ -85,22 +90,20 @@
                                             [
                                                 'label' => 'Dibayar',
                                                 'icon' => 'bi-cash-stack',
-                                                'active' => (bool) $item->order->payment_proof,
-                                                'desc' => $item->order->payment_proof ? 'Terverifikasi' : 'Menunggu',
+                                                'active' => $hasProof, // SEKARANG BERDASARKAN ITEM
+                                                'desc' => $hasProof ? 'Menunggu Verifikasi' : 'Belum Bayar',
                                             ],
                                             [
                                                 'label' => 'Diproses',
                                                 'icon' => 'bi-box-seam',
                                                 'active' => $isApproved || $isShipping,
-                                                'desc' => $item->approved_at
-                                                    ? $item->approved_at->format('d M')
-                                                    : 'Diproses Seller',
+                                                'desc' => $isApproved || $isShipping ? 'Disiapkan Seller' : 'Antrean',
                                             ],
                                             [
                                                 'label' => 'Dikirim',
                                                 'icon' => 'bi-truck',
                                                 'active' => $isShipping && $hasResi,
-                                                'desc' => $hasResi ? 'Dalam Pengiriman' : 'Belum Dikirim',
+                                                'desc' => $hasResi ? 'Kurir Menuju Lokasi' : 'Belum Ada Resi',
                                             ],
                                         ];
                                     @endphp
