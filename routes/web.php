@@ -44,6 +44,11 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         ->name('account.update');
 
     Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/notifications/unread-count', function () {
+            return response()->json([
+                'count' => auth()->user()->unreadNotifications->count()
+            ]);
+        })->middleware('auth');
 
         // Menandai semua dibaca
         Route::get('/mark-all-read', function () {

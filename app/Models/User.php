@@ -61,6 +61,12 @@ class User extends Authenticatable
         return $this->hasMany(Book::class, 'user_id');
     }
 
+    public function messages()
+    {
+        return $this->hasMany(Message::class, 'sender_id')
+            ->orWhere('receiver_id', $this->id);
+    }
+
     public function getSoldCountAttribute()
     {
         // Mengambil semua order_items melalui buku yang dimiliki user

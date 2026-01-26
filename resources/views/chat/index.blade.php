@@ -4,34 +4,19 @@
     @section('body-content')
         <x-sidebar>
             <div class="min-h-screen bg-[#f8fafc] p-4 md:p-6 font-sans">
-
-                {{-- WRAPPER --}}
                 <div
-                    class="flex h-[88vh]
-                           rounded-2xl shadow-2xl overflow-hidden
-                           border border-gray-200 animate-slide-up
-                           bg-transparent">
+                    class="flex h-[88vh] rounded-2xl shadow-2xl overflow-hidden border border-gray-200 animate-slide-up bg-transparent">
 
-                    {{-- ================= SIDEBAR ================= --}}
-                    <div class="w-1/3 bg-white border-r border-gray-200 flex flex-col">
-
-                        {{-- Search --}}
-                        <div class="p-4 flex items-center gap-3">
-                            <button class="p-2 rounded-full hover:bg-slate-100 transition">
-                                <i class="bi bi-list text-xl text-gray-500"></i>
-                            </button>
-
+                    {{-- SIDEBAR CONTACTS --}}
+                    <div class="w-full md:w-1/3 bg-white border-r border-gray-200 flex flex-col">
+                        <div class="p-4 flex items-center gap-3 bg-white">
                             <div class="relative flex-1">
-                                <i
-                                    class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2
-                                           text-gray-400 text-sm"></i>
-                                <input type="text" placeholder="Search chat"
-                                    class="w-full bg-slate-100 rounded-full py-2.5 pl-9 pr-4
-                                           text-sm focus:ring-2 focus:ring-teal-500/30 border-none">
+                                <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="text" id="contactSearch" placeholder="Cari pesan..."
+                                    class="w-full bg-slate-100 rounded-full py-2.5 pl-9 pr-4 text-sm focus:ring-2 focus:ring-teal-500/30 border-none">
                             </div>
                         </div>
 
-                        {{-- Contacts --}}
                         <div class="flex-1 overflow-y-auto custom-scrollbar">
                             @forelse($contacts as $contact)
                                 @php
@@ -40,53 +25,47 @@
                                         ->where('is_read', false)
                                         ->count();
                                     $isActive = isset($activeContact) && $activeContact->id == $contact->id;
+                                    $roleColor = [
+                                        'admin' => 'bg-red-100 text-red-600',
+                                        'seller' => 'bg-teal-100 text-teal-600',
+                                        'buyer' => 'bg-blue-100 text-blue-600',
+                                    ];
                                 @endphp
 
                                 <a href="{{ route('chat.index', $contact->id) }}"
-                                    class="flex items-center gap-3 px-4 py-3.5 transition
+                                    class="contact-item flex items-center gap-3 px-4 py-3.5 transition border-b border-gray-50
                                     {{ $isActive ? 'bg-gradient-to-r from-teal-600 to-teal-500 text-white' : 'hover:bg-slate-50' }}">
 
-                                    {{-- Avatar --}}
                                     <div class="relative">
                                         <div
-                                            class="w-11 h-11 rounded-full flex items-center justify-center
-                                                   font-bold text-lg text-white
-                                                   bg-gradient-to-br from-teal-600 to-emerald-500">
+                                            class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg text-white bg-gradient-to-br from-teal-600 to-emerald-500">
                                             {{ strtoupper(substr($contact->name, 0, 1)) }}
                                         </div>
-
-                                        @if ($contact->isOnline)
+                                        @if (Cache::has('user-is-online-' . $contact->id))
                                             <span
-                                                class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500
-                                                       ring-2 {{ $isActive ? 'ring-teal-600' : 'ring-white' }}
-                                                       rounded-full"></span>
+                                                class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 ring-2 {{ $isActive ? 'ring-teal-600' : 'ring-white' }} rounded-full"></span>
                                         @endif
                                     </div>
 
-                                    {{-- Info --}}
                                     <div class="flex-1 min-w-0">
-                                        <div class="flex justify-between">
-                                            <h4 class="font-semibold text-sm truncate">
-                                                {{ $contact->name }}
+                                        <div class="flex justify-between items-baseline">
+                                            <h4 class="font-semibold text-sm truncate contact-name">{{ $contact->name }}
                                             </h4>
-                                            <span
-                                                class="text-[11px]
-                                                {{ $isActive ? 'text-white/70' : 'text-gray-400' }}">
-                                                {{ $contact->last_message_time ?? '—' }}
+                                            <span class="text-[10px] {{ $isActive ? 'text-white/70' : 'text-gray-400' }}">
+                                                {{ \App\Models\Message::where(function ($q) use ($contact) {
+                                                    $q->where('sender_id', $contact->id)->orWhere('receiver_id', $contact->id);
+                                                })->latest()->first()
+                                                    ?->created_at->diffForHumans() ?? '' }}
                                             </span>
                                         </div>
-
                                         <div class="flex justify-between items-center mt-0.5">
-                                            <p
-                                                class="text-xs truncate
-                                                {{ $isActive ? 'text-white/80' : 'text-gray-500' }}">
+                                            <span
+                                                class="text-[10px] px-2 rounded-md uppercase font-bold {{ $isActive ? 'bg-white/20 text-white' : $roleColor[$contact->role] ?? 'bg-gray-100' }}">
                                                 {{ $contact->role }}
-                                            </p>
-
+                                            </span>
                                             @if ($unreadCount > 0)
                                                 <span
-                                                    class="px-2 py-0.5 text-[11px] font-bold rounded-full
-                                                    {{ $isActive ? 'bg-white text-teal-600' : 'bg-teal-600 text-white' }}">
+                                                    class="px-2 py-0.5 text-[10px] font-bold rounded-full {{ $isActive ? 'bg-white text-teal-600' : 'bg-teal-600 text-white' }}">
                                                     {{ $unreadCount }}
                                                 </span>
                                             @endif
@@ -94,196 +73,162 @@
                                     </div>
                                 </a>
                             @empty
-                                <p class="text-center text-sm text-gray-400 mt-20">
-                                    No conversations
-                                </p>
+                                <div class="text-center mt-20 p-4">
+                                    <i class="bi bi-chat-dots text-4xl text-gray-200"></i>
+                                    <p class="text-sm text-gray-400 mt-2">Belum ada kontak tersedia</p>
+                                </div>
                             @endforelse
                         </div>
                     </div>
 
-                    {{-- ================= CHAT AREA ================= --}}
-                    <div class="flex-1 flex flex-col relative chat-wallpaper">
-
+                    {{-- CHAT AREA --}}
+                    <div class="hidden md:flex flex-1 flex flex-col relative chat-wallpaper">
                         @if (isset($activeContact))
-                            {{-- Header --}}
                             <div
-                                class="px-5 py-3 bg-white/80 backdrop-blur
-                                       border-b border-gray-200
-                                       flex items-center justify-between relative z-10">
-
+                                class="px-5 py-3 bg-white/90 backdrop-blur border-b border-gray-200 flex items-center justify-between relative z-10">
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="w-10 h-10 rounded-full bg-gradient-to-br
-                                               from-teal-600 to-emerald-500
-                                               flex items-center justify-center
-                                               text-white font-bold">
+                                        class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-600 to-emerald-500 flex items-center justify-center text-white font-bold">
                                         {{ strtoupper(substr($activeContact->name, 0, 1)) }}
                                     </div>
-
                                     <div>
-                                        <h3 class="text-sm font-bold text-gray-800">
-                                            {{ $activeContact->name }}
-                                        </h3>
+                                        <h3 class="text-sm font-bold text-gray-800">{{ $activeContact->name }}</h3>
                                         <p
-                                            class="text-xs
-                                            {{ $activeContact->isOnline ? 'text-teal-600' : 'text-gray-400' }}">
-                                            {{ $activeContact->isOnline ? 'online' : 'last seen recently' }}
+                                            class="text-[11px] {{ Cache::has('user-is-online-' . $activeContact->id) ? 'text-teal-600' : 'text-gray-400' }}">
+                                            {{ Cache::has('user-is-online-' . $activeContact->id) ? 'Online' : 'Offline' }}
                                         </p>
                                     </div>
                                 </div>
-
-                                <div class="flex gap-4 text-gray-400">
-                                    <i class="bi bi-search hover:text-teal-600 cursor-pointer"></i>
-                                    <i class="bi bi-telephone hover:text-teal-600 cursor-pointer"></i>
-                                    <i class="bi bi-three-dots-vertical hover:text-teal-600 cursor-pointer"></i>
-                                </div>
                             </div>
 
-                            {{-- Messages --}}
                             <div id="chatWindow"
-                                class="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar relative z-10">
-
+                                class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar relative z-10">
+                                @php $lastDate = null; @endphp
                                 @foreach ($messages as $msg)
+                                    @php $msgDate = $msg->created_at->format('Y-m-d'); @endphp
+                                    @if ($lastDate !== $msgDate)
+                                        <div class="flex justify-center my-4">
+                                            <span
+                                                class="bg-gray-200/50 backdrop-blur px-3 py-1 rounded-full text-[10px] text-gray-600 uppercase tracking-wider">
+                                                {{ $msg->created_at->isToday() ? 'Hari Ini' : $msg->created_at->translatedFormat('d M Y') }}
+                                            </span>
+                                        </div>
+                                        @php $lastDate = $msgDate; @endphp
+                                    @endif
+
                                     <div
-                                        class="flex
-                                        {{ $msg->sender_id == auth()->id() ? 'justify-end' : 'justify-start' }}
-                                        animate-pop">
-
-                                        <div class="max-w-[70%]">
-                                            <div
-                                                class="px-4 py-2 rounded-2xl text-sm leading-relaxed
-                                                {{ $msg->sender_id == auth()->id()
-                                                    ? 'bg-emerald-100/90 rounded-tr-md'
-                                                    : 'bg-white/90 border border-gray-200 rounded-tl-md' }}">
-
-                                                {{ $msg->message }}
-
-                                                <div class="flex justify-end items-center gap-1 mt-1">
-                                                    <span class="text-[10px] text-gray-400">
-                                                        {{ $msg->created_at->format('H:i') }}
-                                                    </span>
-
-                                                    @if ($msg->sender_id == auth()->id())
-                                                        <i
-                                                            class="bi bi-check2-all text-xs
-                                                            {{ $msg->is_read ? 'text-sky-500' : 'text-gray-300' }}"></i>
-                                                    @endif
-                                                </div>
+                                        class="flex {{ $msg->sender_id == auth()->id() ? 'justify-end' : 'justify-start' }} animate-pop">
+                                        <div
+                                            class="max-w-[75%] shadow-sm {{ $msg->sender_id == auth()->id() ? 'bg-teal-600 text-white rounded-l-2xl rounded-tr-2xl' : 'bg-white text-gray-800 rounded-r-2xl rounded-tl-2xl border border-gray-100' }} px-4 py-2 relative">
+                                            <p class="text-sm leading-relaxed">{{ $msg->message }}</p>
+                                            <div class="flex justify-end items-center gap-1 mt-1">
+                                                <span
+                                                    class="text-[9px] {{ $msg->sender_id == auth()->id() ? 'text-teal-100' : 'text-gray-400' }}">
+                                                    {{ $msg->created_at->format('H:i') }}
+                                                </span>
+                                                @if ($msg->sender_id == auth()->id())
+                                                    <i
+                                                        class="bi bi-check2-all text-xs {{ $msg->is_read ? 'text-sky-300' : 'text-teal-200' }}"></i>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
                                 @endforeach
                             </div>
 
-                            {{-- Input --}}
-                            <div class="p-4 relative z-10">
-                                <form action="{{ route('messages.send') }}" method="POST"
+                            <div class="p-4 bg-white/50 backdrop-blur relative z-10">
+                                <form action="{{ route('messages.send') }}" method="POST" id="chatForm"
                                     class="max-w-4xl mx-auto flex items-center gap-2">
                                     @csrf
                                     <input type="hidden" name="receiver_id" value="{{ $activeContact->id }}">
-
                                     <div
-                                        class="flex-1 flex items-center bg-white/90 backdrop-blur
-                                               rounded-full px-4 py-1
-                                               shadow border border-gray-200">
-
-                                        <i class="bi bi-emoji-smile text-gray-400 text-xl"></i>
-
-                                        <input type="text" name="message" required placeholder="Type a message…" autofocus
+                                        class="flex-1 flex items-center bg-white rounded-full px-4 py-1 shadow-md border border-gray-200">
+                                        <input type="text" name="message" id="messageInput" required autocomplete="off"
+                                            placeholder="Tulis pesan..."
                                             class="flex-1 px-3 py-2 bg-transparent border-none focus:ring-0 text-sm">
-
-                                        <i class="bi bi-paperclip text-gray-400 text-xl"></i>
                                     </div>
-
                                     <button type="submit"
-                                        class="w-11 h-11 rounded-full bg-teal-600 text-white
-                                               flex items-center justify-center
-                                               hover:bg-teal-700 transition active:scale-90">
-                                        <i class="bi bi-send-fill text-sm ml-0.5"></i>
+                                        class="w-12 h-12 rounded-full bg-teal-600 text-white flex items-center justify-center hover:bg-teal-700 transition shadow-lg">
+                                        <i class="bi bi-send-fill text-lg"></i>
                                     </button>
                                 </form>
                             </div>
                         @else
-                            <div class="flex-1 flex items-center justify-center">
-                                <span class="text-sm text-gray-400">
-                                    Select a chat to start messaging
-                                </span>
+                            <div class="flex-1 flex flex-col items-center justify-center bg-white/60 backdrop-blur">
+                                <div class="w-24 h-24 bg-teal-50 rounded-full flex items-center justify-center mb-4">
+                                    <i class="bi bi-chat-left-text text-4xl text-teal-500"></i>
+                                </div>
+                                <h3 class="text-gray-800 font-bold">Pesan Anda</h3>
+                                <p class="text-sm text-gray-500 mt-1">Pilih teman chat untuk memulai percakapan</p>
                             </div>
                         @endif
                     </div>
                 </div>
             </div>
 
-            {{-- ================= STYLE ================= --}}
             <style>
-                @keyframes slideUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                @keyframes pop {
-                    from {
-                        opacity: 0;
-                        transform: scale(0.96);
-                    }
-
-                    to {
-                        opacity: 1;
-                        transform: scale(1);
-                    }
-                }
-
-                .animate-slide-up {
-                    animation: slideUp .5s cubic-bezier(.22, 1, .36, 1);
-                }
-
-                .animate-pop {
-                    animation: pop .25s cubic-bezier(.22, 1, .36, 1);
+                .chat-wallpaper {
+                    background-color: #e5e7eb;
+                    background-image: url("{{ asset('image/wallpaper-chat.png') }}");
                 }
 
                 .custom-scrollbar::-webkit-scrollbar {
-                    width: 5px;
+                    width: 4px;
                 }
 
                 .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(0, 0, 0, .2);
+                    background: #cbd5e1;
                     border-radius: 10px;
                 }
-
-                /* CHAT WALLPAPER */
-                .chat-wallpaper {
-                    position: relative;
-                    background-image: url('{{ asset('image/wallpaper-chat.png') }}');
-                    background-size: cover;
-                    background-position: center;
-                    background-repeat: no-repeat;
-                }
-
-                .chat-wallpaper::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: rgba(255, 255, 255, .20);
-                    backdrop-filter: blur(1px);
-                    z-index: 0;
-                }
-
-                .chat-wallpaper>* {
-                    position: relative;
-                    z-index: 1;
-                }
             </style>
-
             <script>
-                const chatWindow = document.getElementById('chatWindow');
-                if (chatWindow) chatWindow.scrollTop = chatWindow.scrollHeight;
+                document.addEventListener('DOMContentLoaded', function() {
+                    const chatWindow = document.getElementById('chatWindow');
+                    if (chatWindow) chatWindow.scrollTop = chatWindow.scrollHeight;
+
+                    @if (isset($activeContact))
+                        // 1. Logika Aktivitas (Sudah ada di kode Anda)
+                        const reportActivity = () => {
+                            fetch("{{ route('chat.activity') }}", {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    receiver_id: {{ $activeContact->id }}
+                                })
+                            });
+                        };
+                        reportActivity();
+                        setInterval(reportActivity, 30000);
+
+                        // 2. LOGIKA REAL-TIME CHAT (TAMBAHKAN INI)
+                        if (typeof Echo !== 'undefined') {
+                            window.Echo.channel(`chat.{{ auth()->id() }}`)
+                                .listen('.message.sent', (e) => {
+                                    // Hanya munculkan jika pengirimnya adalah orang yang sedang kita ajak chat
+                                    if (e.message.sender_id == {{ $activeContact->id }}) {
+                                        const messageHtml = `
+                                            <div class="flex justify-start animate-pop">
+                                                <div class="max-w-[75%] shadow-sm bg-white text-gray-800 rounded-r-2xl rounded-tl-2xl border border-gray-100 px-4 py-2 relative">
+                                                    <p class="text-sm leading-relaxed">${e.message.message}</p>
+                                                    <div class="flex justify-end items-center gap-1 mt-1">
+                                                        <span class="text-[9px] text-gray-400">Baru saja</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                        chatWindow.insertAdjacentHTML('beforeend', messageHtml);
+                                        chatWindow.scrollTop = chatWindow.scrollHeight;
+                                    } else {
+                                        // Jika pesan dari orang lain, biarkan notifikasi sidebar yang bekerja
+                                        console.log('Pesan masuk dari kontak lain');
+                                    }
+                                });
+                        }
+                    @endif
+                });
             </script>
         </x-sidebar>
     @endsection

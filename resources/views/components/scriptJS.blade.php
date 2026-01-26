@@ -150,18 +150,6 @@
         });
     }
 
-    {{--  Icons Bootstrapp untuk bagian Role SIGN Up  --}}
-    const roleSelect = document.querySelector('select[name="role"]');
-    const roleIcon = document.getElementById('roleIcon');
-
-    roleSelect.addEventListener('change', function() {
-        if (this.value === 'seller') {
-            roleIcon.innerHTML = '<i class="bi bi-briefcase text-lg"></i>';
-        } else if (this.value === 'buyer') {
-            roleIcon.innerHTML = '<i class="bi bi-person-check text-lg"></i>';
-        }
-    });
-
     {{--  Modal Script (Group)  --}}
 
     function openModal(id) {

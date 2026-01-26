@@ -168,6 +168,7 @@
                                             </p>
                                             <p class="text-sm font-bold text-teal-600">
                                                 {{ $item->qty }} x Rp{{ number_format($item->price, 0, ',', '.') }}
+                                                = Rp{{ number_format($item->qty * $item->price, 0, ',', '.') }}
                                             </p>
                                             <p class="text-xs text-gray-400">
                                                 Seller: {{ $item->book->user->name }}

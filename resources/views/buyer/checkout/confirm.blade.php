@@ -15,21 +15,48 @@
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div class="lg:col-span-2 space-y-6">
                             <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                                <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2"><i
-                                        class="bi bi-geo-alt text-teal-600"></i> Alamat Pengiriman</h3>
+                                <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+                                    <i class="bi bi-geo-alt text-teal-600"></i> Informasi Pengiriman & Pembayaran
+                                </h3>
+
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100"><label
-                                            class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama
+                                    {{-- Nama Penerima --}}
+                                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama
                                             Penerima</label>
                                         <p class="text-sm font-bold text-gray-700">{{ auth()->user()->name }}</p>
                                     </div>
-                                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100"><label
+
+                                    {{-- Kontak --}}
+                                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <label
                                             class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kontak</label>
                                         <p class="text-sm font-bold text-gray-700">{{ auth()->user()->email }}</p>
                                     </div>
+
+                                    {{-- Bank Name --}}
+                                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Bank
+                                            Pengirim</label>
+                                        <p class="text-sm font-bold text-teal-700">
+                                            {{ auth()->user()->bank_name ?? 'Belum Diatur' }}</p>
+                                    </div>
+
+                                    {{-- Nomor Rekening --}}
+                                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No.
+                                            Rekening</label>
+                                        <p class="text-sm font-bold text-gray-700">{{ auth()->user()->no_rek ?? '-' }}</p>
+                                    </div>
                                 </div>
-                                <textarea name="address" required rows="3"
-                                    class="w-full p-4 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 outline-none">{{ old('address', auth()->user()->address) }}</textarea>
+
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Alamat
+                                        Lengkap</label>
+                                    <textarea name="address" required rows="3"
+                                        class="w-full p-4 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 outline-none transition-all shadow-sm"
+                                        placeholder="Tulis alamat lengkap pengiriman...">{{ old('address', auth()->user()->address) }}</textarea>
+                                </div>
                             </div>
 
                             <div class="space-y-4">

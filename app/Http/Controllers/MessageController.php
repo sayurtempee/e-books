@@ -4,16 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Message;
+use App\Events\MessageSent;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use App\Notifications\GeneralNotification;
-use App\Events\MessageSent;
 
 class MessageController extends Controller
 {
     public function index($id = null)
     {
         $user = auth()->user();
+
+        Cache::put('user-is-online-' . $user->id, true, now()->addMinutes(5));
+
         $contacts = collect();
         $activeContact = null;
         $messages = collect();
@@ -66,7 +70,7 @@ class MessageController extends Controller
         // --- 1. FILTER ROLE ---
         $rules = [
             'buyer'  => ['seller'],
-            'seller' => ['buyer', 'admin'],
+            'seller' => ['buyer', 'admin', 'seller'],
             'admin'  => ['seller'],
         ];
 
@@ -88,9 +92,9 @@ class MessageController extends Controller
             $receiver->notify(new GeneralNotification([
                 'title'   => 'Pesan Baru 📩',
                 'message' => $sender->name . ': ' . Str::limit($request->message, 45),
-                'icon'    => '<i class="bi bi-chat-right-text-fill"></i>',
+                'icon'    => '<i class="bi bi-chat-right-text-fill"></i>', // Hilangkan tag <i>, kirim class saja
                 'color'   => 'bg-blue-100 text-blue-600',
-                'url'     => route('chat.index', $sender->id) . '#last-message',
+                'url'     => route('chat.index', $sender->id),
             ]));
         }
 
