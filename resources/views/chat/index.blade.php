@@ -189,7 +189,7 @@
 
                                         <i class="bi bi-emoji-smile text-gray-400 text-xl"></i>
 
-                                        <input type="text" name="message" required placeholder="Type a message…"
+                                        <input type="text" name="message" required placeholder="Type a message…" autofocus
                                             class="flex-1 px-3 py-2 bg-transparent border-none focus:ring-0 text-sm">
 
                                         <i class="bi bi-paperclip text-gray-400 text-xl"></i>

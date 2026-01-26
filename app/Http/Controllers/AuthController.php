@@ -186,7 +186,7 @@ class AuthController extends Controller
         if ($user) {
             $user->update([
                 'isOnline' => false,
-                'last_activity_at' => null,
+                // 'last_activity_at' => null,
             ]);
         }
 

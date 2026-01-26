@@ -269,30 +269,38 @@
 
     {{--  Modal Bukti Pembayaran  --}}
 
-    function openModal(imageSrc) {
+    function openModal(imageUrl) {
         const modal = document.getElementById('imageModal');
-        const modalImg = document.getElementById('modalImage');
+        const content = document.getElementById('modalContent');
+        const image = document.getElementById('modalImage');
 
-        modalImg.src = imageSrc;
+        image.src = imageUrl;
         modal.classList.remove('hidden');
+        modal.classList.add('flex');
 
-        // Mencegah scrolling pada body saat modal buka
-        document.body.style.overflow = 'hidden';
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 50);
     }
 
     function closeModal() {
         const modal = document.getElementById('imageModal');
-        modal.classList.add('hidden');
+        const content = document.getElementById('modalContent');
 
-        // Mengembalikan scrolling body
-        document.body.style.overflow = 'auto';
+        content.classList.add('scale-95', 'opacity-0');
+        content.classList.remove('scale-100', 'opacity-100');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.getElementById('modalImage').src = '';
+        }, 250);
     }
 
-    // Menutup modal dengan tombol Escape di Keyboard
-    document.addEventListener('keydown', function(event) {
-        if (event.key === "Escape") {
-            closeModal();
-        }
+    // Tutup dengan tombol ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
     });
 
     {{--  Toogle untuk deskripsi (order)  --}}

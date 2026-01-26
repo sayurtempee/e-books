@@ -42,7 +42,7 @@ class AutoLogout
 
             // JIKA MASIH AKTIF:
             // 1. Update session untuk pengecekan berikutnya
-            session(['last_activity' => now()]);
+            session(['last_activity_at' => now()]);
 
             // 2. Update database (Heartbeat) agar loginSubmit tahu user ini masih ada
             $user->update([
