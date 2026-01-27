@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Notifications\GeneralNotification;
 use App\Models\Book;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Notifications\GeneralNotification;
+// Tambahkan Facade Notification sebagai alternatif jika Auth::user()->notify() masih merah
+use Illuminate\Support\Facades\Notification;
 
 class BookController extends Controller
 {
-    // Seller
     public function index()
     {
-        // Mengambil buku hanya milik user yang sedang login
-        $books = Book::where('user_id', auth()->id())
-            ->with('category') // Eager load kategori agar tidak lambat
+        $books = Book::where('user_id', Auth::id())
+            ->with('category')
             ->latest()
             ->get();
 
@@ -29,115 +30,118 @@ class BookController extends Controller
         $validated = $request->validate([
             'category_id'    => 'required|exists:categories,id',
             'photos_product' => 'required|image|mimes:jpg,jpeg,png|max:2048',
-            'user_id'     => 'required|exists:users,id',
             'title'          => 'required|string|max:255',
             'description'    => 'nullable|string',
             'stock'          => 'required|integer|min:0',
             'unit'           => 'required|in:pcs,pack,box',
             'capital'        => 'required|numeric|min:0',
             'price'          => 'required|numeric|min:0|gte:capital',
-            'margin'         => 'nullable|numeric',
         ]);
 
-        $validated['user_id'] = auth()->id();
+        $validated['user_id'] = Auth::id();
 
-        $validated['photos_product'] =
-            $request->file('photos_product')->store('books', 'public');
+        if ($request->hasFile('photos_product')) {
+            $validated['photos_product'] = $request->file('photos_product')->store('books', 'public');
+        }
 
-        // 🔥 AUTO HITUNG MARGIN (ANTI MANIPULASI)
-        $validated['margin'] = round(
-            (($validated['price'] - $validated['capital']) / $validated['capital']) * 100,
-            2
-        );
+        // AUTO HITUNG MARGIN
+        $validated['margin'] = $validated['capital'] > 0
+            ? round((($validated['price'] - $validated['capital']) / $validated['capital']) * 100, 2)
+            : 0;
 
         $book = Book::create($validated);
 
-        // Notifikasi ke Seller (Diri sendiri)
-        auth()->user()->notify(new GeneralNotification([
-            'title' => 'Produk Ditambahkan',
+        $this->notifyBook($book, [
+            'title'   => 'Produk Ditambahkan',
             'message' => "Buku '{$book->title}' berhasil diterbitkan dengan stok {$book->stock} {$book->unit}.",
-            'icon' => '📚',
-            'color' => 'bg-emerald-100 text-emerald-600',
-            'url' => route('seller.book.index'),
-        ]));
+            'icon'    => '📚',
+            'color'   => 'bg-emerald-100 text-emerald-600',
+        ]);
 
-        return redirect()
-            ->route('seller.book.index')
-            ->with('success', 'Book created successfully.');
+        return redirect()->route('seller.book.index')->with('success', 'Produk berhasil ditambahkan.');
     }
 
     public function update(Request $request, $id)
     {
-        $book = Book::findOrFail($id);
+        $book = Book::where('user_id', Auth::id())->findOrFail($id);
 
         $validated = $request->validate([
             'category_id'    => 'required|exists:categories,id',
             'photos_product' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'user_id'     => 'required|exists:users,id',
             'title'          => 'required|string|max:255',
             'description'    => 'nullable|string',
             'stock'          => 'required|integer|min:0',
             'unit'           => 'required|in:pcs,pack,box',
             'capital'        => 'required|numeric|min:0',
             'price'          => 'required|numeric|min:0|gte:capital',
-            'margin'         => 'nullable|numeric',
         ]);
-
-        $validated['user_id'] = auth()->id();
 
         if ($request->hasFile('photos_product')) {
             if ($book->photos_product) {
                 Storage::disk('public')->delete($book->photos_product);
             }
-
-            $validated['photos_product'] =
-                $request->file('photos_product')->store('books', 'public');
+            $validated['photos_product'] = $request->file('photos_product')->store('books', 'public');
         }
 
-        // 🔥 AUTO HITUNG ULANG
-        $validated['margin'] = round(
-            (($validated['price'] - $validated['capital']) / $validated['capital']) * 100,
-            2
-        );
+        $validated['margin'] = $validated['capital'] > 0
+            ? round((($validated['price'] - $validated['capital']) / $validated['capital']) * 100, 2)
+            : 0;
 
         $book->update($validated);
 
-        // Notifikasi stok kritis otomatis
         if ($book->stock <= 5 && $book->stock > 0) {
-            auth()->user()->notify(new GeneralNotification([
-                'title' => 'Peringatan Stok Rendah!',
+            $this->notifyBook($book, [
+                'title'   => 'Peringatan Stok Rendah!',
                 'message' => "Stok buku '{$book->title}' sisa {$book->stock}. Segera restock!",
-                'icon' => '⚠️',
-                'color' => 'bg-yellow-100 text-yellow-600',
-                'url' => route('seller.book.index'),
-            ]));
+                'icon'    => '⚠️',
+                'color'   => 'bg-yellow-100 text-yellow-600',
+            ]);
         }
 
-        return redirect()
-            ->route('seller.book.index')
-            ->with('success', 'Book updated successfully.');
+        return redirect()->route('seller.book.index')->with('success', 'Produk berhasil diperbarui.');
     }
 
     public function destroy($id)
     {
-        $book = Book::findOrFail($id);
+        $book = Book::where('user_id', Auth::id())->findOrFail($id);
 
         if ($book->stock > 0) {
-            return back()->with('error', 'Mohon maaf, Produk masih mempunyai stok.');
+            return back()->with('error', 'Produk tidak bisa dihapus karena masih memiliki stok.');
         }
 
-        $title = $book->title; // Simpan judul sebelum dihapus
+        $title = $book->title;
+
+        if ($book->photos_product) {
+            Storage::disk('public')->delete($book->photos_product);
+        }
+
         $book->delete();
 
-        // Notifikasi penghapusan
-        auth()->user()->notify(new GeneralNotification([
-            'title' => 'Produk Dihapus',
-            'message' => "Produk '{$title}' telah dihapus permanen dari sistem.",
-            'icon' => '🗑️',
-            'color' => 'bg-red-100 text-red-600',
-            'url' => route('seller.book.index'),
+        // Menggunakan Facade Notification untuk menghindari "Undefined Method"
+        Notification::send(Auth::user(), new GeneralNotification([
+            'title'   => 'Produk Dihapus',
+            'message' => "Produk '{$title}' telah dihapus dari sistem.",
+            'icon'    => '🗑️',
+            'color'   => 'bg-red-100 text-red-600',
+            'url'     => route('seller.book.index'),
         ]));
 
         return back()->with('success', 'Produk berhasil dihapus.');
+    }
+
+    private function notifyBook(Book $book, array $data)
+    {
+        $user = Auth::user();
+
+        if ($user) {
+            // Menggunakan Facade Notification agar editor tidak protes
+            Notification::send($user, new GeneralNotification([
+                'title'   => $data['title'],
+                'message' => $data['message'],
+                'icon'    => $data['icon'],
+                'color'   => $data['color'],
+                'url'     => route('seller.book.index'),
+            ]));
+        }
     }
 }

@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Notifications\GeneralNotification; // Import di bagian atas
-use App\Models\User;
 use App\Models\Book;
 use App\Models\Order;
 use App\Models\Category;
+use App\Models\OrderItem;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Notifications\GeneralNotification; // Import di bagian atas
 
 class OrderController extends Controller
 {
@@ -18,64 +21,64 @@ class OrderController extends Controller
         $categories = Category::all();
 
         $books = Book::query()
-
-            // 🔍 Search by title
             ->when($request->search, function ($query, $search) {
                 $query->where('title', 'like', '%' . $search . '%');
-            })
-
-            // 🏷 Filter by category
+        })
             ->when($request->category, function ($query, $category) {
                 $query->where('category_id', $category);
-            })
-
+        })
             ->get();
 
-        return view('buyer.orders.index', compact('books', 'categories'));
+        $items = OrderItem::all();
+
+        return view('buyer.orders.index', compact('books', 'categories', 'items'));
     }
 
-    public function uploadPayment(Request $request, Order $order)
+    public function updateApproval(Request $request, OrderItem $item)
     {
+        abort_if(
+            $item->seller_id !== Auth::id(),
+            403,
+            'Unauthorized'
+        );
+
         $request->validate([
-            'payment_proof' => 'required|image|mimes:jpg,jpeg,png|max:2048'
+            'status' => 'required|in:pending,approved,shipping,selesai,refunded',
+            'tracking_number' => 'nullable|string|max:100',
+            'expedisi_name' => 'nullable|string|max:50', // Tambahkan ini
         ]);
 
-        if ($request->hasFile('payment_proof')) {
-            // Hapus file lama jika ada
-            if ($order->payment_proof) {
-                Storage::delete('public/' . $order->payment_proof);
+        DB::transaction(function () use ($request, $item) {
+            $data = ['status' => $request->status];
+
+            if ($request->status === 'approved') {
+                $data['approved_at'] = now();
             }
 
-            $path = $request->file('payment_proof')->store('payments', 'public');
-
-            $order->update([
-                'payment_proof' => $path,
-                'status' => 'pending' // Tetap pending menunggu verifikasi seller
-            ]);
-
-            // Notifikasi
-            $sellers = User::whereIn('role', ['seller', 'admin'])->get();
-
-            $notifData = [
-                'title' => 'Bukti Pembayaran Baru!',
-                'message' => "Buyer " . auth()->user()->name . " telah mengunggah bukti bayar untuk #ORD-{$order->id}.",
-                'icon' => '💳',
-                'color' => 'bg-blue-100 text-blue-600',
-                'url' => route('seller.approval.index'), // Link ke halaman verifikasi seller
-            ];
-
-            foreach ($sellers as $seller) {
-                $seller->notify(new GeneralNotification($notifData));
+            if ($request->status === 'shipping') {
+                // Gunakan input manual atau generate otomatis jika kosong
+                $data['tracking_number'] = $request->tracking_number ?? 'REG' . strtoupper(Str::random(10));
+                $data['expedisi_name'] = $request->expedisi_name ?? 'Internal Courier';
             }
-        }
 
-        return back()->with('success', 'Bukti pembayaran berhasil diunggah! Seller akan segera memverifikasi.');
+            if ($request->status === 'refunded') {
+                $data['refunded_at'] = now();
+                if ($item->book) {
+                    $item->book->increment('stock', (int) $item->qty);
+                }
+            }
+
+            $item->update($data);
+            $this->notifyBuyer($item);
+        });
+
+        return back()->with('success', 'Status berhasil diperbarui.');
     }
 
     public function downloadInvoice(Order $order)
     {
         // 1. Keamanan: Pastikan hanya pemilik yang bisa akses
-        if ($order->user_id !== auth()->id()) {
+        if ($order->user_id !== Auth::id()) {
             abort(403);
         }
 
@@ -88,5 +91,49 @@ class OrderController extends Controller
 
         // 4. Return download dengan nama file yang unik
         return $pdf->download('Invoice-ORD-' . $order->id . '-' . now()->format('Ymd') . '.pdf');
+    }
+
+    private function notifyBuyer(OrderItem $item)
+    {
+        // Pastikan relasi book, order, dan user tersedia
+        if (!$item->book || !$item->order || !$item->order->user) return;
+
+        $map = [
+            'approved' => [
+                'title' => 'Item Disetujui',
+                'message' => "Item \"{$item->book->title}\" sedang disiapkan oleh seller.",
+                'icon' => '✅',
+                'color' => 'bg-teal-100 text-teal-600',
+            ],
+            'shipping' => [
+                'title' => 'Item Dalam Pengiriman',
+                // Menampilkan Ekspedisi dan Resi yang baru diupdate
+                'message' => "Item \"{$item->book->title}\" telah dikirim via {$item->expedisi_name}. Resi: {$item->tracking_number}",
+                'icon' => '🚚',
+                'color' => 'bg-blue-100 text-blue-600',
+            ],
+            'selesai' => [ // Tambahkan status selesai
+                'title' => 'Pesanan Selesai',
+                'message' => "Terima kasih! Item \"{$item->book->title}\" telah diterima.",
+                'icon' => '🏠',
+                'color' => 'bg-emerald-100 text-emerald-600',
+            ],
+            'refunded' => [
+                'title' => 'Item Dibatalkan',
+                'message' => "Item \"{$item->book->title}\" telah dibatalkan & stok dikembalikan.",
+                'icon' => '❌',
+                'color' => 'bg-red-100 text-red-600',
+            ],
+        ];
+
+        // Jika status tidak ada di map (misal: pending), jangan kirim notif
+        if (!isset($map[$item->status])) return;
+
+        $item->order->user->notify(
+            new GeneralNotification([
+                ...$map[$item->status],
+                'url' => route('buyer.orders.tracking'),
+            ])
+        );
     }
 }

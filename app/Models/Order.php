@@ -42,6 +42,10 @@ class Order extends Model
             return 'approved';
         }
 
+        if ($statuses->contains('selesai')) {
+            return 'selesai';
+        }
+
         return 'pending';
     }
 }

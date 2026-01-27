@@ -45,23 +45,30 @@
             x-data="{
                 loading: false,
                 preview: null,
-                price: 0,
                 capital: 0,
+                price: 0,
 
                 // PROFIT (uang)
                 get profit() {
                     return this.price - this.capital;
                 },
 
-                // NILAI ASLI (FLOAT) → SAMA dengan controller
                 get marginValue() {
-                    if (this.capital === 0) return 0;
-                    return (((this.price - this.capital) / this.capital) * 100).toFixed(2);
+                    let cap = typeof this.capital === 'string' ?
+                        parseFloat(this.capital.replace(/[^0-9]/g, '')) : this.capital;
+                    let prc = typeof this.price === 'string' ?
+                        parseFloat(this.price.replace(/[^0-9]/g, '')) : this.price;
+
+                    if (cap > 0 && prc > 0) {
+                        let res = ((prc - cap) / cap) * 100;
+                        return res.toFixed(2);
+                    }
+                    return 0;
                 },
 
                 // NILAI TAMPILAN → untuk user (format Indonesia)
                 get marginDisplay() {
-                    return this.marginValue.replace('.', ',');
+                    return this.marginValue.toString().replace('.', ',');
                 }
             }" @submit="loading = true" class="grid grid-cols-2 gap-6 text-sm text-gray-700">
             @csrf
@@ -154,10 +161,11 @@
             {{-- MARGIN --}}
             <div class="col-span-1">
                 <label class="block mb-1 font-medium">Margin (%)</label>
+                {{-- Tampilan untuk User --}}
                 <input type="text" readonly :value="marginDisplay + '%'"
-                    class="w-full h-11 px-4 rounded-xl
-                           bg-gray-100 border border-gray-200
-                           text-gray-600 cursor-not-allowed">
+                    class="w-full h-11 px-4 rounded-xl bg-gray-100 border border-gray-200 text-gray-600 cursor-not-allowed">
+
+                {{-- Nilai Asli untuk Database --}}
                 <input type="hidden" name="margin" :value="marginValue">
             </div>
 

@@ -121,7 +121,7 @@
                         <div class="flex justify-between items-center">
                             <p class="font-semibold text-base">🔔 Notifikasi</p>
                             <span x-show="unreadCount > 0"
-                                class="bg-white/20 px-2 py-0.5 rounded text-[10px] font-bold">BARU</span>
+                                class="bg-white/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Baru</span>
                         </div>
                         <p class="text-xs text-teal-100"
                             x-text="unreadCount > 0 ? 'Kamu punya ' + unreadCount + ' pesan belum dibaca' : 'Tidak ada aktivitas baru'">
@@ -133,6 +133,8 @@
                         @forelse($notifications as $notification)
                             <div
                                 class="group relative flex items-start gap-3 px-5 py-4 hover:bg-teal-50 transition {{ $notification->read_at ? 'opacity-60' : '' }}">
+
+                                {{-- Link Klik Notifikasi --}}
                                 <a href="{{ route('notifications.readSingle', $notification->id) }}"
                                     class="flex flex-1 gap-3">
                                     <div
@@ -145,20 +147,54 @@
                                             {{ $notification->data['title'] }}
                                         </p>
                                         <p class="text-[11px] text-gray-500 line-clamp-2">
-                                            {{ $notification->data['message'] }}</p>
+                                            {{ $notification->data['message'] }}
+                                        </p>
                                         <p class="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
                                             <i class="bi bi-clock"></i>
                                             {{ $notification->created_at->diffForHumans() }}
                                         </p>
                                     </div>
                                 </a>
-                                {{-- ... tombol delete tetap sama ... --}}
+
+                                {{-- Tombol Hapus Satuan --}}
+                                <form action="{{ route('notifications.destroy', $notification->id) }}" method="POST"
+                                    class="opacity-0 group-hover:opacity-100 transition">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-gray-400 hover:text-red-500 transition p-1">
+                                        <i class="bi bi-trash3 text-sm"></i>
+                                    </button>
+                                </form>
                             </div>
                         @empty
-                            {{-- ... Empty state tetap sama ... --}}
+                            <div class="py-12 text-center">
+                                <div class="text-4xl mb-2">empty</div>
+                                <p class="text-gray-400 text-xs">Belum ada notifikasi untukmu.</p>
+                            </div>
                         @endforelse
                     </div>
-                    {{-- ... Footer tetap sama ... --}}
+
+                    {{-- FOOTER / ACTION BUTTONS --}}
+                    @if ($notifications->count() > 0)
+                        <div class="grid grid-cols-2 border-t text-center divide-x">
+                            {{-- Tombol Tandai Semua Dibaca --}}
+                            <a href="{{ route('notifications.markAllRead') }}"
+                                class="py-3 text-[11px] font-semibold text-teal-600 hover:bg-teal-50 transition uppercase tracking-wider">
+                                <i class="bi bi-check2-all mr-1"></i> Tandai Dibaca
+                            </a>
+
+                            {{-- Tombol Hapus Semua (Gunakan Form karena Method DELETE) --}}
+                            <form action="{{ route('notifications.clearAll') }}" method="POST"
+                                onsubmit="return confirm('Hapus semua riwayat notifikasi?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                    class="w-full py-3 text-[11px] font-semibold text-red-500 hover:bg-red-50 transition uppercase tracking-wider">
+                                    <i class="bi bi-trash3 mr-1"></i> Bersihkan
+                                </button>
+                            </form>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

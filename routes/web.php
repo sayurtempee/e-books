@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookController;
@@ -43,64 +45,62 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         ->middleware('throttle:60,1')
         ->name('account.update');
 
-    Route::prefix('notifications')->name('notifications.')->group(function () {
-        Route::get('/notifications/unread-count', function () {
+    Route::prefix('notifications')->name('notifications.')->middleware('auth')->group(function () {
+
+        // Unread Count
+        Route::get('/unread-count', function () {
+            /** @var User $user */
+            $user = Auth::user();
             return response()->json([
-                'count' => auth()->user()->unreadNotifications->count()
+                'count' => $user->unreadNotifications->count()
             ]);
-        })->middleware('auth');
+        });
 
         // Menandai semua dibaca
         Route::get('/mark-all-read', function () {
-            auth()->user()->unreadNotifications->markAsRead();
+            /** @var User $user */
+            $user = Auth::user();
+            $user->unreadNotifications->markAsRead();
             return back()->with('success', 'Semua notifikasi ditandai dibaca.');
-        })->name('markAllRead'); // Jadi: notifications.markAllRead
+        })->name('markAllRead');
 
         // Menghapus semua
         Route::delete('/clear-all', function () {
-            auth()->user()->notifications()->delete();
+            /** @var User $user */
+            $user = Auth::user();
+            $user->notifications()->delete();
             return back()->with('success', 'Semua riwayat telah dihapus.');
-        })->name('clearAll'); // Jadi: notifications.clearAll
+        })->name('clearAll');
 
-        Route::get('/notifications/{id}/read', function ($id) {
-            $notification = auth()->user()->notifications()->find($id);
-
-            if (!$notification) {
-                // Jika notif tidak ada, redirect manual berdasarkan role
-                return redirectByRole();
-            }
+        // Membaca satu notifikasi & Redirect
+        Route::get('/{id}/read', function ($id) {
+            /** @var User $user */
+            $user = Auth::user();
+            $notification = $user->notifications()->findOrFail($id);
 
             $notification->markAsRead();
             $targetUrl = $notification->data['url'] ?? null;
 
-            // Proteksi Loop: Jika URL kosong atau mengarah ke notifikasi lagi
+            // Logika redirect berdasarkan role jika URL kosong
             if (!$targetUrl || $targetUrl === '#' || str_contains($targetUrl, '/notifications/')) {
-                return redirectByRole()->with('success', 'Notifikasi telah dibaca.');
+                return match ($user->role) {
+                    'admin'  => redirect()->route('admin.dashboard'),
+                    'seller' => redirect()->route('seller.dashboard'),
+                    'buyer'  => redirect()->route('buyer.dashboard'),
+                    default  => redirect('/'),
+                };
             }
 
             return redirect($targetUrl);
-        })->name('readSingle')->where('id', '.*');
+        })->name('readSingle');
 
-        /**
-         * Fungsi Helper untuk menentukan dashboard berdasarkan role
-         * Taruh di bawah route atau di dalam Controller
-         */
-        function redirectByRole()
-        {
-            $user = auth()->user();
-            return match ($user->role) {
-                'admin'  => redirect()->route('admin.dashboard'),
-                'seller' => redirect()->route('seller.dashboard'),
-                'buyer'  => redirect()->route('buyer.dashboard'),
-                default  => redirect('/'), // Fallback ke home jika role tidak dikenal
-            };
-        }
-
-        // Menghapus satu per satu (UUID Support)
+        // Menghapus satu per satu
         Route::delete('/{id}', function ($id) {
-            auth()->user()->notifications()->findOrFail($id)->delete();
+            /** @var User $user */
+            $user = Auth::user();
+            $user->notifications()->findOrFail($id)->delete();
             return back()->with('success', 'Notifikasi dihapus.');
-        })->name('destroy')->where('id', '.*');
+        })->name('destroy');
     });
 
     // Chat & Message
@@ -174,9 +174,9 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         // Track Package
         Route::get('/track-package', function () {
             $items = \App\Models\OrderItem::whereHas('order', function ($q) {
-                $q->where('user_id', auth()->id());
+                $q->where('user_id', Auth::id());
             })
-                ->whereIn('status', ['approved', 'shipping'])
+                ->whereIn('status', ['approved', 'shipping', 'selesai'])
                 ->with([
                     'order',
                     'book.user',

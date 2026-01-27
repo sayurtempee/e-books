@@ -59,7 +59,7 @@
 
                                 {{-- Read More Minimalis --}}
                                 <div x-data="{ expand: false }" class="mt-2 mb-4">
-                                    <p :class="expand ? '' : 'line-clamp-2'" class="text-xs text-gray-500 leading-relaxed">
+                                    <p :class="expand ? '' : 'line-clamp-2'" class="text-xs text-gray-500 leading-relaxed text-justify">
                                         {{ $book->description }}
                                     </p>
                                     @if(strlen($book->description) > 50)

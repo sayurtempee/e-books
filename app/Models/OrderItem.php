@@ -22,6 +22,7 @@ class OrderItem extends Model
         'approved_at',
         'refunded_at',
         'tracking_number',
+        'expedisi_name',
         'payment_proof',
     ];
 

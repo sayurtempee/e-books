@@ -132,7 +132,9 @@
                 const chatMessages = document.getElementById('chat-messages');
 
                 // Scroll otomatis ke bawah saat halaman dimuat
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                if (chatMessages) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
 
                 if (chatForm) {
                     chatForm.addEventListener('submit', async function(e) {

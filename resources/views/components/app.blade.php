@@ -8,7 +8,7 @@
 
     {{--  Vite JS  --}}
     @vite(['resources/js/app.js'])
-    
+
     <!-- Google Font: Lato -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,10 +23,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
     <!-- Link CDN Sweat2Alert -->
+    <script src="//unpkg.com/alpinejs" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Link CDN AlpineJS -->
-    <script src="//unpkg.com/alpinejs" defer></script>
 
 
     <!-- Title -->

@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\OrderItem;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use App\Notifications\GeneralNotification;
 
 class TransactionController extends Controller
@@ -15,7 +16,7 @@ class TransactionController extends Controller
      */
     public function indexApproval()
     {
-        $items = OrderItem::where('seller_id', auth()->id())
+        $items = OrderItem::where('seller_id', Auth::id())
             ->where('status', '!=', 'refunded')
             ->with([
             'order.user',
@@ -34,13 +35,13 @@ class TransactionController extends Controller
     {
         // 🔐 VALIDASI KEPEMILIKAN (SUMBER KEBENARAN = seller_id)
         abort_if(
-            $item->seller_id !== auth()->id(),
+            $item->seller_id !== Auth::id(),
             403,
             'Unauthorized'
         );
 
         $request->validate([
-            'status' => 'required|in:pending,approved,shipping,refunded',
+            'status' => 'required|in:pending,approved,shipping,selesai,refunded',
             'tracking_number' => 'nullable|string|max:100|unique:order_items,tracking_number,' . $item->id,
         ]);
 

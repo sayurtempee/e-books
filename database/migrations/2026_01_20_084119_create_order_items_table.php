@@ -22,7 +22,7 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
-            $table->enum('status', ['pending', 'approved', 'shipping', 'refunded'])->default('pending');
+            $table->enum('status', ['pending', 'approved', 'shipping', 'selesai', 'refunded'])->default('pending');
             $table->string('tracking_number')->unique()->nullable();
             $table->timestamp('approved_at')->nullable();
 
