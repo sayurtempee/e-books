@@ -2,98 +2,75 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Message;
 use App\Models\User;
-use App\Events\MessageSent;
+use App\Models\Message;
 use App\Events\UserTyping;
 use App\Events\MessageRead;
+use App\Events\MessageSent;
+use App\Models\Conversation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
 class MessageController extends Controller
 {
-    public function index($id = null)
+    public function index($user_id = null)
     {
-        $user = auth()->user();
+        $authId = auth()->id();
 
-        // 1. Update status online
-        Cache::put('user-is-online-' . $user->id, true, now()->addMinutes(5));
-
-        // 2. Eager Loading untuk menghindari N+1 Query di Sidebar
-        // Kita ambil kontak beserta pesan terakhir mereka
-        $contacts = User::where( 'id', '!=', $user->id)
-            ->withCount(['receivedMessages as unread_count' => function ($q) use ($user) {
-                $q->where('receiver_id', $user->id)->where('is_read', false);
-            }])
+        // 1. Ambil semua daftar percakapan untuk sidebar
+        $conversations = Conversation::with(['sender', 'receiver', 'messages'])
+            ->where('sender_id', $authId)
+            ->orWhere('receiver_id', $authId)
+            ->orderBy('last_message_at', 'desc')
             ->get();
 
-        $activeContact = null;
-        $messages = collect();
+        $activeChat = null;
 
-        if ($id) {
-            $activeContact = User::findOrFail($id);
+        // 2. Jika ada user_id yang diklik, cari atau buat percakapannya
+        if ($user_id) {
+            $activeChat = Conversation::where(function ($q) use ($authId, $user_id) {
+                $q->where('sender_id', $authId)->where('receiver_id', $user_id);
+            })->orWhere(function ($q) use ($authId, $user_id) {
+                $q->where('sender_id', $user_id)->where('receiver_id', $authId);
+            })->first();
 
-            // 3. Grouped Query untuk pesan agar lebih aman
-            $messages = Message::where(function ($query) use ($user, $id) {
-                $query->where(function ($q) use ($user, $id) {
-                    $q->where('sender_id', $user->id)
-                        ->where('receiver_id', $id);
-                })->orWhere(function ($q) use ($user, $id) {
-                    $q->where('sender_id', $id)
-                        ->where('receiver_id', $user->id);
-                });
-            })->orderBy('created_at', 'asc')->get();
-
-            // 4. Update is_read hanya jika ada pesan yang belum dibaca (Efisiensi Database)
-            $unreadMessages = Message::where('sender_id', $id)
-                ->where('receiver_id', $user->id)
-                ->where('is_read', false);
-
-            if ($unreadMessages->exists()) {
-                $unreadMessages->update(['is_read' => true]);
-
-                // // Pastikan Event MessageRead sudah menerima data yang benar
-                // broadcast(new MessageRead($id, $user->id))->toOthers();
+            if (!$activeChat) {
+                $activeChat = Conversation::create([
+                    'sender_id' => $authId,
+                    'receiver_id' => $user_id,
+                    'last_message_at' => now(),
+                ]);
+                // Refresh daftar agar chat baru muncul di sidebar
+                return redirect()->route('chat.index', $user_id);
             }
         }
 
-        return view('chat.index', compact('contacts', 'activeContact', 'messages'));
+        return view('chat.index', compact('conversations', 'activeChat'));
     }
 
-    public function sendMessage(Request $request)
+    public function store(Request $request, $conversation_id)
     {
-        // 1. Validasi input agar tidak error database
-        $validated = $request->validate([
-            'receiver_id' => 'required|exists:users,id',
-            'message' => 'required|string',
+        $request->validate([
+            'body' => 'required|string',
         ]);
 
-        try {
-            $message = Message::create([
-                'sender_id'   => Auth::id(),
-                'receiver_id' => $validated['receiver_id'],
-                'message'     => $validated['message'],
-                'is_read'     => false,
-            ]);
+        $message = Message::create([
+            'conversation_id' => $conversation_id,
+            'user_id' => auth()->id(),
+            'body' => $request->body,
+        ]);
 
-            // 2. Load relasi agar data di Event lengkap (sesuai broadcastWith)
-            $message->load(['sender', 'receiver']);
+        // Update timestamp percakapan agar naik ke paling atas di sidebar
+        $message->conversation()->update(['last_message_at' => now()]);
 
-            // 3. Broadcast
-            broadcast(new MessageSent($message))->toOthers();
+        broadcast(new MessageSent($message))->toOthers();
 
-            return response()->json([
-                'status' => 'success',
-                'message' => $message->message, // Sesuai dengan kebutuhan JS insertAdjacentHTML
-                'data' => $message
-            ]);
-        } catch (\Exception $e) {
-            // Jangan return seluruh object $e di produksi karena berbahaya
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'status' => 'success',
+            'message' => $message,
+            // Format waktu untuk dikirim ke UI
+            'time' => $message->created_at->format('H:i')
+        ]);
     }
 }

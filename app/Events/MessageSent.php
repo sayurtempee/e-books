@@ -17,37 +17,30 @@ class MessageSent implements ShouldBroadcastNow
 
     public function __construct(Message $message)
     {
-        // Sangat Penting: Pastikan relasi di-load agar broadcastWith tidak error/kosong
-        $this->message = $message->load(['sender', 'receiver']);
+        $this->message = $message;
     }
 
     public function broadcastOn(): array
     {
-        // Menggunakan array agar sesuai dengan standar Laravel terbaru
+        // Channel khusus berdasarkan ID percakapan
         return [
-            new PrivateChannel('chat.' . $this->message->receiver_id),
+            new PrivateChannel('chat.' . $this->message->conversation_id),
         ];
-    }
-
-    public function broadcastAs(): string
-    {
-        return 'message.sent';
     }
 
     public function broadcastWith(): array
     {
         return [
             'message' => [
-                'id'         => $this->message->id,
-                'sender_id'   => $this->message->sender_id,
-                'receiver_id' => $this->message->receiver_id,
-                'message'     => $this->message->message,
-                'created_at'  => $this->message->created_at->diffForHumans(),
-                'sender' => [
-                    'name'         => $this->message->sender->name,
-                    'foto_profile' => $this->message->sender->foto_profile ?? null
+                'id'              => $this->message->id,
+                'user_id'         => $this->message->user_id, // Sesuaikan dari gambar DB
+                'conversation_id' => $this->message->conversation_id,
+                'body'            => $this->message->body, // Di DB kamu namanya 'body'
+                'created_at'      => $this->message->created_at->format('H:i'),
+                'user' => [
+                    'name'         => $this->message->user->name,
+                    'foto_profile' => $this->message->user->foto_profile ?? null
                 ],
-                // Tambahkan data receiver jika dibutuhkan di frontend
             ],
         ];
     }

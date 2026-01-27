@@ -1,236 +1,224 @@
 <x-app>
-    @section('title', 'Pesan Chat')
-
+    @section('title', 'Halaman Chat')
     @section('body-content')
         <x-sidebar>
-            <div class="min-h-screen bg-[#f8fafc] p-4 md:p-6 font-sans">
-                <div
-                    class="flex h-[88vh] rounded-2xl shadow-2xl overflow-hidden border border-gray-200 animate-slide-up bg-transparent">
+            <div class="flex h-[calc(100vh-2rem)] bg-white rounded-xl shadow-lg overflow-hidden m-4 border border-gray-100">
 
-                    {{-- SIDEBAR CONTACTS --}}
-                    <div class="w-full md:w-1/3 bg-white border-r border-gray-200 flex flex-col">
-                        <div class="p-4 flex items-center gap-3 bg-white">
-                            <div class="relative flex-1">
-                                <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                                <input type="text" id="contactSearch" placeholder="Cari pesan..."
-                                    class="w-full bg-slate-100 rounded-full py-2.5 pl-9 pr-4 text-sm focus:ring-2 focus:ring-teal-500/30 border-none">
-                            </div>
-                        </div>
-
-                        <div class="flex-1 overflow-y-auto custom-scrollbar">
-                            @forelse($contacts as $contact)
-                                @php
-                                    $unreadCount = \App\Models\Message::where('sender_id', $contact->id)
-                                        ->where('receiver_id', auth()->id())
-                                        ->where('is_read', false)
-                                        ->count();
-                                    $isActive = isset($activeContact) && $activeContact->id == $contact->id;
-                                    $roleColor = [
-                                        'admin' => 'bg-red-100 text-red-600',
-                                        'seller' => 'bg-teal-100 text-teal-600',
-                                        'buyer' => 'bg-blue-100 text-blue-600',
-                                    ];
-                                @endphp
-
-                                <a href="{{ route('chat.index', $contact->id) }}"
-                                    class="contact-item flex items-center gap-3 px-4 py-3.5 transition border-b border-gray-50
-                                      {{ $isActive ? 'bg-gradient-to-r from-teal-600 to-teal-500 text-white' : 'hover:bg-slate-50' }}"
-                                    data-contact-id="{{ $contact->id }}">
-                                    <div class="relative">
-                                        <div
-                                            class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg text-white bg-gradient-to-br from-teal-600 to-emerald-500">
-                                            {{ strtoupper(substr($contact->name, 0, 1)) }}
-                                        </div>
-                                        @if (Cache::has('user-is-online-' . $contact->id))
-                                            <span
-                                                class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 ring-2 {{ $isActive ? 'ring-teal-600' : 'ring-white' }} rounded-full"></span>
-                                        @endif
-                                    </div>
-
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex justify-between items-baseline">
-                                            <h4 class="font-semibold text-sm truncate">{{ $contact->name }}</h4>
-                                            <span class="text-[10px] {{ $isActive ? 'text-white/70' : 'text-gray-400' }}">
-                                                {{ \App\Models\Message::where(function ($q) use ($contact) {
-                                                    $q->where('sender_id', $contact->id)->orWhere('receiver_id', $contact->id);
-                                                })->latest()->first()
-                                                    ?->created_at->diffForHumans() ?? '' }}
-                                            </span>
-                                        </div>
-                                        <div class="flex justify-between items-center mt-0.5">
-                                            <span
-                                                class="text-[10px] px-2 rounded-md uppercase font-bold {{ $isActive ? 'bg-white/20 text-white' : $roleColor[$contact->role] ?? 'bg-gray-100' }}">
-                                                {{ $contact->role }}
-                                            </span>
-                                            @if ($unreadCount > 0)
-                                                <span
-                                                    class="px-2 py-0.5 text-[10px] font-bold rounded-full {{ $isActive ? 'bg-white text-teal-600' : 'bg-teal-600 text-white' }}">
-                                                    {{ $unreadCount }}
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </a>
-                            @empty
-                                <div class="text-center mt-20 p-4">
-                                    <i class="bi bi-chat-dots text-4xl text-gray-200"></i>
-                                    <p class="text-sm text-gray-400 mt-2">Belum ada kontak tersedia</p>
-                                </div>
-                            @endforelse
+                <div class="w-1/3 border-r border-gray-100 flex flex-col bg-white">
+                    <div class="p-4 border-b">
+                        <h2 class="text-xl font-bold text-teal-600 mb-4">Messages</h2>
+                        <div class="relative">
+                            <input type="text" placeholder="Cari pesan..."
+                                class="w-full bg-gray-100 border-none rounded-full py-2 px-10 text-sm focus:ring-2 focus:ring-teal-500">
+                            <span class="absolute left-4 top-2.5 text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </span>
                         </div>
                     </div>
 
-                    {{-- CHAT AREA --}}
-                    <div class="hidden md:flex flex-1 flex flex-col relative chat-wallpaper">
-                        <div id="chatWindow" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar relative z-10">
-                            @if (isset($activeContact))
-                                @include('chat.messages', ['messages' => $messages])
-                            @else
-                                <div class="flex-1 flex flex-col items-center justify-center bg-white/60 backdrop-blur">
-                                    <div class="w-24 h-24 bg-teal-50 rounded-full flex items-center justify-center mb-4">
-                                        <i class="bi bi-chat-left-text text-4xl text-teal-500"></i>
+                    <div class="flex-1 overflow-y-auto">
+                        @foreach ($conversations as $chat)
+                            @php
+                                // Menentukan siapa lawan bicara
+                                $user = $chat->interlocutor;
+                                $isActive = isset($activeChat) && $activeChat->id == $chat->id;
+                            @endphp
+                            <a href="{{ route('chat.index', $user->id) }}"
+                                class="flex items-center p-4 cursor-pointer transition-all border-l-4 {{ $isActive ? 'bg-teal-50 border-teal-500' : 'hover:bg-gray-50 border-transparent' }}">
+                                <div
+                                    class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center text-teal-700 font-bold mr-3 uppercase">
+                                    {{ substr($user->name, 0, 2) }}
+                                </div>
+                                <div class="flex-1 overflow-hidden">
+                                    <div class="flex justify-between items-center">
+                                        <h4 class="font-semibold text-gray-800 truncate">{{ $user->name }}</h4>
+                                        <span
+                                            class="text-[10px] text-gray-500">{{ $chat->updated_at->format('H:i') }}</span>
                                     </div>
-                                    <h3 class="text-gray-800 font-bold">Pesan Anda</h3>
-                                    <p class="text-sm text-gray-500 mt-1">Pilih teman chat untuk memulai percakapan</p>
+                                    <p class="text-sm {{ $isActive ? 'text-teal-600' : 'text-gray-500' }} truncate">
+                                        {{ $chat->messages->last()->body ?? 'Belum ada pesan' }}
+                                    </p>
                                 </div>
-                            @endif
-                        </div>
-
-                        {{-- Form input --}}
-                        <div class="p-4 bg-white/80 backdrop-blur relative z-10">
-                            <form id="chatForm" class="max-w-4xl mx-auto flex items-center gap-3">
-                                @csrf
-                                <input type="hidden" name="receiver_id" id="receiverInput"
-                                    value="{{ $activeContact->id ?? '' }}">
-                                <div class="flex-1 flex items-center bg-white rounded-full px-4 py-2 border shadow-sm">
-                                    <input type="text" id="messageInput" name="message" placeholder="Tulis pesan..."
-                                        class="flex-1 bg-transparent border-none focus:ring-0 text-sm" autocomplete="off"
-                                        required>
-                                </div>
-                                <button type="submit"
-                                    class="w-11 h-11 rounded-full bg-teal-600 text-white flex items-center justify-center hover:bg-teal-700 transition">
-                                    <i class="bi bi-send-fill"></i>
-                                </button>
-                            </form>
-                        </div>
+                            </a>
+                        @endforeach
                     </div>
                 </div>
-            </div>
 
-            <style>
-                .chat-wallpaper {
-                    background-color: #e5e7eb;
-                    background-image: url("{{ asset('image/wallpaper-chat.png') }}");
-                }
-
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
-                }
-
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #cbd5e1;
-                    border-radius: 10px;
-                }
-            </style>
-
-            <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                    const chatWindow = document.getElementById('chatWindow');
-                    const chatForm = document.getElementById('chatForm');
-                    const messageInput = document.getElementById('messageInput');
-                    const receiverInput = document.getElementById('receiverInput');
-                    let receiverId = receiverInput?.value || null;
-                    const csrf = '{{ csrf_token() }}';
-
-                    if (chatWindow) chatWindow.scrollTop = chatWindow.scrollHeight;
-
-                    // Kirim pesan
-                    chatForm?.addEventListener('submit', async e => {
-                        e.preventDefault();
-                        const message = messageInput.value.trim();
-                        if (!message || !receiverId) return;
-
-                        const response = await fetch("{{ route('messages.send') }}", {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': csrf,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                receiver_id: parseInt(receiverId),
-                                message
-                            })
-                        });
-                        const data = await response.json();
-
-                        chatWindow.insertAdjacentHTML('beforeend', `
-                    <div class="flex justify-end">
-                        <div class="bg-teal-600 text-white px-4 py-2 rounded-l-2xl rounded-tr-2xl">
-                            ${data.message}
-                            <i class="bi bi-check2-all text-xs text-teal-200 check"></i>
-                        </div>
-                    </div>
-                `);
-
-                        chatWindow.scrollTop = chatWindow.scrollHeight;
-                        messageInput.value = '';
-                    });
-
-                    // Gunakan template literal JS atau pastikan ID ter-render sebagai angka
-                    const authId = {{ auth()->id() }};
-
-                    window.Echo.private(`chat.${receiverId}`)
-                        .listen('.message.sent', (e) => {
-                            console.log('Pesan diterima:', e); // Untuk debugging
-
-                            // Pastikan kita hanya menampilkan pesan jika pengirimnya adalah orang yang sedang kita ajak chat
-                            if (e.message.sender_id == receiverId) {
-                                const incomingMessageHtml = `
-                            <div class="flex justify-start">
-                                <div class="bg-white border px-4 py-2 rounded-r-2xl rounded-tl-2xl shadow-sm">
-                                    ${e.message.message}
+                <div class="flex-1 flex flex-col bg-[#f0f4f4]">
+                    @if ($activeChat)
+                        @php
+                            $activeUser =
+                                $activeChat->sender_id == auth()->id() ? $activeChat->receiver : $activeChat->sender;
+                        @endphp
+                        <div class="p-4 bg-white shadow-sm flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div
+                                    class="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold mr-3 uppercase">
+                                    {{ substr($activeUser->name, 0, 2) }}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800">{{ $activeUser->name }}</h4>
+                                    <p class="text-xs {{ $activeUser->isOnline ? 'text-teal-500' : 'text-gray-400' }}">
+                                        {{ $activeUser->isOnline ? 'Online' : 'Offline' }}
+                                    </p>
                                 </div>
                             </div>
-                        `;
-                                chatWindow.insertAdjacentHTML('beforeend', incomingMessageHtml);
-                                chatWindow.scrollTop = chatWindow.scrollHeight;
+                        </div>
 
-                                // Hit API mark as read
-                                fetch('/chat/read', {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-CSRF-TOKEN': csrf,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        sender_id: receiverId
-                                    })
-                                });
-                            } else {
-                                // Logika jika ada pesan masuk tapi kita lagi chat sama orang lain
-                                // Bisa tambah notifikasi atau update badge angka di sidebar
-                                updateUnreadBadge(e.message.sender_id);
+                        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-opacity-50">
+                            @foreach ($activeChat->messages as $message)
+                                @if ($message->user_id == auth()->id())
+                                    <div class="flex items-end justify-end">
+                                        <div
+                                            class="bg-teal-500 text-white p-3 rounded-2xl rounded-br-none shadow-sm max-w-md">
+                                            <p class="text-sm">{{ $message->body }}</p>
+                                            <span
+                                                class="text-[10px] text-teal-100 mt-1 block text-right">{{ $message->created_at->format('H:i') }}</span>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="flex items-end">
+                                        <div
+                                            class="bg-white text-gray-800 p-3 rounded-2xl rounded-bl-none shadow-sm max-w-md">
+                                            <p class="text-sm">{{ $message->body }}</p>
+                                            <span
+                                                class="text-[10px] text-gray-400 mt-1 block text-left">{{ $message->created_at->format('H:i') }}</span>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+
+                        <form id="chat-form" data-url="{{ route('chat.send', $activeChat->id ?? 0) }}"
+                            class="p-4 bg-white border-t border-gray-100">
+                            @csrf
+                            <div class="flex items-center space-x-3">
+                                <input type="text" id="message-input" name="body" placeholder="Tulis pesan..."
+                                    required
+                                    class="flex-1 bg-gray-50 border-none rounded-full py-2.5 px-5 focus:ring-1 focus:ring-teal-500 text-sm">
+                                <button type="submit"
+                                    class="bg-teal-500 hover:bg-teal-600 text-white p-2.5 rounded-full shadow-md transition-transform active:scale-95">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 rotate-90" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </form>
+                    @else
+                        <div class="flex-1 flex flex-col items-center justify-center text-gray-400">
+                            <div class="bg-white p-6 rounded-full shadow-inner mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-teal-200" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                            </div>
+                            <p>Pilih pesan untuk mulai mengobrol</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </x-sidebar>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const chatForm = document.getElementById('chat-form');
+                const messageInput = document.getElementById('message-input');
+                const chatMessages = document.getElementById('chat-messages');
+
+                // Scroll otomatis ke bawah saat halaman dimuat
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                if (chatForm) {
+                    chatForm.addEventListener('submit', async function(e) {
+                        e.preventDefault();
+
+                        const body = messageInput.value.trim();
+                        if (!body) return;
+
+                        const url = this.getAttribute('data-url');
+                        const token = document.querySelector('input[name="_token"]').value;
+
+                        // 1. Kosongkan input segera untuk UX yang cepat
+                        messageInput.value = '';
+
+                        try {
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': token,
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    body: body
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            if (data.status === 'success') {
+                                // 2. Tambahkan bubble chat baru ke UI secara instan
+                                appendMessage(data.message.body, data.time);
+                                chatMessages.scrollTop = chatMessages.scrollHeight;
+                            }
+                        } catch (error) {
+                            console.error('Gagal mengirim pesan:', error);
+                            alert('Gagal mengirim pesan, coba lagi.');
+                        }
+                    });
+                }
+
+                function appendMessage(text, time) {
+                    const messageHtml = `
+                        <div class="flex items-end justify-end">
+                            <div class="bg-teal-500 text-white p-3 rounded-2xl rounded-br-none shadow-sm max-w-md">
+                                <p class="text-sm">${text}</p>
+                                <span class="text-[10px] text-teal-100 mt-1 block text-right">${time}</span>
+                            </div>
+                        </div>
+                    `;
+                    chatMessages.insertAdjacentHTML('beforeend', messageHtml);
+                }
+            });
+
+            // Pastikan Laravel Echo sudah terinstall dan terkonfigurasi di resources/js/app.js
+            // Biasanya Reverb otomatis terkonfigurasi di sana.
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const activeChatId = "{{ $activeChat->id ?? 0 }}";
+                const authId = "{{ auth()->id() }}";
+
+                if (activeChatId > 0) {
+                    // Mendengarkan Private Channel
+                    window.Echo.private(`chat.${activeChatId}`)
+                        .listen('MessageSent', (e) => {
+                            // Jangan tambah bubble jika pesan itu dikirim oleh diri sendiri (sudah ditangani AJAX)
+                            if (e.message.user_id != authId) {
+                                appendIncomingMessage(e.message.body, 'Baru saja');
+                                chatMessages.scrollTop = chatMessages.scrollHeight;
                             }
                         });
+                }
 
-                    // Ganti kontak tanpa reload
-                    document.querySelectorAll('.contact-item').forEach(el => {
-                        el.addEventListener('click', e => {
-                            e.preventDefault();
-                            receiverId = el.dataset.contactId;
-                            receiverInput.value = receiverId;
-                            chatWindow.innerHTML = '';
-
-                            fetch(`/chat/${receiverId}`)
-                                .then(res => res.text())
-                                .then(html => {
-                                    chatWindow.innerHTML = html;
-                                    chatWindow.scrollTop = chatWindow.scrollHeight;
-                                });
-                        });
-                    });
-                });
-            </script>
-        </x-sidebar>
+                // Fungsi khusus untuk pesan masuk (Lawan Bicara)
+                function appendIncomingMessage(text, time) {
+                    const messageHtml = `
+            <div class="flex items-end">
+                <div class="bg-white text-gray-800 p-3 rounded-2xl rounded-bl-none shadow-sm max-w-md">
+                    <p class="text-sm">${text}</p>
+                    <span class="text-[10px] text-gray-400 mt-1 block text-left">${time}</span>
+                </div>
+            </div>
+        `;
+                    document.getElementById('chat-messages').insertAdjacentHTML('beforeend', messageHtml);
+                }
+            });
+        </script>
     @endsection
 </x-app>

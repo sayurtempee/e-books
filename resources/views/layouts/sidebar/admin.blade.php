@@ -10,14 +10,14 @@
         class="flex items-center gap-3 px-4 py-2 rounded-lg
         {{ request()->routeIs('admin.sellers') ? $activeClass : $inactiveClass }}">
         <i class="bi bi-shop"></i>
-        <span>Seller</span>
+        <span>Management Seller</span>
     </a>
 
     <a href="{{ route('admin.buyers') }}"
         class="flex items-center gap-3 px-4 py-2 rounded-lg
         {{ request()->routeIs('admin.buyers') ? $activeClass : $inactiveClass }}">
         <i class="bi bi-people"></i>
-        <span>Buyer</span>
+        <span>Management Buyer</span>
     </a>
 
     <a href="{{ route('admin.categories') }}"
@@ -25,12 +25,5 @@
         {{ request()->routeIs('admin.categories') ? $activeClass : $inactiveClass }}">
         <i class="bi bi-book"></i>
         <span>Categories</span>
-    </a>
-
-    <a href="{{ route('chat.index') }}"
-        class="flex items-center gap-3 px-4 py-2 rounded-lg
-        {{ request()->routeIs('chat.*') ? $activeClass : $inactiveClass }}">
-        <i class="bi bi-chat-dots-fill"></i>
-        <span>Pesan Chat</span>
     </a>
 </nav>
