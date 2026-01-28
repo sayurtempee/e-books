@@ -23,16 +23,11 @@ class AdminController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'address' => 'nullable|string',
+            'no_rek' => 'nullable|string|min:10|max:20|unique:users,no_rek',
+            'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
         ]);
 
-        User::create([
-            'nik' => $validated['nik'],
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => 'seller',
-            'address' => $validated['address'] ?? 'Address has not been entered',
-        ]);
+        // dd($validated);
 
         $user = User::create([
             'nik' => $validated['nik'],
@@ -41,7 +36,18 @@ class AdminController extends Controller
             'password' => Hash::make($validated['password']),
             'role' => 'seller',
             'address' => $validated['address'] ?? 'Address has not been entered',
+            'no_rek' => $validated['no_rek'] ?? 'Belum Buat Nomor Rekening',
+            'bank_name' => $validated['bank_name'] ?? 'Belum Membuat Bank',
         ]);
+
+        // $user = User::create([
+        //     'nik' => $validated['nik'],
+        //     'name' => $validated['name'],
+        //     'email' => $validated['email'],
+        //     'password' => Hash::make($validated['password']),
+        //     'role' => 'seller',
+        //     'address' => $validated['address'] ?? 'Address has not been entered',
+        // ]);
 
         // NOTIFIKASI KE SELLER BARU (Welcome Message)
         $user->notify(new GeneralNotification([
@@ -64,6 +70,8 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'address' => 'nullable|string',
+            'no_rek' => 'nullable|string|min:10|max:20|unique:users,no_rek',
+            'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
         ]);
 
         $user->update([
@@ -71,6 +79,8 @@ class AdminController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'address' => $validated['address'] ?? 'Address has not been entered',
+            'no_rek' => $validated['no_rek'] ?? 'Belum Buat Nomor Rekening',
+            'bank_name' => $validated['bank_name'] ?? 'Belum Membuat Bank',
         ]);
 
         // NOTIFIKASI KE SELLER (Info Update)
@@ -110,15 +120,19 @@ class AdminController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'address' => 'nullable|string',
+            'no_rek' => 'nullable|string|min:10|max:20|unique:users,no_rek',
+            'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
         ]);
 
-        User::create([
+        $user = User::create([
             'nik' => $validated['nik'],
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => 'buyer',
             'address' => $validated['address'] ?? 'Address has not been entered',
+            'no_rek' => $validated['no_rek'] ?? 'Belum Buat Nomor Rekening',
+            'bank_name' => $validated['bank_name'] ?? 'Belum Membuat Bank',
         ]);
 
         $user->notify(new GeneralNotification([
@@ -141,6 +155,8 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'address' => 'nullable|string',
+            'no_rek' => 'nullable|string|min:10|max:20|unique:users,no_rek',
+            'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
         ]);
 
         $user->update([
@@ -148,6 +164,8 @@ class AdminController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'address' => $validated['address'] ?? 'Address has not been entered',
+            'no_rek' => $validated['no_rek'] ?? 'Belum Buat Nomor Rekening',
+            'bank_name' => $validated['bank_name'] ?? 'Belum Membuat Bank',
         ]);
 
         return redirect()->route('admin.buyers')->with('success', 'Buyer updated successfully.');

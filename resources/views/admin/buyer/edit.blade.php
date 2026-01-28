@@ -71,31 +71,34 @@
                    focus:border-teal-500 focus:ring-teal-500">
             </div>
 
-            {{-- GRID UNTUK INFO BANK (READONLY) --}}
+            {{-- GRID UNTUK INFO BANK (EDITABLE) --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {{-- BANK NAME --}}
+
+                {{-- BANK NAME (SELECT OPTION) --}}
                 <div>
-                    <label class="block text-gray-500 mb-1 text-left">Bank Name</label>
-                    <input type="text" readonly
-                        class="w-full h-11 px-4 rounded-xl
-                   bg-gray-100/80
-                   border border-gray-200
-                   text-gray-500
-                   cursor-not-allowed"
-                        value="{{ $user->bank_name ?? 'Not set' }}">
+                    <label for="bank_name" class="block text-gray-700 font-medium mb-1 text-left">Bank Name</label>
+                    <select name="bank_name" id="bank_name"
+                        class="w-full h-11 px-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none">
+                        <option value="" disabled {{ !$user->bank_name ? 'selected' : '' }}>Pilih Bank</option>
+                        <option value="BCA" {{ $user->bank_name == 'BCA' ? 'selected' : '' }}>BCA</option>
+                        <option value="Mandiri" {{ $user->bank_name == 'Mandiri' ? 'selected' : '' }}>Mandiri</option>
+                        <option value="BNI" {{ $user->bank_name == 'BNI' ? 'selected' : '' }}>BNI</option>
+                        <option value="BRI" {{ $user->bank_name == 'BRI' ? 'selected' : '' }}>BRI</option>
+                    </select>
+                    @error('bank_name')
+                        <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                    @enderror
                 </div>
 
-                {{-- NO REKENING --}}
+                {{-- NO REKENING (VARCHAR / TEXT) --}}
                 <div>
-                    <label class="block text-gray-500 mb-1 text-left">No. Rekening</label>
-                    <input type="text" readonly
-                        class="w-full h-11 px-4 rounded-xl
-                   bg-gray-100/80
-                   border border-gray-200
-                   text-gray-500
-                   font-mono
-                   cursor-not-allowed"
-                        value="{{ $user->no_rek ?? 'Not set' }}">
+                    <label for="no_rek" class="block text-gray-700 font-medium mb-1 text-left">No. Rekening</label>
+                    <input type="text" name="no_rek" id="no_rek"
+                        class="w-full h-11 px-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono transition-all outline-none @error('no_rek') border-red-500 @enderror"
+                        placeholder="Contoh: 1234567890" maxlength="20" value="{{ old('no_rek', $user->no_rek) }}">
+                    @error('no_rek')
+                        <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                    @enderror
                 </div>
             </div>
 

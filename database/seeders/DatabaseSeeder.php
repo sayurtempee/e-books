@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
             'nik' => '3271051203980001',
             'bank_name' => 'BCA',
             'no_rek' => '1234567890', // BCA
-            'name' => 'Bu Fadilah',
+            'name' => 'Faris Hilmi Al - Iza',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
             'role' => 'admin',

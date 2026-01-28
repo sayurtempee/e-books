@@ -40,6 +40,8 @@
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Stok
                                     </th>
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Harga
+                                        Modal</th>
+                                    <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Harga
                                         Jual</th>
                                     <th class="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">
                                         Estimasi Profit</th>
@@ -86,6 +88,10 @@
                                                         Hampir Habis!</span>
                                                 @endif
                                             </div>
+                                        </td>
+
+                                        <td class="px-6 py-4 font-bold text-gray-900">
+                                            Rp {{ number_format($book->capital, 0, ',', '.') }}
                                         </td>
 
                                         <td class="px-6 py-4 font-bold text-gray-900">
