@@ -29,5 +29,9 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('notifications', collect());
             }
         });
+
+        \Carbon\Carbon::setLocale('id');
+        config(['app.locale' => 'id']);
+        date_default_timezone_set('Asia/Jakarta');
     }
 }

@@ -181,12 +181,13 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
                 $q->where('user_id', Auth::id());
             })
                 ->whereIn('status', ['approved', 'shipping', 'selesai'])
-                ->with([
-                    'order',
-                    'book.user',
-                ])
+                ->with(['order', 'book.user'])
                 ->latest()
-                ->get();
+                ->get()
+                // Kelompokkan berdasarkan ID Seller dan Resi (agar jika resi kosong tapi seller sama, tetap jadi satu)
+                ->groupBy(function ($item) {
+                    return $item->book->user_id . '-' . ($item->tracking_number ?? 'no-resi');
+                });
 
             return view('buyer.track_package.index', compact('items'));
         })->name('buyer.orders.tracking');

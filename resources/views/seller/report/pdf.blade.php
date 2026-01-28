@@ -112,108 +112,110 @@
 
 <body>
     <div class="header">
-        <div class="title">MIIMOYS E-BOOKS</div>
-        <div style="font-weight: bold; font-size: 14px;">LAPORAN PENJUALAN SELLER</div>
-        <div style="font-size: 10px; color: #666; margin-top: 5px;">
-            Periode: {{ now()->translatedFormat('F Y') }} |
-            Dicetak: {{ now()->format('d/m/Y H:i') }}
+        <div class="header">
+            <div class="title">MIIMOYS E-BOOKS</div>
+            <div style="font-weight: bold; font-size: 14px;">LAPORAN PENJUALAN SELLER</div>
+            <div style="font-size: 10px; color: #666; margin-top: 5px;">
+                {{-- Menggunakan variabel periode dari controller --}}
+                Periode: {{ $periode }} |
+                Dicetak: {{ now()->format('d/m/Y H:i') }}
+            </div>
         </div>
-    </div>
 
-    {{-- Tabel Transaksi Utama --}}
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 15%;">ID Order</th>
-                <th style="width: 35%;">Rincian Produk</th>
-                <th style="width: 20%;">Pembeli</th>
-                <th style="width: 15%;">Tanggal</th>
-                <th style="width: 15%;">Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($orders as $orderId => $items)
-                @php
-                    $firstItem = $items->first();
-                    $orderData = $firstItem->order;
-                    $orderSubtotal = $items->sum(fn($i) => $i->price * $i->qty);
-                @endphp
+        {{-- Tabel Transaksi Utama --}}
+        <table>
+            <thead>
                 <tr>
-                    <td><strong>#ORD-{{ $orderId }}</strong></td>
-                    <td>
-                        @foreach ($items as $item)
-                            <div class="product-item">
-                                • {{ $item->book->title }}
-                                <span class="product-qty">({{ $item->qty }}x)</span>
-                            </div>
-                        @endforeach
-                    </td>
-                    <td>{{ $orderData->user->name }}</td>
-                    <td>{{ $orderData->created_at->format('d/m/Y') }}</td>
-                    <td style="font-weight: bold;">
-                        Rp {{ number_format($orderSubtotal, 0, ',', '.') }}
-                    </td>
+                    <th style="width: 15%;">ID Order</th>
+                    <th style="width: 35%;">Rincian Produk</th>
+                    <th style="width: 20%;">Pembeli</th>
+                    <th style="width: 15%;">Tanggal</th>
+                    <th style="width: 15%;">Subtotal</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    <div class="stats-container">
-        {{-- Section: Top 5 Produk Terlaris --}}
-        <div class="top-products">
-            <div class="section-title">TOP 5 PRODUK TERLARIS ANDA</div>
-            <table style="margin-top: 5px;">
-                @php
-                    $productSummary = $orders
-                        ->flatten()
-                        ->groupBy('book_id')
-                        ->map(function ($items) {
-                            return [
-                                'title' => $items->first()->book->title,
-                                'total_qty' => $items->sum('qty'),
-                            ];
-                        })
-                        ->sortByDesc('total_qty')
-                        ->take(5);
-                @endphp
-                @foreach ($productSummary as $summary)
+            </thead>
+            <tbody>
+                @foreach ($orders as $orderId => $items)
+                    @php
+                        $firstItem = $items->first();
+                        $orderData = $firstItem->order;
+                        $orderSubtotal = $items->sum(fn($i) => $i->price * $i->qty);
+                    @endphp
                     <tr>
-                        <td style="padding: 5px 0; border-bottom: 1px dashed #ddd;">{{ $summary['title'] }}</td>
-                        <td
-                            style="padding: 5px 0; border-bottom: 1px dashed #ddd; text-align: right; font-weight: bold;">
-                            {{ $summary['total_qty'] }} Pcs
+                        <td><strong>#ORD-{{ $orderId }}</strong></td>
+                        <td>
+                            @foreach ($items as $item)
+                                <div class="product-item">
+                                    • {{ $item->book->title }}
+                                    <span class="product-qty">({{ $item->qty }}x)</span>
+                                </div>
+                            @endforeach
+                        </td>
+                        <td>{{ $orderData->user->name }}</td>
+                        <td>{{ $orderData->created_at->format('d/m/Y') }}</td>
+                        <td style="font-weight: bold;">
+                            Rp {{ number_format($orderSubtotal, 0, ',', '.') }}
                         </td>
                     </tr>
                 @endforeach
-            </table>
+            </tbody>
+        </table>
+
+        <div class="stats-container">
+            {{-- Section: Top 5 Produk Terlaris --}}
+            <div class="top-products">
+                <div class="section-title">TOP 5 PRODUK TERLARIS ANDA</div>
+                <table style="margin-top: 5px;">
+                    @php
+                        $productSummary = $orders
+                            ->flatten()
+                            ->groupBy('book_id')
+                            ->map(function ($items) {
+                                return [
+                                    'title' => $items->first()->book->title,
+                                    'total_qty' => $items->sum('qty'),
+                                ];
+                            })
+                            ->sortByDesc('total_qty')
+                            ->take(5);
+                    @endphp
+                    @foreach ($productSummary as $summary)
+                        <tr>
+                            <td style="padding: 5px 0; border-bottom: 1px dashed #ddd;">{{ $summary['title'] }}</td>
+                            <td
+                                style="padding: 5px 0; border-bottom: 1px dashed #ddd; text-align: right; font-weight: bold;">
+                                {{ $summary['total_qty'] }} Pcs
+                            </td>
+                        </tr>
+                    @endforeach
+                </table>
+            </div>
+
+            {{-- Section: Ringkasan Keuangan --}}
+            <div class="summary-box">
+                <div class="section-title">RINGKASAN KEUANGAN</div>
+                <table class="summary-table">
+                    <tr>
+                        <td>Total Pesanan</td>
+                        <td style="text-align: right;">{{ $orders->count() }} Order</td>
+                    </tr>
+                    <tr>
+                        <td>Total Omzet</td>
+                        <td style="text-align: right;">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</td>
+                    </tr>
+                    <tr style="font-size: 13px; font-weight: bold; color: #059669;">
+                        <td style="padding-top: 10px;">PROFIT BERSIH</td>
+                        <td style="padding-top: 10px; text-align: right;">
+                            Rp {{ number_format($totalProfit, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
         </div>
 
-        {{-- Section: Ringkasan Keuangan --}}
-        <div class="summary-box">
-            <div class="section-title">RINGKASAN KEUANGAN</div>
-            <table class="summary-table">
-                <tr>
-                    <td>Total Pesanan</td>
-                    <td style="text-align: right;">{{ $orders->count() }} Order</td>
-                </tr>
-                <tr>
-                    <td>Total Omzet</td>
-                    <td style="text-align: right;">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</td>
-                </tr>
-                <tr style="font-size: 13px; font-weight: bold; color: #059669;">
-                    <td style="padding-top: 10px;">PROFIT BERSIH</td>
-                    <td style="padding-top: 10px; text-align: right;">
-                        Rp {{ number_format($totalProfit, 0, ',', '.') }}
-                    </td>
-                </tr>
-            </table>
+        <div class="footer">
+            Dokumen ini dihasilkan secara otomatis oleh sistem akuntansi Miimoys E-Books.<br>
+            Laporan ini hanya mencakup data penjualan untuk seller yang bersangkutan.
         </div>
-    </div>
-
-    <div class="footer">
-        Dokumen ini dihasilkan secara otomatis oleh sistem akuntansi Miimoys E-Books.<br>
-        Laporan ini hanya mencakup data penjualan untuk seller yang bersangkutan.
-    </div>
 </body>
 
 </html>
