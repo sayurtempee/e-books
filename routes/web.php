@@ -45,6 +45,10 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         ->middleware('throttle:60,1')
         ->name('account.update');
 
+    Route::get('/help', function () {
+        return view('help.index');
+    })->name('help.index');
+
     Route::prefix('notifications')->name('notifications.')->middleware('auth')->group(function () {
 
         // Unread Count

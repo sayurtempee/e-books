@@ -21,6 +21,9 @@ class DatabaseSeeder extends Seeder
 
         // Bank Name = 'BCA', 'Mandiri', 'BNI', 'BRI'
 
+        // Report
+        // Benerin di laporan nya agar ada filter bulan dan tahun, lalu untuk grafiknya ada 2 yaitu total omzet nya berapa dan capital nya berapa.
+
         // Sudah bisa forgot dan reset password langsung ke email active.
 
         User::factory()->create([

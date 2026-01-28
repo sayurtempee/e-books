@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\Category;
+use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use App\Notifications\GeneralNotification;
 // Tambahkan Facade Notification sebagai alternatif jika Auth::user()->notify() masih merah
+use App\Notifications\GeneralNotification;
 use Illuminate\Support\Facades\Notification;
 
 class BookController extends Controller
@@ -16,7 +17,7 @@ class BookController extends Controller
     public function index()
     {
         $books = Book::where('user_id', Auth::id())
-            ->with('category')
+            ->with(['category', 'item'])
             ->latest()
             ->get();
 

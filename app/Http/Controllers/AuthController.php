@@ -41,7 +41,7 @@ class AuthController extends Controller
             'password' => Hash::make($validationData['password']),
             'role' => $validationData['role'],
             'nik' => $validationData['nik'],
-            'address' => $validationData['address'] ?? null,
+            'address' => $validationData['address'] ?? 'Address has not been entered',
             'no_rek' => $validationData['no_rek'] ?? null,
             'bank_name' => $validationData['bank_name'] ?? null,
             'isOnline' => false, // Default awal saat register

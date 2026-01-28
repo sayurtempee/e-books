@@ -72,7 +72,7 @@
 
                     <p class="text-center text-sm text-gray-700 mt-4">
                         Remember your password?
-                        <a href="{{ route('login.page') }}" class="text-teal-700 font-medium hover:underline">
+                        <a href="{{ route('login') }}" class="text-teal-700 font-medium hover:underline">
                             Login
                         </a>
                     </p>

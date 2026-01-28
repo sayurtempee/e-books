@@ -16,7 +16,7 @@ class ReportController extends Controller
 
         // 1. Ambil OrderItem milik seller ini dengan status yang valid
         $sellerItems = OrderItem::where('seller_id', $sellerId)
-            ->whereIn('status', ['approved', 'shipping'])
+            ->whereIn('status', ['shipping', 'selesai'])
             ->with(['order', 'book'])
             ->get();
 
@@ -36,7 +36,7 @@ class ReportController extends Controller
             // Hitung profit harian KHUSUS seller ini
             $dailyProfit = OrderItem::where('seller_id', $sellerId)
                 ->whereDate('created_at', $date)
-                ->whereIn('status', ['approved', 'shipping'])
+                ->whereIn('status', ['shipping', 'selesai'])
                 ->sum('profit');
 
             $profits->push($dailyProfit);
@@ -58,7 +58,7 @@ class ReportController extends Controller
         // Ambil item milik seller tertentu
         $items = OrderItem::with(['order.user', 'book'])
             ->where('seller_id', $sellerId)
-            ->whereIn('status', ['approved', 'shipping'])
+            ->whereIn('status', ['shipping', 'selesai'])
             ->get();
 
         $totalRevenue = $items->sum(fn($i) => $i->price * $i->qty);

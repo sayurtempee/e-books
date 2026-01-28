@@ -90,4 +90,11 @@ class User extends Authenticatable
         return $this->hasMany(Conversation::class, 'sender_id')
             ->orWhere('receiver_id', $this->id);
     }
+
+    public function getTotalProfitAttribute()
+    {
+        return OrderItem::where('seller_id', $this->id)
+            ->whereIn('status', ['approved', 'shipping', 'selesai'])
+            ->sum('profit'); // Menggunakan kolom 'profit' yang ada di tabel order_items Anda
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\OrderItem;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\GeneralNotification;
@@ -33,7 +34,6 @@ class TransactionController extends Controller
      */
     public function updateApproval(Request $request, OrderItem $item)
     {
-        // 🔐 VALIDASI KEPEMILIKAN (SUMBER KEBENARAN = seller_id)
         abort_if(
             $item->seller_id !== Auth::id(),
             403,
@@ -42,45 +42,50 @@ class TransactionController extends Controller
 
         $request->validate([
             'status' => 'required|in:pending,approved,shipping,selesai,refunded',
-            'tracking_number' => 'nullable|string|max:100|unique:order_items,tracking_number,' . $item->id,
+            'tracking_number' => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::unique('order_items', 'tracking_number')->ignore($item->id),
+            ],
+            'expedisi_name' => 'nullable|string|max:100',
         ]);
 
         DB::transaction(function () use ($request, $item) {
+            $data = ['status' => $request->status];
 
-            $data = [
-                'status' => $request->status,
-            ];
-
-            // ================= APPROVED =================
             if ($request->status === 'approved') {
                 $data['approved_at'] = now();
-                $data['tracking_number'] = null;
             }
 
-            // ================= SHIPPING =================
             if ($request->status === 'shipping') {
-                $data['tracking_number'] =
-                    $request->tracking_number
-                    ?? 'JNE' . strtoupper(Str::random(10));
+                // Jika user tidak isi resi, kita generate otomatis
+                if (empty($request->tracking_number)) {
+                    // Loop untuk memastikan generate resi otomatis pun tidak duplikat
+                    do {
+                        $newResi = 'REG' . strtoupper(Str::random(10));
+                    } while (OrderItem::where('tracking_number', $newResi)->exists());
+
+                    $data['tracking_number'] = $newResi;
+                } else {
+                    $data['tracking_number'] = $request->tracking_number;
+                }
+
+                $data['expedisi_name'] = $request->expedisi_name ?? 'Internal Courier';
             }
 
-            // ================= REFUNDED =================
             if ($request->status === 'refunded') {
                 $data['refunded_at'] = now();
-
-                // ⬆️ KEMBALIKAN STOK (AMAN)
                 if ($item->book) {
                     $item->book->increment('stock', (int) $item->qty);
                 }
             }
 
             $item->update($data);
-
-            // 🔔 NOTIFIKASI BUYER (PER ITEM)
             $this->notifyBuyer($item);
         });
 
-        return back()->with('success', 'Status item berhasil diperbarui.');
+        return back()->with('success', 'Status berhasil diperbarui.');
     }
 
     /**
@@ -99,6 +104,12 @@ class TransactionController extends Controller
             ],
             'shipping' => [
                 'title' => 'Item Dikirim',
+                'message' => "Item \"{$item->book->title}\" dikirim. Resi: {$item->tracking_number}",
+                'icon' => '🚚',
+                'color' => 'bg-blue-100 text-blue-600',
+            ],
+            'selesai' => [
+                'title' => 'Item Telah Sampai',
                 'message' => "Item \"{$item->book->title}\" dikirim. Resi: {$item->tracking_number}",
                 'icon' => '🚚',
                 'color' => 'bg-blue-100 text-blue-600',

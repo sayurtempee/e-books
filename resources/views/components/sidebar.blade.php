@@ -41,12 +41,13 @@
                 </button>
             </form>
 
-            <button type="button" onclick="openHelpModal()"
+            <a href="{{ route('help.index') }}"
                 class="w-full flex items-center gap-3 px-4 py-2 rounded-lg
-                           text-teal-600 hover:bg-teal-100 font-semibold transition">
+                {{ request()->routeIs('help.index') ? 'bg-teal-100 text-teal-700' : 'text-teal-600 hover:bg-teal-100' }}
+                font-semibold transition">
                 <i class="bi bi-question-circle-fill text-lg"></i>
                 <span>Help</span>
-            </button>
+            </a>
         </div>
     </aside>
 

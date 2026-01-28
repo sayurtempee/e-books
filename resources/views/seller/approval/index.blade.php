@@ -138,13 +138,14 @@
                 <template x-teleport="body">
                     <div x-show="openShippingModal" x-transition:enter="transition ease-out duration-300"
                         x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm" x-cloak>
+                        class="fixed inset-0 z-[100] flex items-center justify-center bg-teal-900/30 backdrop-blur-sm"
+                        x-cloak>
 
                         <div @click.away="openShippingModal = false"
-                            class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-gray-100">
+                            class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-teal-50">
 
                             <div class="flex items-center gap-3 mb-5">
-                                <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                                <div class="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
                                     <i class="bi bi-truck text-xl"></i>
                                 </div>
                                 <div>
@@ -159,19 +160,22 @@
 
                                 <div>
                                     <label
-                                        class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1 tracking-widest">Nama
+                                        class="block text-[10px] font-bold text-teal-600/60 uppercase mb-1 ml-1 tracking-widest">Nama
                                         Ekspedisi</label>
                                     <input type="text" name="expedisi_name" required placeholder="JNT, JNE, Sicepat, dll"
-                                        class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition">
+                                        class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition placeholder:text-gray-300">
                                 </div>
 
                                 <div>
                                     <label
-                                        class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1 tracking-widest">Nomor
+                                        class="block text-[10px] font-bold text-teal-600/60 uppercase mb-1 ml-1 tracking-widest">Nomor
                                         Resi</label>
                                     <input type="text" name="tracking_number" required
                                         placeholder="Masukkan nomor resi..."
-                                        class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none font-mono tracking-widest transition">
+                                        class="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none font-mono tracking-widest transition placeholder:text-gray-300">
+                                    @error('tracking_number')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
                                 </div>
 
                                 <div class="flex gap-2 pt-2">
@@ -180,7 +184,7 @@
                                         Batal
                                     </button>
                                     <button type="submit"
-                                        class="flex-1 py-2.5 text-xs font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition">
+                                        class="flex-1 py-2.5 text-xs font-bold bg-teal-600 text-white rounded-xl hover:bg-teal-700 shadow-lg shadow-teal-100 transition">
                                         Konfirmasi
                                     </button>
                                 </div>

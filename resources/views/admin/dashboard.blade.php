@@ -188,7 +188,7 @@
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-500">Address</span>
                                 <span class="font-medium text-gray-800 capitalize">
-                                    {{ auth()->user()->address ?? 'Address has not been entered' }}
+                                    {{ auth()->user()->address }}
                                 </span>
                             </div>
                         </div>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\GeneralNotification;
@@ -18,7 +19,15 @@ class AccountController extends Controller
             'address' => 'nullable|string|max:255',
         ]);
 
-        $user->update($validated);
+        // $user->update($validated);
+
+        $user->update([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'address' => $validated['address'] ?? 'Address has not been entered',
+        ]);
+
+        dd($user);
 
         // KIRIM NOTIFIKASI KE USER SENDIRI
         $user->notify(new GeneralNotification([

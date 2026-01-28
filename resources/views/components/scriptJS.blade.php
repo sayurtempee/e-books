@@ -1,7 +1,6 @@
 <script>
     const customSwal = Swal.mixin({
         background: 'rgba(255, 255, 255, 0.85)',
-        backdrop: 'rgba(20, 184, 166, 0.25)',
         color: '#1f2937',
         confirmButtonColor: '#14b8a6',
         cancelButtonColor: '#64748b',
@@ -16,7 +15,9 @@
             title: 'text-gray-800',
             confirmButton: 'px-6 py-2 rounded-lg font-semibold',
         },
-        didOpen: () => {
+        didOpen: (popup) => {
+            if (!Swal.isVisible() || !Swal.getPopup()) return;
+
             const backdrop = document.querySelector('.swal2-backdrop');
             if (backdrop) {
                 backdrop.style.backdropFilter = 'blur(8px)';
@@ -28,7 +29,6 @@
         customSwal.fire({
             toast: true,
             position: 'bottom-end',
-            backdrop: false, // ⬅️ WAJIB
             icon: 'success',
             title: @json(session('success')),
             timer: 3000,
@@ -45,7 +45,6 @@
         customSwal.fire({
             toast: true,
             position: 'bottom-end',
-            backdrop: false, // ⬅️ WAJIB
             icon: 'error',
             title: @json(session('error')),
             timer: 3000,
@@ -98,66 +97,6 @@
                 document.querySelector('form[action="{{ route('password.email') }}"]').submit();
             }
         });
-    }
-
-    {{--  Open Help Modal  --}}
-
-    function openHelpModal() {
-        customSwal.fire({
-            title: 'Pusat Bantuan & QnA',
-            html: `
-                <div class="text-left text-sm text-gray-700 space-y-4 max-h-[60vh] overflow-y-auto px-2">
-                    <p class="mb-4">Berikut adalah pertanyaan yang sering diajukan terkait penggunaan aplikasi <strong>Miimoys E-Books</strong>:</p>
-
-                    <div class="space-y-4">
-                        <div>
-                            <h4 class="font-bold text-teal-700">1. Bagaimana cara membeli e-book?</h4>
-                            <p>Pilih e-book yang Anda inginkan, klik tombol <strong>"Beli Sekarang"</strong>, lalu ikuti instruksi pembayaran yang tertera di layar hingga selesai.</p>
-                        </div>
-
-                        <div>
-                            <h4 class="font-bold text-teal-700">2. Metode pembayaran apa saja yang tersedia?</h4>
-                            <p>Kami mendukung berbagai metode pembayaran mulai dari <strong>Transfer Bank, E-Wallet (Dana, OVO, GoPay)</strong>, hingga QRIS (sesuai integrasi sistem).</p>
-                        </div>
-
-                        <div>
-                            <h4 class="font-bold text-teal-700">3. Apakah e-book bisa langsung dibaca setelah bayar?</h4>
-                            <p>Ya! Setelah pembayaran berhasil dikonfirmasi oleh sistem, e-book akan otomatis muncul di menu <strong>"E-book Saya"</strong> atau <strong>"Riwayat Pembelian"</strong>.</p>
-                        </div>
-
-                        <div>
-                            <h4 class="font-bold text-teal-700">4. Bagaimana jika pembayaran gagal atau belum terverifikasi?</h4>
-                            <p>Pastikan Anda mengunggah bukti transfer yang valid jika diminta. Jika dalam 1x24 jam status belum berubah, silakan hubungi admin melalui kontak di bawah.</p>
-                        </div>
-
-                        <div>
-                            <h4 class="font-bold text-teal-700">5. Apakah saya bisa menjual e-book di sini?</h4>
-                            <p>Bisa. Anda harus mendaftar atau beralih akun menjadi <strong>Seller</strong>. Setelah disetujui, Anda dapat mengunggah e-book Anda sendiri.</p>
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <p class="text-xs text-gray-500">
-                        Punya pertanyaan lain? Hubungi pengembang di:
-                        <br>
-                        <strong class="text-teal-600">farishilmiializa@gmail.com</strong>
-                    </p>
-                </div>
-            `,
-            confirmButtonText: 'Tutup',
-            confirmButtonColor: '#0d9488', // Warna teal
-        });
-    }
-
-    {{--  Modal Script (Group)  --}}
-
-    function openModal(id) {
-        document.getElementById('modal-' + id).classList.remove('hidden');
-    }
-
-    function closeModal(id) {
-        document.getElementById('modal-' + id).classList.add('hidden');
     }
 
     {{--  Confirm Delete Seller  --}}
@@ -367,9 +306,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Munculkan Toast jika ada pesan sukses (seperti logout berhasil)
         @if (session('success'))
-            toastSwal.fire({
+            customSwal.fire({
                 icon: 'success',
                 title: 'Berhasil',
                 text: "{{ session('success') }}",

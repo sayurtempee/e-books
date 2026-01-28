@@ -34,47 +34,6 @@ class OrderController extends Controller
         return view('buyer.orders.index', compact('books', 'categories', 'items'));
     }
 
-    public function updateApproval(Request $request, OrderItem $item)
-    {
-        abort_if(
-            $item->seller_id !== Auth::id(),
-            403,
-            'Unauthorized'
-        );
-
-        $request->validate([
-            'status' => 'required|in:pending,approved,shipping,selesai,refunded',
-            'tracking_number' => 'nullable|string|max:100',
-            'expedisi_name' => 'nullable|string|max:50', // Tambahkan ini
-        ]);
-
-        DB::transaction(function () use ($request, $item) {
-            $data = ['status' => $request->status];
-
-            if ($request->status === 'approved') {
-                $data['approved_at'] = now();
-            }
-
-            if ($request->status === 'shipping') {
-                // Gunakan input manual atau generate otomatis jika kosong
-                $data['tracking_number'] = $request->tracking_number ?? 'REG' . strtoupper(Str::random(10));
-                $data['expedisi_name'] = $request->expedisi_name ?? 'Internal Courier';
-            }
-
-            if ($request->status === 'refunded') {
-                $data['refunded_at'] = now();
-                if ($item->book) {
-                    $item->book->increment('stock', (int) $item->qty);
-                }
-            }
-
-            $item->update($data);
-            $this->notifyBuyer($item);
-        });
-
-        return back()->with('success', 'Status berhasil diperbarui.');
-    }
-
     public function downloadInvoice(Order $order)
     {
         // 1. Keamanan: Pastikan hanya pemilik yang bisa akses

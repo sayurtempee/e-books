@@ -94,13 +94,25 @@
 
                                         <td class="px-6 py-4">
                                             <div class="flex flex-col">
-                                                <span class="text-teal-600 font-black">
-                                                    Rp{{ number_format($book->total_real_profit ?? 0, 0, ',', '.') }}
-                                                </span>
-                                                <span class="text-[10px] text-gray-400 font-medium italic">
-                                                    Margin:
-                                                    Rp{{ number_format($book->price - $book->capital, 0, ',', '.') }}
-                                                </span>
+                                                {{-- Menampilkan harga dari pesanan terbaru, jika belum ada tampilkan harga default buku --}}
+                                                <div class="flex flex-col">
+                                                    {{-- Total Keuntungan yang sudah masuk dari buku ini --}}
+                                                    <span class="text-teal-600 font-black">
+                                                        @php
+                                                            $totalProfitBuku = $book
+                                                                ->item()
+                                                                ->whereIn('status', ['approved', 'shipping', 'selesai'])
+                                                                ->sum('profit');
+                                                        @endphp
+                                                        Rp{{ number_format($totalProfitBuku, 0, ',', '.') }}
+                                                    </span>
+
+                                                    <span class="text-[10px] text-gray-400 font-medium italic">
+                                                        Profit & Margin:
+                                                        Rp{{ number_format($book->price - $book->capital, 0, ',', '.') }}
+                                                        ({{ $book->margin }}%)
+                                                    </span>
+                                                </div>
                                             </div>
                                         </td>
 
