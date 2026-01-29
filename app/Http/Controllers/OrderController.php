@@ -21,6 +21,7 @@ class OrderController extends Controller
         $categories = Category::all();
 
         $books = Book::query()
+            ->where('stock', '>', 0)
             ->when($request->search, function ($query, $search) {
                 $query->where('title', 'like', '%' . $search . '%');
         })

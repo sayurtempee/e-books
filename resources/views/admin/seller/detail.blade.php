@@ -161,16 +161,16 @@
                 <div class="mt-6 pt-4 border-t border-gray-100">
                     <div class="flex items-center justify-center gap-10 text-center">
                         <div>
-                            {{-- Menggunakan Accessor getBooksCountAttribute --}}
-                            <p class="text-lg font-bold text-teal-600">{{ $user->books_count }}</p>
+                            {{-- books_count otomatis ada karena kita pakai ->withCount('books') di Controller --}}
+                            <p class="text-lg font-bold text-teal-600">{{ $user->books_count ?? 0 }}</p>
                             <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Total Buku</p>
                         </div>
 
                         <div class="w-px h-8 bg-gray-200"></div>
 
                         <div>
-                            {{-- Menggunakan Accessor getSoldCountAttribute --}}
-                            <p class="text-lg font-bold text-cyan-600">{{ $user->sold_count }}</p>
+                            {{-- items_sold_sum_qty otomatis ada karena kita pakai ->withSum(..., 'qty') di Controller --}}
+                            <p class="text-lg font-bold text-cyan-600">{{ $user->items_sold_sum_qty ?? 0 }}</p>
                             <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Item Terjual</p>
                         </div>
                     </div>

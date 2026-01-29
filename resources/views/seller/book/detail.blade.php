@@ -116,7 +116,13 @@
                 <div class="flex-1">
                     <p class="text-xs text-gray-500 font-medium mb-0.5">Total Keuntungan Terjual</p>
                     <p class="text-sm font-semibold text-green-600">
-                        Rp {{ number_format($book->total_real_profit ?? 0, 0, ',', '.') }}
+                        @php
+                            $totalProfitBuku = $book
+                                ->item()
+                                ->whereIn('status', ['approved', 'shipping', 'selesai'])
+                                ->sum('profit');
+                        @endphp
+                        Rp{{ number_format($totalProfitBuku, 0, ',', '.') }}
                     </p>
                 </div>
             </div>

@@ -11,7 +11,13 @@ class AdminController extends Controller
 {
     public function listSellers()
     {
-        $users = User::where('role', 'seller')->get();
+        $users = User::where('role', 'seller')
+            ->withCount('books') // Menghitung baris di tabel books (Total Buku)
+            ->withSum(['orderItems as items_sold' => function ($query) {
+                $query->where('status', 'selesai'); // Hanya yang statusnya sudah selesai
+            }], 'qty') // Menjumlahkan kolom 'qty' di tabel order_items (Item Terjual)
+            ->get();
+
         return view('admin.seller.index', compact('users'));
     }
 

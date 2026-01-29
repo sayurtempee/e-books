@@ -62,6 +62,12 @@ class User extends Authenticatable
         return $this->hasMany(Book::class, 'user_id');
     }
 
+    public function orderItems()
+    {
+        // Relasi User ke OrderItems (berdasarkan kolom seller_id di image database kamu)
+        return $this->hasMany(OrderItem::class, 'seller_id');
+    }
+
     public function getSoldCountAttribute()
     {
         // Mengambil semua order_items melalui buku yang dimiliki user
