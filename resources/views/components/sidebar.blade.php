@@ -3,7 +3,7 @@
     $inactiveClass = 'text-gray-700 hover:bg-gray-100';
 @endphp
 
-<div x-data="{ sidebarOpen: false }" class="min-h-screen flex bg-gray-100 font-lato">
+<div x-data="{ sidebarOpen: false }" class="h-screen flex overflow-hidden bg-gray-100 font-lato">
 
     {{-- OVERLAY MOBILE --}}
     <div x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false"
@@ -51,14 +51,18 @@
         </div>
     </aside>
 
-    {{-- CONTENT --}}
-    <div class="flex-1 p-6 md:p-8">
-        {{-- HEADER --}}
-        <div class="flex justify-between items-center mb-6">
+    {{-- CONTENT WRAPPER: Hapus padding p-6 md:p-8 di sini agar header bisa menempel sempurna --}}
+    <div class="flex-1 h-full overflow-y-auto custom-scrollbar flex flex-col bg-gray-100">
+
+        {{-- HEADER: Sekarang benar-benar flush ke atas --}}
+        {{-- px-6 md:px-8 ditambahkan di sini untuk menjaga keselarasan horizontal dengan konten --}}
+        <header
+            class="sticky top-0 z-30 flex justify-between items-center bg-gray-100/90 backdrop-blur-md px-6 md:px-8 py-4 border-b border-gray-200/50 transition-all">
+
             {{-- LEFT --}}
             <div class="flex items-center gap-4">
                 <button @click="sidebarOpen = !sidebarOpen"
-                    class="md:hidden flex flex-col justify-center gap-1.5 w-8 h-8 p-1 rounded hover:bg-gray-200">
+                    class="md:hidden flex flex-col justify-center gap-1.5 w-10 h-10 p-2 rounded-lg bg-white shadow-sm border border-gray-200 hover:bg-gray-50 transition">
                     <span class="block h-0.5 w-full bg-gray-800"></span>
                     <span class="block h-0.5 w-full bg-gray-800"></span>
                     <span class="block h-0.5 w-full bg-gray-800"></span>
@@ -78,12 +82,9 @@
                 openProfile: false,
                 unreadCount: {{ $unreadCount }},
                 init() {
-                    // MENGGUNAKAN WEBSOCKET (REVERB) UNTUK NOTIFIKASI
                     window.Echo.private('App.Models.User.' + {{ auth()->id() }})
                         .notification((notification) => {
                             this.unreadCount++;
-                            // Opsional: Mainkan suara notifikasi di sini
-                            // alert('Notifikasi baru: ' + notification.title);
                         });
                 }
             }">
@@ -97,7 +98,6 @@
                     <div
                         class="relative w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-white">
                         {{ $initials }}
-                        {{-- RED DOT NOTIF (Hanya muncul jika unreadCount > 0) --}}
                         <template x-if="unreadCount > 0">
                             <span class="absolute -top-1 -right-1 flex h-4 w-4">
                                 <span
@@ -110,14 +110,14 @@
                     </div>
                 </button>
 
-                {{-- DROPDOWN NOTIFICATION --}}
+                {{-- DROPDOWN NOTIFICATION (Style disempurnakan) --}}
                 <div x-show="openProfile" @click.away="openProfile = false"
                     x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 translate-y-2"
-                    x-transition:enter-end="opacity-100 translate-y-0"
-                    class="absolute right-0 mt-4 w-80 bg-white rounded-2xl shadow-2xl border overflow-hidden text-sm z-50">
+                    x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    class="absolute right-0 mt-4 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden text-sm z-50"
+                    style="display: none;">
 
-                    {{-- HEADER --}}
                     <div class="bg-gradient-to-r from-teal-500 to-emerald-500 px-5 py-4 text-white">
                         <div class="flex justify-between items-center">
                             <p class="font-semibold text-base">🔔 Notifikasi</p>
@@ -129,13 +129,10 @@
                         </p>
                     </div>
 
-                    {{-- LIST NOTIFIKASI --}}
                     <div class="divide-y max-h-96 overflow-y-auto custom-scrollbar">
                         @forelse($notifications as $notification)
                             <div
                                 class="group relative flex items-start gap-3 px-5 py-4 hover:bg-teal-50 transition {{ $notification->read_at ? 'opacity-60' : '' }}">
-
-                                {{-- Link Klik Notifikasi --}}
                                 <a href="{{ route('notifications.readSingle', $notification->id) }}"
                                     class="flex flex-1 gap-3">
                                     <div
@@ -148,58 +145,51 @@
                                             {{ $notification->data['title'] }}
                                         </p>
                                         <p class="text-[11px] text-gray-500 line-clamp-2">
-                                            {{ $notification->data['message'] }}
-                                        </p>
+                                            {{ $notification->data['message'] }}</p>
                                         <p class="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
                                             <i class="bi bi-clock"></i>
                                             {{ $notification->created_at->diffForHumans() }}
                                         </p>
                                     </div>
                                 </a>
-
-                                {{-- Tombol Hapus Satuan --}}
                                 <form action="{{ route('notifications.destroy', $notification->id) }}" method="POST"
                                     class="opacity-0 group-hover:opacity-100 transition">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-gray-400 hover:text-red-500 transition p-1">
-                                        <i class="bi bi-trash3 text-sm"></i>
-                                    </button>
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="text-gray-400 hover:text-red-500 p-1"><i
+                                            class="bi bi-trash3 text-sm"></i></button>
                                 </form>
                             </div>
                         @empty
-                            <div class="py-12 text-center">
-                                <div class="text-4xl mb-2">empty</div>
-                                <p class="text-gray-400 text-xs">Belum ada notifikasi untukmu.</p>
+                            <div class="py-12 text-center text-gray-400">
+                                <i class="bi bi-bell-slash text-3xl block mb-2 opacity-20"></i>
+                                <p class="text-xs">Belum ada notifikasi.</p>
                             </div>
                         @endforelse
                     </div>
 
-                    {{-- FOOTER / ACTION BUTTONS --}}
                     @if ($notifications->count() > 0)
-                        <div class="grid grid-cols-2 border-t text-center divide-x">
-                            {{-- Tombol Tandai Semua Dibaca --}}
+                        <div class="grid grid-cols-2 border-t text-center divide-x bg-gray-50">
                             <a href="{{ route('notifications.markAllRead') }}"
-                                class="py-3 text-[11px] font-semibold text-teal-600 hover:bg-teal-50 transition uppercase tracking-wider">
-                                <i class="bi bi-check2-all mr-1"></i> Tandai Dibaca
-                            </a>
-
-                            {{-- Tombol Hapus Semua (Gunakan Form karena Method DELETE) --}}
+                                class="py-3 text-[11px] font-semibold text-teal-600 hover:bg-white transition uppercase tracking-wider">Tandai
+                                Dibaca</a>
                             <form action="{{ route('notifications.clearAll') }}" method="POST"
-                                onsubmit="return confirm('Hapus semua riwayat notifikasi?')">
-                                @csrf
-                                @method('DELETE')
+                                onsubmit="return confirm('Hapus semua?')">
+                                @csrf @method('DELETE')
                                 <button type="submit"
-                                    class="w-full py-3 text-[11px] font-semibold text-red-500 hover:bg-red-50 transition uppercase tracking-wider">
-                                    <i class="bi bi-trash3 mr-1"></i> Bersihkan
-                                </button>
+                                    class="w-full py-3 text-[11px] font-semibold text-red-500 hover:bg-white transition uppercase tracking-wider">Bersihkan</button>
                             </form>
                         </div>
                     @endif
                 </div>
             </div>
-        </div>
-        <main>{{ $slot }}</main>
+        </header>
+
+        {{-- MAIN: Padding dipindahkan ke sini --}}
+        <main class="p-6 md:p-8 pt-2">
+            <div class="7xl mx-auto">
+                {{ $slot }}
+            </div>
+        </main>
     </div>
 </div>
 

@@ -2,44 +2,54 @@
     @section('title', 'Halaman Chat')
     @section('body-content')
         <x-sidebar>
-            <div class="flex h-[calc(100vh-2rem)] bg-white rounded-xl shadow-lg overflow-hidden m-4 border border-gray-100">
+            {{-- Container Utama Chat --}}
+            <div
+                class="flex h-[calc(100vh-2rem)] bg-white rounded-2xl shadow-2xl overflow-hidden m-4 border border-gray-100">
 
-                <div class="w-1/3 border-r border-gray-100 flex flex-col bg-white">
-                    <div class="p-4 border-b">
-                        <h2 class="text-xl font-bold text-teal-600 mb-4">Messages</h2>
+                {{-- SIDEBAR KIRI: Daftar Percakapan --}}
+                <div class="w-1/3 border-r border-gray-100 flex flex-col bg-white z-20">
+                    <div class="p-5 border-b bg-gray-50/50">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-teal-600">Messages</h2>
+                            <button class="text-teal-600 hover:bg-teal-50 p-2 rounded-full transition">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                        </div>
                         <div class="relative">
                             <input type="text" placeholder="Cari pesan..."
-                                class="w-full bg-gray-100 border-none rounded-full py-2 px-10 text-sm focus:ring-2 focus:ring-teal-500">
-                            <span class="absolute left-4 top-2.5 text-gray-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
+                                class="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-10 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm">
+                            <span class="absolute left-3.5 top-3 text-gray-400">
+                                <i class="bi bi-search"></i>
                             </span>
                         </div>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto">
+                    <div class="flex-1 overflow-y-auto custom-scrollbar">
                         @foreach ($conversations as $chat)
                             @php
-                                // Menentukan siapa lawan bicara
                                 $user = $chat->interlocutor;
                                 $isActive = isset($activeChat) && $activeChat->id == $chat->id;
                             @endphp
                             <a href="{{ route('chat.index', $user->id) }}"
                                 class="flex items-center p-4 cursor-pointer transition-all border-l-4 {{ $isActive ? 'bg-teal-50 border-teal-500' : 'hover:bg-gray-50 border-transparent' }}">
-                                <div
-                                    class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center text-teal-700 font-bold mr-3 uppercase">
-                                    {{ substr($user->name, 0, 2) }}
+                                <div class="relative mr-3">
+                                    <div
+                                        class="w-12 h-12 bg-gradient-to-tr from-teal-500 to-emerald-400 rounded-full flex items-center justify-center text-white font-bold uppercase shadow-md">
+                                        {{ substr($user->name, 0, 2) }}
+                                    </div>
+                                    @if ($user->isOnline)
+                                        <span
+                                            class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                                    @endif
                                 </div>
                                 <div class="flex-1 overflow-hidden">
-                                    <div class="flex justify-between items-center">
-                                        <h4 class="font-semibold text-gray-800 truncate">{{ $user->name }}</h4>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <h4 class="font-bold text-gray-800 truncate">{{ $user->name }}</h4>
                                         <span
-                                            class="text-[10px] text-gray-500">{{ $chat->updated_at->format('H:i') }}</span>
+                                            class="text-[10px] font-medium text-gray-400">{{ $chat->updated_at->format('H:i') }}</span>
                                     </div>
-                                    <p class="text-sm {{ $isActive ? 'text-teal-600' : 'text-gray-500' }} truncate">
+                                    <p
+                                        class="text-xs {{ $isActive ? 'text-teal-600 font-medium' : 'text-gray-500' }} truncate">
                                         {{ $chat->messages->last()->body ?? 'Belum ada pesan' }}
                                     </p>
                                 </div>
@@ -48,90 +58,163 @@
                     </div>
                 </div>
 
-                <div class="flex-1 flex flex-col bg-[#f0f4f4]">
+                {{-- KOLOM KANAN: Area Chat --}}
+                <div class="flex-1 flex flex-col relative overflow-hidden bg-[#f0f2f5]">
                     @if ($activeChat)
                         @php
                             $activeUser =
                                 $activeChat->sender_id == auth()->id() ? $activeChat->receiver : $activeChat->sender;
                         @endphp
-                        <div class="p-4 bg-white shadow-sm flex items-center justify-between">
+
+                        {{-- Header Chat --}}
+                        <div
+                            class="p-4 bg-white/90 backdrop-blur-md shadow-sm flex items-center justify-between z-10 border-b border-gray-100">
                             <div class="flex items-center">
                                 <div
-                                    class="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center text-white font-bold mr-3 uppercase">
+                                    class="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center text-white font-bold mr-3 uppercase shadow-md">
                                     {{ substr($activeUser->name, 0, 2) }}
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-gray-800">{{ $activeUser->name }}</h4>
-                                    <p class="text-xs {{ $activeUser->isOnline ? 'text-teal-500' : 'text-gray-400' }}">
-                                        {{ $activeUser->isOnline ? 'Online' : 'Offline' }}
+                                    <h4 class="font-bold text-gray-800 leading-tight">{{ $activeUser->name }}</h4>
+                                    <p
+                                        class="text-[11px] {{ $activeUser->isOnline ? 'text-teal-500 font-bold' : 'text-gray-400' }}">
+                                        {{ $activeUser->isOnline ? '● Online' : 'Offline' }}
                                     </p>
                                 </div>
                             </div>
+                            <div class="flex gap-3 text-gray-400">
+                                <button class="hover:text-teal-600 p-2 rounded-full transition"><i
+                                        class="bi bi-telephone-fill"></i></button>
+                                <button class="hover:text-teal-600 p-2 rounded-full transition"><i
+                                        class="bi bi-three-dots-vertical"></i></button>
+                            </div>
                         </div>
 
-                        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-opacity-50">
+                        {{-- Area Pesan (Dibuat bg-transparent agar wallpaper terlihat) --}}
+                        <div id="chat-messages"
+                            class="flex-1 overflow-y-auto p-6 space-y-4 z-10 custom-scrollbar relative bg-transparent">
                             @foreach ($activeChat->messages as $message)
-                                @if ($message->user_id == auth()->id())
-                                    <div class="flex items-end justify-end">
-                                        <div
-                                            class="bg-teal-500 text-white p-3 rounded-2xl rounded-br-none shadow-sm max-w-md">
-                                            <p class="text-sm">{{ $message->body }}</p>
+                                <div
+                                    class="flex {{ $message->user_id == auth()->id() ? 'justify-end' : 'justify-start' }} animate-fade-in">
+                                    <div
+                                        class="max-w-[75%] px-4 py-2 shadow-md rounded-2xl relative
+                                        {{ $message->user_id == auth()->id()
+                                            ? 'bg-teal-600 text-white rounded-br-none'
+                                            : 'bg-white text-gray-800 rounded-bl-none border border-gray-100' }}">
+
+                                        <p class="text-[13.5px] leading-relaxed">{{ $message->body }}</p>
+
+                                        <div class="flex items-center justify-end gap-1 mt-1">
                                             <span
-                                                class="text-[10px] text-teal-100 mt-1 block text-right">{{ $message->created_at->format('H:i') }}</span>
+                                                class="text-[9px] {{ $message->user_id == auth()->id() ? 'text-teal-100' : 'text-gray-400' }}">
+                                                {{ $message->created_at->format('H:i') }}
+                                            </span>
+                                            @if ($message->user_id == auth()->id())
+                                                <i class="bi bi-check2-all text-[12px] text-teal-200"></i>
+                                            @endif
                                         </div>
                                     </div>
-                                @else
-                                    <div class="flex items-end">
-                                        <div
-                                            class="bg-white text-gray-800 p-3 rounded-2xl rounded-bl-none shadow-sm max-w-md">
-                                            <p class="text-sm">{{ $message->body }}</p>
-                                            <span
-                                                class="text-[10px] text-gray-400 mt-1 block text-left">{{ $message->created_at->format('H:i') }}</span>
-                                        </div>
-                                    </div>
-                                @endif
+                                </div>
                             @endforeach
                         </div>
 
-                        <form id="chat-form" data-url="{{ route('chat.send', $activeChat->id ?? 0) }}"
-                            class="p-4 bg-white border-t border-gray-100">
-                            @csrf
-                            <div class="flex items-center space-x-3">
-                                <input type="text" id="message-input" name="body" placeholder="Tulis pesan..."
-                                    required
-                                    class="flex-1 bg-gray-50 border-none rounded-full py-2.5 px-5 focus:ring-1 focus:ring-teal-500 text-sm">
+                        {{-- Input Pesan --}}
+                        <div class="p-3 z-20">
+                            <form id="chat-form" data-url="{{ route('chat.send', $activeChat->id ?? 0) }}"
+                                class="bg-transparent flex items-center gap-2 max-w-4xl mx-auto">
+                                @csrf
+
+                                <div
+                                    class="flex flex-1 items-center bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full px-3 py-1">
+                                    <button type="button" class="p-1.5 text-gray-500 hover:text-teal-600 transition">
+                                        <i class="bi bi-emoji-smile text-xl"></i>
+                                    </button>
+
+                                    <input type="text" id="message-input" name="body" placeholder="Tulis pesan..."
+                                        required
+                                        class="flex-1 bg-transparent border-none focus:ring-0 text-base py-1.5 px-2 text-gray-700">
+
+                                    <button type="button" class="p-1.5 text-gray-500 hover:text-teal-600 transition">
+                                        <i class="bi bi-paperclip text-xl"></i>
+                                    </button>
+                                </div>
+
                                 <button type="submit"
-                                    class="bg-teal-500 hover:bg-teal-600 text-white p-2.5 rounded-full shadow-md transition-transform active:scale-95">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 rotate-90" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                    </svg>
+                                    class="bg-teal-600 hover:bg-teal-700 text-white w-11 h-11 rounded-full flex items-center justify-center shadow-md transition-all active:scale-90 shrink-0">
+                                    <i class="bi bi-send-fill text-lg"></i>
                                 </button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     @else
-                        <div class="flex-1 flex flex-col items-center justify-center text-gray-400">
-                            <div class="bg-white p-6 rounded-full shadow-inner mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-teal-200" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                </svg>
+                        {{-- Welcome Screen --}}
+                        <div class="flex-1 flex flex-col items-center justify-center text-gray-400 z-10 relative">
+                            <div
+                                class="w-24 h-24 bg-white rounded-full shadow-xl flex items-center justify-center mb-6 animate-bounce">
+                                <i class="bi bi-chat-dots-fill text-4xl text-teal-500"></i>
                             </div>
-                            <p>Pilih pesan untuk mulai mengobrol</p>
+                            <h3 class="text-xl font-bold text-gray-700">Miimoys Chat</h3>
+                            <p class="text-sm">Pilih teman untuk mulai mengobrol</p>
                         </div>
                     @endif
                 </div>
             </div>
         </x-sidebar>
+
+        <style>
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 5px;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 10px;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: #14b8a6;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .animate-fade-in {
+                animation: fadeIn 0.3s ease-out forwards;
+            }
+
+            #chat-messages {
+                background-image: url('{{ asset('image/wallpaper-chat.png') }}');
+                background-color: #EBF4F6;
+                background-blend-mode: overlay;
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+            }
+        </style>
+
         <script>
+            // Logika JavaScript tetap sama seperti sebelumnya, pastikan ID elemen sesuai.
             document.addEventListener('DOMContentLoaded', function() {
                 const chatForm = document.getElementById('chat-form');
                 const messageInput = document.getElementById('message-input');
                 const chatMessages = document.getElementById('chat-messages');
 
-                // Scroll otomatis ke bawah saat halaman dimuat
                 if (chatMessages) {
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
@@ -139,14 +222,11 @@
                 if (chatForm) {
                     chatForm.addEventListener('submit', async function(e) {
                         e.preventDefault();
-
                         const body = messageInput.value.trim();
                         if (!body) return;
 
                         const url = this.getAttribute('data-url');
                         const token = document.querySelector('input[name="_token"]').value;
-
-                        // 1. Kosongkan input segera untuk UX yang cepat
                         messageInput.value = '';
 
                         try {
@@ -161,64 +241,46 @@
                                     body: body
                                 })
                             });
-
                             const data = await response.json();
-
                             if (data.status === 'success') {
-                                // 2. Tambahkan bubble chat baru ke UI secara instan
                                 appendMessage(data.message.body, data.time);
                                 chatMessages.scrollTop = chatMessages.scrollHeight;
                             }
                         } catch (error) {
-                            console.error('Gagal mengirim pesan:', error);
-                            alert('Gagal mengirim pesan, coba lagi.');
+                            console.error(error);
                         }
                     });
                 }
 
                 function appendMessage(text, time) {
-                    const messageHtml = `
-                        <div class="flex items-end justify-end">
-                            <div class="bg-teal-500 text-white p-3 rounded-2xl rounded-br-none shadow-sm max-w-md">
-                                <p class="text-sm">${text}</p>
-                                <span class="text-[10px] text-teal-100 mt-1 block text-right">${time}</span>
+                    const html = `<div class="flex items-end justify-end animate-fade-in">
+                        <div class="bg-teal-600 text-white p-3 rounded-2xl rounded-br-none shadow-md max-w-md">
+                            <p class="text-sm">${text}</p>
+                            <div class="flex items-center justify-end gap-1 mt-1">
+                                <span class="text-[9px] text-teal-100">${time}</span>
+                                <i class="bi bi-check2-all text-[12px] text-teal-200"></i>
                             </div>
                         </div>
-                    `;
-                    chatMessages.insertAdjacentHTML('beforeend', messageHtml);
+                    </div>`;
+                    chatMessages.insertAdjacentHTML('beforeend', html);
                 }
-            });
 
-            // Pastikan Laravel Echo sudah terinstall dan terkonfigurasi di resources/js/app.js
-            // Biasanya Reverb otomatis terkonfigurasi di sana.
-
-            document.addEventListener('DOMContentLoaded', function() {
+                // Echo Logic
                 const activeChatId = "{{ $activeChat->id ?? 0 }}";
-                const authId = "{{ auth()->id() }}";
-
-                if (activeChatId > 0) {
-                    // Mendengarkan Private Channel
+                if (activeChatId > 0 && window.Echo) {
                     window.Echo.private(`chat.${activeChatId}`)
                         .listen('MessageSent', (e) => {
-                            // Jangan tambah bubble jika pesan itu dikirim oleh diri sendiri (sudah ditangani AJAX)
-                            if (e.message.user_id != authId) {
-                                appendIncomingMessage(e.message.body, 'Baru saja');
+                            if (e.message.user_id != "{{ auth()->id() }}") {
+                                const incomingHtml = `<div class="flex items-end animate-fade-in">
+                                    <div class="bg-white text-gray-800 p-3 rounded-2xl rounded-bl-none shadow-md max-w-md border border-gray-100">
+                                        <p class="text-sm">${e.message.body}</p>
+                                        <span class="text-[10px] text-gray-400 mt-1 block text-left">Baru saja</span>
+                                    </div>
+                                </div>`;
+                                chatMessages.insertAdjacentHTML('beforeend', incomingHtml);
                                 chatMessages.scrollTop = chatMessages.scrollHeight;
                             }
                         });
-                }
-
-                // Fungsi khusus untuk pesan masuk (Lawan Bicara)
-                function appendIncomingMessage(text, time) {
-                    const messageHtml = `
-            <div class="flex items-end">
-                <div class="bg-white text-gray-800 p-3 rounded-2xl rounded-bl-none shadow-sm max-w-md">
-                    <p class="text-sm">${text}</p>
-                    <span class="text-[10px] text-gray-400 mt-1 block text-left">${time}</span>
-                </div>
-            </div>
-        `;
-                    document.getElementById('chat-messages').insertAdjacentHTML('beforeend', messageHtml);
                 }
             });
         </script>

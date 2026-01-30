@@ -95,7 +95,7 @@ class AdminController extends Controller
             'message' => 'Data profil Anda telah diperbarui oleh Admin.',
             'icon' => '📝',
             'color' => 'bg-blue-100 text-blue-600',
-            'url' => '#',
+            'url' => route('admin.dashboard'),
         ]));
 
         return redirect()->route('admin.sellers')->with('success', 'Seller updated successfully.');

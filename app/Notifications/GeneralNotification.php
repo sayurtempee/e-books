@@ -19,7 +19,7 @@ class GeneralNotification extends Notification
     public function via($notifiable)
     {
         //database simpan riwayat, broadcast kirim real-time
-        return ['database', 'broadcast'];
+        return ['database'];
     }
 
     public function toDatabase($notifiable)
@@ -33,14 +33,14 @@ class GeneralNotification extends Notification
         ];
     }
 
-    public function toBroadcast($notifiable)
-    {
-        return new BroadcastMessage([
-            'title'   => $this->details['title'],
-            'message' => $this->details['message'],
-            'icon'    => $this->details['icon'], // Berisi tag <i> atau class
-            'color'   => $this->details['color'],
-            'url'     => $this->details['url'],
-        ]);
-    }
+    // public function toBroadcast($notifiable)
+    // {
+    //     return new BroadcastMessage([
+    //         'title'   => $this->details['title'],
+    //         'message' => $this->details['message'],
+    //         'icon'    => $this->details['icon'], // Berisi tag <i> atau class
+    //         'color'   => $this->details['color'],
+    //         'url'     => $this->details['url'],
+    //     ]);
+    // }
 }
