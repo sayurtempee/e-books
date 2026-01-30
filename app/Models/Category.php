@@ -35,6 +35,8 @@ class Category extends Model
             'non fiksi' => 'book',
             'akademik' => 'mortarboard',
             'komik' => 'bluesky',
+            'novel' => 'journal-bookmark-fill',
+            'dongeng' => 'magic',
             default => 'collection',
         };
     }
