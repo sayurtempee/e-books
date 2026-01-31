@@ -89,9 +89,14 @@
             </div>
 
             @if (session('checkout_success'))
-                @php $order = \App\Models\Order::with('items.book.user')->find(session('order_id')); @endphp
+                @php
+                    // Variabel $order ini akan "diwariskan" ke file @include di bawahnya
+                    $order = \App\Models\Order::with('items.book.user')->find(session('order_id'));
+                @endphp
+
                 @if ($order)
-                    @include('buyer.payment.index')
+                    @include('buyer.payment.bank')
+                    @include('buyer.payment.pay')
                 @endif
             @endif
         </x-sidebar>

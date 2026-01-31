@@ -107,6 +107,8 @@
                                     <option value="" disabled selected>Pilih Pembayaran</option>
                                     <option value="transfer">Bank Transfer</option>
                                     <option value="qris">QRIS</option>
+                                    <option value="ovo">OVO</option>
+                                    <option value="gopay">GOPAY</option>
                                 </select>
                                 <div class="flex justify-between font-black text-xl mb-6">
                                     <span class="text-sm font-normal text-gray-500">Total Tagihan</span>

@@ -78,9 +78,21 @@ class CheckoutController extends Controller
             ]));
 
             session()->forget('cart');
+            session()->put('order_id', $order->id);
             return redirect()->route('buyer.carts.index')->with('checkout_success', true);
         } catch (\Exception $e) {
             return redirect()->route('buyer.carts.index')->with('error', $e->getMessage());
         }
+    }
+
+    public function payPage(Order $order)
+    {
+        // Eager load untuk mempercepat query
+        $order->load('items.book.user');
+
+        // Ambil penjual unik
+        $sellers = $order->items->groupBy('seller_id');
+
+        return view('buyer.payment.pay', compact('order', 'sellers'));
     }
 }

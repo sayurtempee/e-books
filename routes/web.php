@@ -163,6 +163,7 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         // Checkout
         Route::get('/buyer/checkout/confirm', [CheckoutController::class, 'confirmPage'])->name('buyer.checkout.confirm');
         Route::post('/buyer/checkout', [CheckoutController::class, 'checkout'])->middleware('throttle:60,1')->name('buyer.checkout');
+        Route::get('/buyer/pay/{order}', [CheckoutController::class, 'payPage'])->name('buyer.payment.pay');
 
         // Payment
         Route::post('/orders/{order}/payment-upload', [PaymentController::class, 'uploadPayment'])->name('buyer.payment.upload');
