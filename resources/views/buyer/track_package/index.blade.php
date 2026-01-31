@@ -4,41 +4,41 @@
     @section('body-content')
         <x-sidebar>
             <div class="p-8 bg-gray-50 min-h-screen">
-
                 {{-- Header --}}
                 <div class="mb-10">
                     <h1 class="text-3xl font-black text-gray-800 border-l-4 border-teal-600 pl-4">
                         Lacak <span class="text-teal-600">Paket</span>
                     </h1>
                     <p class="text-gray-500 text-sm ml-5">
-                        Produk dari penjual yang sama dikelompokkan dalam satu pengiriman.
+                        Produk dari penjual yang sama dalam satu pesanan dikirim dalam satu paket.
                     </p>
                 </div>
 
                 <div class="grid grid-cols-1 gap-8">
-
                     @forelse ($items as $group)
                         @php
-                            // Ambil satu item sampel dari grup untuk data header (Resi, Status, Seller)
                             $firstItem = $group->first();
 
-                            $hasResi = !empty($firstItem->tracking_number);
-                            $isApproved = $firstItem->status === 'approved';
-                            $isShipping = $firstItem->status === 'shipping';
-                            $isSelesai = $firstItem->status === 'selesai';
+                            // Cek payment_proof ada di order_items
                             $hasProof = !empty($firstItem->payment_proof);
 
-                            // Progress bar diambil dari status item pertama dalam grup
+                            $status = $firstItem->status;
+
+                            $statusFinishDate = $firstItem->updated_at;
+
+                            $hasResi = !empty($firstItem->tracking_number);
+
+                            // Hitung Progress
                             $progressWidth = '20%';
-                            if ($isSelesai) {
+                            if ($status === 'selesai') {
                                 $progressWidth = '100%';
-                            } elseif ($isShipping && $hasResi) {
+                            } elseif ($status === 'shipping' && $hasResi) {
                                 $progressWidth = '80%';
-                            } elseif ($isApproved || $isShipping) {
+                            } elseif ($status === 'approved' || $status === 'shipping') {
                                 $progressWidth = '60%';
                             } elseif ($hasProof) {
                                 $progressWidth = '40%';
-                            }
+                            } // Gunakan variabel $hasProof
                         @endphp
 
                         <div
@@ -46,15 +46,16 @@
 
                             {{-- Header Card --}}
                             <div
-                                class="bg-gradient-to-r {{ $isSelesai ? 'from-emerald-600 to-teal-500' : 'from-teal-600 to-teal-500' }} p-6 text-white flex flex-col md:flex-row justify-between gap-4">
+                                class="bg-gradient-to-r {{ $status === 'selesai' ? 'from-emerald-600 to-teal-500' : 'from-teal-600 to-teal-500' }} p-6 text-white flex flex-col md:flex-row justify-between gap-4">
                                 <div class="flex items-center gap-4">
                                     <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl">
-                                        <i class="bi {{ $isSelesai ? 'bi-check-all' : 'bi-box-seam' }}"></i>
+                                        <i class="bi {{ $status === 'selesai' ? 'bi-check-all' : 'bi-box-seam' }}"></i>
                                     </div>
                                     <div>
-                                        <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Penjual</p>
+                                        <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Order
+                                            #ORD-{{ $firstItem->order_id }}</p>
                                         <p class="font-bold text-lg leading-tight uppercase">
-                                            {{ $firstItem->book->user->name }}
+                                            {{ $firstItem->book->user->name }} {{-- Nama Seller --}}
                                         </p>
                                     </div>
                                 </div>
@@ -69,7 +70,7 @@
                             </div>
 
                             <div class="p-8">
-                                {{-- Progress Timeline (Sama seperti sebelumnya, menggunakan data $firstItem) --}}
+                                {{-- Progress Timeline --}}
                                 <div class="relative flex flex-col md:flex-row justify-between gap-y-8">
                                     <div class="hidden md:block absolute top-6 left-0 w-full h-1 bg-gray-100">
                                         <div class="h-full bg-teal-500 transition-all duration-1000 ease-in-out"
@@ -87,29 +88,30 @@
                                             [
                                                 'label' => 'Dibayar',
                                                 'icon' => 'bi-cash-stack',
-                                                'active' => $hasProof,
-                                                'desc' => $hasProof ? 'Terverifikasi' : 'Belum Bayar',
+                                                'active' => $hasProof, // Menggunakan variabel hasProof yang baru
+                                                'desc' => $hasProof ? 'Terverifikasi' : 'Pending',
                                             ],
                                             [
                                                 'label' => 'Diproses',
                                                 'icon' => 'bi-box-seam',
-                                                'active' => $isApproved || $isShipping || $isSelesai,
-                                                'desc' =>
-                                                    $isApproved || $isShipping || $isSelesai
-                                                        ? 'Sedang Dikemas'
-                                                        : 'Menunggu',
+                                                'active' => in_array($status, ['approved', 'shipping', 'selesai']),
+                                                'desc' => 'Dikemas',
                                             ],
                                             [
                                                 'label' => 'Dikirim',
                                                 'icon' => 'bi-truck',
-                                                'active' => ($isShipping && $hasResi) || $isSelesai,
-                                                'desc' => $hasResi ? 'Dalam Perjalanan' : 'Proses Pick-up',
+                                                'active' =>
+                                                    ($status === 'shipping' && $hasResi) || $status === 'selesai',
+                                                'desc' => $hasResi ? 'Perjalanan' : 'Menunggu',
                                             ],
                                             [
                                                 'label' => 'Selesai',
                                                 'icon' => 'bi-house-check',
-                                                'active' => $isSelesai,
-                                                'desc' => $isSelesai ? 'Diterima' : 'Tujuan Akhir',
+                                                'active' => $status === 'selesai',
+                                                'desc' => [
+                                                    $status === 'selesai' ? 'Diterima' : 'Tujuan',
+                                                    $statusFinishDate ? $statusFinishDate->format('d M H:i') : '-',
+                                                ],
                                             ],
                                         ];
                                     @endphp
@@ -126,21 +128,22 @@
                                                     {{ $step['label'] }}</p>
                                                 <p
                                                     class="text-[10px] font-medium {{ $step['active'] ? 'text-teal-600' : 'text-gray-300' }}">
-                                                    {{ $step['desc'] }}</p>
+                                                    {{--  @dd($step['desc'])  --}}
+                                                    {!! is_array($step['desc']) ? implode('<br>', $step['desc']) : $step['desc'] !!}
+                                                </p>
                                             </div>
                                         </div>
                                     @endforeach
                                 </div>
 
-                                {{-- Daftar Produk dalam Satu Paket --}}
+                                {{-- Daftar Produk dalam Paket --}}
                                 <div class="mt-12 pt-8 border-t border-gray-100">
                                     <p class="text-[10px] font-black uppercase tracking-widest text-teal-600 mb-4">Isi Paket
                                         ({{ $group->count() }} Produk)</p>
-
                                     <div class="space-y-4">
                                         @foreach ($group as $subItem)
                                             <div
-                                                class="flex items-center gap-5 bg-gray-50/50 p-4 rounded-3xl border border-gray-100 shadow-sm">
+                                                class="flex items-center gap-5 bg-gray-50/50 p-4 rounded-3xl border border-gray-100">
                                                 <img src="{{ asset('storage/' . $subItem->book->photos_product) }}"
                                                     class="w-16 h-16 rounded-2xl object-cover shadow-md">
                                                 <div class="flex-1">
@@ -151,9 +154,6 @@
                                                         Rp{{ number_format($subItem->price, 0, ',', '.') }}</p>
                                                 </div>
                                                 <div class="text-right">
-                                                    <p
-                                                        class="text-[10px] text-gray-400 font-black tracking-widest uppercase">
-                                                        Subtotal</p>
                                                     <p class="text-lg font-black text-gray-900 italic">
                                                         Rp{{ number_format($subItem->qty * $subItem->price, 0, ',', '.') }}
                                                     </p>
@@ -162,7 +162,7 @@
                                         @endforeach
                                     </div>
 
-                                    {{-- Footer Detail --}}
+                                    {{-- Footer Total --}}
                                     <div
                                         class="mt-8 flex flex-col lg:flex-row justify-between items-center gap-6 pt-6 border-t border-dashed">
                                         <div class="flex gap-4 items-center">
@@ -177,12 +177,12 @@
                                         <div class="flex items-center gap-6">
                                             <div class="text-right">
                                                 <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">
-                                                    Total Pembayaran Paket</p>
+                                                    Total Harga Paket</p>
                                                 <p class="text-2xl font-black text-teal-600">
                                                     Rp{{ number_format($group->sum(fn($i) => $i->qty * $i->price), 0, ',', '.') }}
                                                 </p>
                                             </div>
-                                            <a href="{{ route('chat.index', $firstItem->book->user_id) }}"
+                                            <a href="{{ route('chat.index', $firstItem->seller_id) }}"
                                                 class="px-6 py-3 bg-white border-2 border-teal-600 rounded-2xl text-teal-600 font-bold text-sm hover:bg-teal-600 hover:text-white transition-all">
                                                 Chat Seller
                                             </a>

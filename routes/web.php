@@ -146,7 +146,7 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
 
         // Approval
         Route::get('/seller/approval', [TransactionController::class, 'indexApproval'])->name('seller.approval.index');
-        Route::put('/seller/approval/{item}', [TransactionController::class, 'updateApproval'])->name('seller.approval.update');
+        Route::put('/seller/approval/{orderId}', [TransactionController::class, 'updateApproval'])->name('seller.approval.update');
 
         // Laporan
         Route::get('/seller/reports', [ReportController::class, 'index'])->name('seller.reports.index');
@@ -184,9 +184,10 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
                 ->with(['order', 'book.user'])
                 ->latest()
                 ->get()
-                // Kelompokkan berdasarkan ID Seller dan Resi (agar jika resi kosong tapi seller sama, tetap jadi satu)
+                // Dikelompokkan per Order dan per Seller
+                // (Karena 1 Order bisa berisi barang dari beberapa Seller berbeda)
                 ->groupBy(function ($item) {
-                    return $item->book->user_id . '-' . ($item->tracking_number ?? 'no-resi');
+                return $item->order_id . '-' . $item->seller_id;
                 });
 
             return view('buyer.track_package.index', compact('items'));

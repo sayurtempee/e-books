@@ -5,130 +5,119 @@ namespace App\Http\Controllers;
 use App\Models\OrderItem;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\GeneralNotification;
 
 class TransactionController extends Controller
 {
-    /**
-     * LIST ITEM UNTUK SELLER
-     */
     public function indexApproval()
     {
-        $items = OrderItem::where('seller_id', Auth::id())
+        // Ambil data dan kelompokkan berdasarkan order_id
+        $groupedItems = OrderItem::where('seller_id', Auth::id())
             ->where('status', '!=', 'refunded')
-            ->with([
-            'order.user',
-            'book',
-            ])
+            ->with(['order.user', 'book'])
             ->latest()
+            ->get()
+            ->groupBy('order_id');
+
+        return view('seller.approval.index', compact('groupedItems'));
+    }
+
+    public function updateApproval(Request $request, $orderId)
+    {
+        // 1. Ambil data items terlebih dahulu agar bisa digunakan di validasi
+        $items = OrderItem::where('order_id', $orderId)
+            ->where('seller_id', Auth::id())
             ->get();
 
-        return view('seller.approval.index', compact('items'));
-    }
+        if ($items->isEmpty()) {
+            return back()->with('error', 'Pesanan tidak ditemukan.');
+        }
 
-    /**
-     * UPDATE STATUS ITEM (APPROVE / SHIPPING / REFUND)
-     */
-    public function updateApproval(Request $request, OrderItem $item)
-    {
-        abort_if(
-            $item->seller_id !== Auth::id(),
-            403,
-            'Unauthorized'
-        );
-
+        // 2. Validasi
         $request->validate([
-            'status' => 'required|in:pending,approved,shipping,selesai,refunded',
+            'status' => 'required|in:approved,shipping,refunded,selesai',
+            'expedisi_name' => 'required_if:status,shipping',
             'tracking_number' => [
                 'nullable',
-                'string',
-                'max:100',
-                Rule::unique('order_items', 'tracking_number')->ignore($item->id),
+                'required_if:status,shipping',
+                function ($attribute, $value, $fail) use ($orderId) {
+                    if (empty($value)) return;
+
+                    // Cek apakah resi sudah dipakai oleh ORDER lain atau SELLER lain
+                    $isUsed = OrderItem::where('tracking_number', $value)
+                        ->where(function ($q) use ($orderId) {
+                            $q->where('order_id', '!=', $orderId)
+                                ->orWhere('seller_id', '!=', Auth::id());
+                        })
+                        ->exists();
+
+                    if ($isUsed) {
+                        $fail('Nomor resi ini sudah digunakan untuk pengiriman lain.');
+                    }
+                },
             ],
-            'expedisi_name' => 'nullable|string|max:100',
         ]);
 
-        DB::transaction(function () use ($request, $item) {
-            $data = ['status' => $request->status];
+        DB::transaction(function () use ($request, $items) {
+            $status = $request->status;
+            $trackingNumber = $request->tracking_number;
 
-            if ($request->status === 'approved') {
-                $data['approved_at'] = now();
+            // Logika Generate Resi Otomatis jika input kosong saat shipping
+            if ($status === 'shipping' && empty($trackingNumber)) {
+                do {
+                    $trackingNumber = 'REG' . strtoupper(Str::random(10));
+                } while (OrderItem::where('tracking_number', $trackingNumber)->exists());
             }
 
-            if ($request->status === 'shipping') {
-                // Jika user tidak isi resi, kita generate otomatis
-                if (empty($request->tracking_number)) {
-                    // Loop untuk memastikan generate resi otomatis pun tidak duplikat
-                    do {
-                        $newResi = 'REG' . strtoupper(Str::random(10));
-                    } while (OrderItem::where('tracking_number', $newResi)->exists());
+            // 3. Eksekusi Update
+            foreach ($items as $item) {
+                $data = ['status' => $status];
 
-                    $data['tracking_number'] = $newResi;
-                } else {
-                    $data['tracking_number'] = $request->tracking_number;
+                if ($status === 'approved') {
+                    $data['approved_at'] = now();
                 }
 
-                $data['expedisi_name'] = $request->expedisi_name ?? 'Internal Courier';
-            }
-
-            if ($request->status === 'refunded') {
-                $data['refunded_at'] = now();
-                if ($item->book) {
-                    $item->book->increment('stock', (int) $item->qty);
+                if ($status === 'shipping') {
+                    $data['tracking_number'] = $trackingNumber;
+                    $data['expedisi_name'] = $request->expedisi_name ?? 'Internal Courier';
                 }
+
+                if ($status === 'refunded') {
+                    $data['refunded_at'] = now();
+                    if ($item->book) {
+                        $item->book->increment('stock', (int) $item->qty);
+                    }
+                }
+
+                // Gunakan update pada instance model
+                $item->update($data);
             }
 
-            $item->update($data);
-            $this->notifyBuyer($item);
+            $this->notifyBuyer($items->first());
         });
 
-        return back()->with('success', 'Status berhasil diperbarui.');
+        return back()->with('success', 'Status pesanan berhasil diperbarui.');
     }
 
-    /**
-     * NOTIFIKASI BUYER
-     */
     private function notifyBuyer(OrderItem $item)
     {
         if (!$item->book || !$item->order) return;
 
         $map = [
-            'approved' => [
-                'title' => 'Item Disetujui',
-                'message' => "Item \"{$item->book->title}\" sedang diproses oleh seller.",
-                'icon' => '✅',
-                'color' => 'bg-teal-100 text-teal-600',
-            ],
-            'shipping' => [
-                'title' => 'Item Dikirim',
-                'message' => "Item \"{$item->book->title}\" dikirim. Resi: {$item->tracking_number}",
-                'icon' => '🚚',
-                'color' => 'bg-blue-100 text-blue-600',
-            ],
-            'selesai' => [
-                'title' => 'Item Telah Sampai',
-                'message' => "Item \"{$item->book->title}\" dikirim. Resi: {$item->tracking_number}",
-                'icon' => '🚚',
-                'color' => 'bg-blue-100 text-blue-600',
-            ],
-            'refunded' => [
-                'title' => 'Item Direfund',
-                'message' => "Item \"{$item->book->title}\" dibatalkan & refund diproses.",
-                'icon' => '❌',
-                'color' => 'bg-red-100 text-red-600',
-            ],
+            'approved' => ['title' => 'Pesanan Diproses', 'message' => "Pesanan #ORD-{$item->order_id} sedang diproses.", 'icon' => '✅'],
+            'shipping' => ['title' => 'Pesanan Dikirim', 'message' => "Pesanan #ORD-{$item->order_id} dalam pengiriman. Resi: {$item->tracking_number}", 'icon' => '🚚'],
+            'selesai'  => ['title' => 'Pesanan Selesai', 'message' => "Pesanan #ORD-{$item->order_id} telah diterima.", 'icon' => '📦'],
+            'refunded' => ['title' => 'Pesanan Dibatalkan', 'message' => "Pesanan #ORD-{$item->order_id} dibatalkan.", 'icon' => '❌'],
         ];
 
         if (!isset($map[$item->status])) return;
 
-        $item->order->user->notify(
-            new GeneralNotification([
-                ...$map[$item->status],
-                'url' => route('buyer.orders.index'),
-            ])
-        );
+        $item->order->user->notify(new GeneralNotification([
+            ...$map[$item->status],
+            'color' => 'bg-teal-100 text-teal-600',
+            'url' => route('buyer.orders.index'),
+        ]));
     }
 }
