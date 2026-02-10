@@ -22,12 +22,11 @@
     <!-- Link CDN Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
-    <!-- Link CDN Sweat2Alert -->
-    <script src="//unpkg.com/alpinejs" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <!-- Link CDN AlpineJS -->
+    <script src="//unpkg.com/alpinejs" defer></script>
 
+    <!-- Link CDN Sweat2Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Title -->
     <title>@yield('title') | E - BOOKS</title>

@@ -12,25 +12,39 @@ class ReportController extends Controller
 {
     public function index(Request $request)
     {
+        // --- PENAMBAHAN: Force Default Redirect ---
+        // Jika user mengakses /seller/reports tanpa parameter, arahkan ke all & 2026
+        if (!$request->has('month')) {
+            return redirect()->route('seller.reports.index', [
+                'month' => 'all',
+                'year' => '2026'
+            ]);
+        }
+
         $sellerId = Auth::id();
 
-        // Ambil input filter (default ke bulan & tahun sekarang)
-        $selectedMonth = $request->get('month', now()->month);
-        $selectedYear = $request->get('year', now()->year);
+        // Ambil input filter
+        $selectedMonth = $request->get('month');
+        $selectedYear = $request->get('year', 2026);
 
-        // --- 1. Data Berdasarkan Filter (Bulanan) ---
+        // --- 1. Data Berdasarkan Filter ---
         $query = OrderItem::where('seller_id', $sellerId)
             ->whereIn('status', ['shipping', 'selesai']);
 
-        // Clone query untuk menghitung Grand Total (Semua Waktu) sebelum difilter bulan/tahun
+        // Ringkasan Seluruh Waktu (Tidak terpengaruh filter)
         $grandTotalQuery = clone $query;
         $grandTotalRevenue = $grandTotalQuery->get()->sum(fn($item) => $item->price * $item->qty);
         $grandTotalProfit  = $grandTotalQuery->sum('profit');
 
-        // Lanjutkan filter bulanan untuk statistik ringkas
-        $sellerItems = $query->whereMonth('created_at', $selectedMonth)
-            ->whereYear('created_at', $selectedYear)
-            ->get();
+        // Filter berdasarkan Tahun
+        $query->whereYear('created_at', $selectedYear);
+
+        // Filter berdasarkan Bulan (Hanya jika bukan 'all')
+        if ($selectedMonth !== 'all') {
+            $query->whereMonth('created_at', $selectedMonth);
+        }
+
+        $sellerItems = $query->get();
 
         $totalRevenue = $sellerItems->sum(fn($item) => $item->price * $item->qty);
         $totalProfit  = $sellerItems->sum('profit');
@@ -41,29 +55,46 @@ class ReportController extends Controller
         $profits = collect();
         $revenues = collect();
 
-        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $selectedMonth, $selectedYear);
+        if ($selectedMonth === 'all') {
+            // Jika SEMUA BULAN, tampilkan grafik Jan - Des
+            for ($m = 1; $m <= 12; $m++) {
+                $monthName = \Carbon\Carbon::createFromDate(null, $m, 1)->locale('id')->translatedFormat('M');
+                $days->push($monthName);
 
-        for ($d = 1; $d <= $daysInMonth; $d++) {
-            $date = sprintf('%04d-%02d-%02d', $selectedYear, $selectedMonth, $d);
-            $days->push($d);
+                $monthlyData = OrderItem::where('seller_id', $sellerId)
+                    ->whereYear('created_at', $selectedYear)
+                    ->whereMonth('created_at', $m)
+                    ->whereIn('status', ['shipping', 'selesai'])
+                    ->get();
 
-            $dailyItems = OrderItem::where('seller_id', $sellerId)
-                ->whereDate('created_at', $date)
-                ->whereIn('status', ['shipping', 'selesai'])
-                ->get();
+                $revenues->push($monthlyData->sum(fn($item) => $item->price * $item->qty));
+                $profits->push($monthlyData->sum('profit'));
+            }
+        } else {
+            // Jika BULAN TERTENTU, tampilkan grafik harian
+            $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$selectedMonth, (int)$selectedYear);
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $date = sprintf('%04d-%02d-%02d', $selectedYear, $selectedMonth, $d);
+                $days->push($d);
 
-            $revenues->push($dailyItems->sum(fn($item) => $item->price * $item->qty));
-            $profits->push($dailyItems->sum('profit'));
+                $dailyItems = OrderItem::where('seller_id', $sellerId)
+                    ->whereDate('created_at', $date)
+                    ->whereIn('status', ['shipping', 'selesai'])
+                    ->get();
+
+                $revenues->push($dailyItems->sum(fn($item) => $item->price * $item->qty));
+                $profits->push($dailyItems->sum('profit'));
+            }
         }
 
-        $yearRange = range(now()->year, now()->year - 5);
+        $yearRange = range(2026, 2021); // Tahun tetap ke 2026 sebagai start
 
         return view('seller.report.index', compact(
             'totalRevenue',
             'totalProfit',
             'totalSold',
-            'grandTotalRevenue', // Data baru
-            'grandTotalProfit',  // Data baru
+            'grandTotalRevenue',
+            'grandTotalProfit',
             'days',
             'profits',
             'revenues',

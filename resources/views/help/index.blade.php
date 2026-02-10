@@ -60,7 +60,7 @@
                                         'bi-plus-circle-fill'"></i>
                             </button>
 
-                            <div x-show="active === {{ $index }}" x-collapse x-cloak>
+                            <div x-show="active === {{ $index }}" x-cloak display="none !important">
                                 <div class="p-5 pt-0 text-gray-600 text-sm leading-relaxed border-t border-teal-100/50">
                                     {{ $faq['a'] }}
                                 </div>
