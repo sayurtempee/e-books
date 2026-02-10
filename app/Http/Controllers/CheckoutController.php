@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
-use App\Models\Order;
 use App\Models\User;
+use App\Models\Order;
+use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\GeneralNotification;
@@ -94,5 +95,31 @@ class CheckoutController extends Controller
         $sellers = $order->items->groupBy('seller_id');
 
         return view('buyer.payment.pay', compact('order', 'sellers'));
+    }
+
+    public function uploadProof(Request $request)
+    {
+        $request->validate([
+            'order_id' => 'required',
+            'payment_proof' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+
+        ]);
+
+        $items = OrderItem::where('order_id', $request->order_id)->get();
+        if ($items->isEmpty()) {
+            return back()->with('error', 'Pesanan tidak ditemukan.');
+        }
+
+        if ($request->hasFile('payment_proof')) {
+            $path = $request->file('payment_proof')->store('payment_proofs', 'public');
+            foreach ($items as $item) {
+                $item->update([
+                    'payment_proof' => $path,
+                    'status' => 'approved' // Otomatis berubah menjadi approved
+                ]);
+            }
+            return back()->with('success', 'Bukti berhasil diunggah. Status pesanan kini: APPROVED');
+        }
+        return back()->with('error', 'Gagal mengunggah file.');
     }
 }

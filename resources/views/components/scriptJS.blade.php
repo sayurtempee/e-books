@@ -325,4 +325,87 @@
             });
         @endif
     });
+
+    // FUNGSI UNTUK MEMBUKA MODAL UPLOAD
+    function openUploadModal(orderId) {
+        const modal = document.getElementById('uploadModal');
+        const modalContent = document.getElementById('uploadModalContent');
+        const inputOrderId = document.getElementById('modal_order_id');
+
+        // Set Order ID ke hidden input
+        inputOrderId.value = orderId;
+
+        // Tampilkan Modal
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Trigger Animasi (sedikit delay agar transisi terasa)
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    // FUNGSI UNTUK MENUTUP MODAL UPLOAD
+    function closeUploadModal() {
+        const modal = document.getElementById('uploadModal');
+        const modalContent = document.getElementById('uploadModalContent');
+
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            // Reset Preview Image saat modal ditutup
+            document.getElementById('upload_preview_img').classList.add('hidden');
+            document.getElementById('placeholder_view').classList.remove('hidden');
+            document.getElementById('uploadForm').reset();
+        }, 300);
+    }
+
+    // FUNGSI PREVIEW GAMBAR
+    function previewImage(input) {
+        const preview = document.getElementById('upload_preview_img');
+        const placeholder = document.getElementById('placeholder_view');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // FUNGSI MODAL LIHAT BUKTI (Preview Image Saja)
+    function viewPaymentProof(imageUrl) {
+        const modal = document.getElementById('imageModal');
+        const modalContent = document.getElementById('modalContent');
+        const modalImage = document.getElementById('modalImage');
+
+        modalImage.src = imageUrl;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('imageModal');
+        const modalContent = document.getElementById('modalContent');
+
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 300);
+    }
 </script>

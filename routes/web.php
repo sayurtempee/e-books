@@ -165,6 +165,7 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         Route::get('/buyer/checkout/confirm', [CheckoutController::class, 'confirmPage'])->name('buyer.checkout.confirm');
         Route::post('/buyer/checkout', [CheckoutController::class, 'checkout'])->middleware('throttle:60,1')->name('buyer.checkout');
         Route::get('/buyer/pay/{order}', [CheckoutController::class, 'payPage'])->name('buyer.payment.pay');
+        Route::post('/buyer/checkout/upload-proof', [CheckoutController::class, 'uploadProof'])->name('buyer.checkout.upload_proof');
 
         // Payment
         Route::post('/orders/{order}/payment-upload', [PaymentController::class, 'uploadPayment'])->name('buyer.payment.upload');
@@ -178,17 +179,26 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         Route::delete('/buyer/carts/{id}', [CartController::class, 'destroy'])->middleware('throttle:60,1')->name('buyer.carts.destroy');
 
         // Track Package
-        Route::get('/track-package', function () {
+        Route::get('/track-package', function (Illuminate\Http\Request $request) {
+            $search = $request->query('tracking_number'); // Mengambil input dari search bar
+
             $items = \App\Models\OrderItem::whereHas('order', function ($q) {
                 $q->where('user_id', Auth::id());
             })
-                // Tambahkan 'pending' di sini agar muncul di halaman tracking
                 ->whereIn('status', ['pending', 'approved', 'shipping', 'selesai'])
+                // Filter Pencarian
+                ->when($search, function ($query) use ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('tracking_number', 'LIKE', "%{$search}%")
+                            ->orWhere('expedisi_name', 'LIKE', "%{$search}%");
+                    });
+                })
                 ->with(['order', 'book.user'])
                 ->latest()
                 ->get()
                 ->groupBy(function ($item) {
-                return $item->order_id . '-' . $item->seller_id;
+                    // Grouping tetap berdasarkan kombinasi Order & Seller
+                    return $item->order_id . '-' . $item->seller_id;
                 });
 
             return view('buyer.track_package.index', compact('items'));

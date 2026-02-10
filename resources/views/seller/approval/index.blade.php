@@ -142,7 +142,7 @@
                                 <input type="text" name="expedisi_name" required placeholder="Nama Ekspedisi (JNT, JNE)"
                                     class="w-full border rounded-xl p-2 text-sm">
                                 <input type="text" name="tracking_number"
-                                    placeholder="Nomor Resi (Kosongkan jika otomatis)"
+                                    placeholder="Isi Nomor Resi Pengiriman" required
                                     class="w-full border rounded-xl p-2 text-sm font-mono">
                                 <div class="flex gap-2">
                                     <button type="button" @click="openShippingModal = false"
