@@ -28,17 +28,19 @@
 
                             $hasResi = !empty($firstItem->tracking_number);
 
-                            // Hitung Progress
-                            $progressWidth = '20%';
+                            // Hitung Progress lebih detail
+                            $progressWidth = '0%';
                             if ($status === 'selesai') {
                                 $progressWidth = '100%';
                             } elseif ($status === 'shipping' && $hasResi) {
                                 $progressWidth = '80%';
-                            } elseif ($status === 'approved' || $status === 'shipping') {
+                            } elseif (in_array($status, ['approved', 'shipping'])) {
                                 $progressWidth = '60%';
-                            } elseif ($hasProof) {
-                                $progressWidth = '40%';
-                            } // Gunakan variabel $hasProof
+                            } elseif ($status === 'pending' && $hasProof) {
+                                $progressWidth = '40%'; // Sudah bayar tapi masih pending di seller
+                            } elseif ($status === 'pending') {
+                                $progressWidth = '20%'; // Baru pesan banget
+                            }
                         @endphp
 
                         <div
@@ -46,7 +48,7 @@
 
                             {{-- Header Card --}}
                             <div
-                                class="bg-gradient-to-r {{ $status === 'selesai' ? 'from-emerald-600 to-teal-500' : 'from-teal-600 to-teal-500' }} p-6 text-white flex flex-col md:flex-row justify-between gap-4">
+                                class="bg-gradient-to-r @if ($status === 'selesai') from-emerald-600 to-teal-500 @elseif($status === 'pending') from-red-400 to-red-500 @else from-teal-600 to-teal-500 @endif p-6 text-white flex flex-col md:flex-row justify-between gap-4">
                                 <div class="flex items-center gap-4">
                                     <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl">
                                         <i class="bi {{ $status === 'selesai' ? 'bi-check-all' : 'bi-box-seam' }}"></i>
@@ -88,21 +90,24 @@
                                             [
                                                 'label' => 'Dibayar',
                                                 'icon' => 'bi-cash-stack',
-                                                'active' => $hasProof, // Menggunakan variabel hasProof yang baru
-                                                'desc' => $hasProof ? 'Terverifikasi' : 'Pending',
+                                                'active' =>
+                                                    $hasProof || in_array($status, ['approved', 'shipping', 'selesai']),
+                                                'desc' => $hasProof ? 'Terverifikasi' : 'Menunggu Pembayaran',
                                             ],
                                             [
                                                 'label' => 'Diproses',
                                                 'icon' => 'bi-box-seam',
+                                                // Hanya aktif jika status BUKAN pending
                                                 'active' => in_array($status, ['approved', 'shipping', 'selesai']),
-                                                'desc' => 'Dikemas',
+                                                'desc' =>
+                                                    $status === 'pending' ? 'Menunggu Penjual' : 'Penjual Memproses',
                                             ],
                                             [
                                                 'label' => 'Dikirim',
                                                 'icon' => 'bi-truck',
                                                 'active' =>
                                                     ($status === 'shipping' && $hasResi) || $status === 'selesai',
-                                                'desc' => $hasResi ? 'Perjalanan' : 'Menunggu',
+                                                'desc' => $hasResi ? 'Dalam Perjalanan' : 'Belum Dikirim',
                                             ],
                                             [
                                                 'label' => 'Selesai',
@@ -110,12 +115,13 @@
                                                 'active' => $status === 'selesai',
                                                 'desc' => [
                                                     $status === 'selesai' ? 'Diterima' : 'Tujuan',
-                                                    $statusFinishDate ? $statusFinishDate->format('d M H:i') : '-',
+                                                    $status === 'selesai' && $statusFinishDate
+                                                        ? $statusFinishDate->format('d M H:i')
+                                                        : '-',
                                                 ],
                                             ],
                                         ];
                                     @endphp
-
                                     @foreach ($steps as $step)
                                         <div class="relative z-10 flex items-center md:flex-col gap-4 w-full md:w-auto">
                                             <div
@@ -125,10 +131,11 @@
                                             <div class="text-left md:text-center">
                                                 <p
                                                     class="text-xs font-black uppercase tracking-tight {{ $step['active'] ? 'text-gray-800' : 'text-gray-300' }}">
-                                                    {{ $step['label'] }}</p>
+                                                    {{ $step['label'] }}
+                                                </p>
                                                 <p
                                                     class="text-[10px] font-medium {{ $step['active'] ? 'text-teal-600' : 'text-gray-300' }}">
-                                                    {{--  @dd($step['desc'])  --}}
+                                                    {{-- @dd($step['desc']) --}}
                                                     {!! is_array($step['desc']) ? implode('<br>', $step['desc']) : $step['desc'] !!}
                                                 </p>
                                             </div>
@@ -148,10 +155,12 @@
                                                     class="w-16 h-16 rounded-2xl object-cover shadow-md">
                                                 <div class="flex-1">
                                                     <p class="font-black text-gray-800 text-base leading-tight">
-                                                        {{ $subItem->book->title }}</p>
+                                                        {{ $subItem->book->title }}
+                                                    </p>
                                                     <p class="text-xs font-bold text-teal-600 uppercase">
                                                         {{ $subItem->qty }} x
-                                                        Rp{{ number_format($subItem->price, 0, ',', '.') }}</p>
+                                                        Rp{{ number_format($subItem->price, 0, ',', '.') }}
+                                                    </p>
                                                 </div>
                                                 <div class="text-right">
                                                     <p class="text-lg font-black text-gray-900 italic">

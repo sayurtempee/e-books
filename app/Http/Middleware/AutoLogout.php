@@ -4,21 +4,18 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class AutoLogout
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check()) {
             $user = Auth::user();
+
+            // Ambil session aktivitas terakhir
+            // Pastikan key-nya sama (sebelumnya Anda pakai 'last_activity' dan 'last_activity_at')
             $lastActivity = session('last_activity');
 
             if ($lastActivity) {
@@ -41,15 +38,19 @@ class AutoLogout
             }
 
             // JIKA MASIH AKTIF:
-            // 1. Update session untuk pengecekan berikutnya
-            session(['last_activity_at' => now()]);
+            // 1. Update session untuk pengecekan berikutnya (Gunakan key yang konsisten)
+            session(['last_activity' => now()]);
 
-            // 2. Update database (Heartbeat) agar loginSubmit tahu user ini masih ada
-            $user->update([
-                'isOnline' => true,
-                'last_activity_at' => now(),
-            ]);
+            // 2. Heartbeat: Update database agar status tetap online dan waktu terpantau
+            // Hanya update jika sudah lewat 1 menit untuk menghemat beban database (opsional)
+            if (!$user->last_activity_at || now()->diffInSeconds($user->last_activity_at) > 60) {
+                $user->update([
+                    'isOnline' => true,
+                    'last_activity_at' => now(),
+                ]);
+            }
         }
+
         return $next($request);
     }
 }

@@ -151,6 +151,7 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         // Laporan
         Route::get('/seller/reports', [ReportController::class, 'index'])->name('seller.reports.index');
         Route::get('/seller/reports/download', [ReportController::class, 'download'])->name('seller.reports.download');
+        Route::get('/seller/reports/downloadAll', [ReportController::class, 'downloadAll'])->name('reports.downloadAll');
     });
 
     // --- BUYER ---
@@ -181,12 +182,11 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
             $items = \App\Models\OrderItem::whereHas('order', function ($q) {
                 $q->where('user_id', Auth::id());
             })
-                ->whereIn('status', ['approved', 'shipping', 'selesai'])
+                // Tambahkan 'pending' di sini agar muncul di halaman tracking
+                ->whereIn('status', ['pending', 'approved', 'shipping', 'selesai'])
                 ->with(['order', 'book.user'])
                 ->latest()
                 ->get()
-                // Dikelompokkan per Order dan per Seller
-                // (Karena 1 Order bisa berisi barang dari beberapa Seller berbeda)
                 ->groupBy(function ($item) {
                 return $item->order_id . '-' . $item->seller_id;
                 });

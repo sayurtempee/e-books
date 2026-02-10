@@ -37,7 +37,7 @@ class TransactionController extends Controller
 
         // 2. Validasi
         $request->validate([
-            'status' => 'required|in:approved,shipping,refunded,selesai',
+            'status' => 'required|in:pending,approved,shipping,refunded,selesai',
             'expedisi_name' => 'required_if:status,shipping',
             'tracking_number' => [
                 'nullable',
@@ -106,6 +106,11 @@ class TransactionController extends Controller
         if (!$item->book || !$item->order) return;
 
         $map = [
+            'pending'  => [
+                'title' => 'Pesanan Menunggu',
+                'message' => "Pesanan #ORD-{$item->order_id} sedang menunggu konfirmasi penjual.",
+                'icon' => '⏳'
+            ],
             'approved' => ['title' => 'Pesanan Diproses', 'message' => "Pesanan #ORD-{$item->order_id} sedang diproses.", 'icon' => '✅'],
             'shipping' => ['title' => 'Pesanan Dikirim', 'message' => "Pesanan #ORD-{$item->order_id} dalam pengiriman. Resi: {$item->tracking_number}", 'icon' => '🚚'],
             'selesai'  => ['title' => 'Pesanan Selesai', 'message' => "Pesanan #ORD-{$item->order_id} telah diterima.", 'icon' => '📦'],
@@ -117,7 +122,7 @@ class TransactionController extends Controller
         $item->order->user->notify(new GeneralNotification([
             ...$map[$item->status],
             'color' => 'bg-teal-100 text-teal-600',
-            'url' => route('buyer.orders.index'),
+            'url' => route('buyer.orders.tracking'),
         ]));
     }
 }

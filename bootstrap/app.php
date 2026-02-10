@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Session\Middleware\AuthenticateSession::class,
             \App\Http\Middleware\AutoLogout::class,
             \App\Http\Middleware\TrackUserActivity::class,
+            \Illuminate\Session\Middleware\AuthenticateSession::class,
         ]);
 
         $middleware->alias([

@@ -3,254 +3,215 @@
 
     @section('body-content')
         <x-sidebar>
-            <div class="p-4 md:p-8 bg-[#f8fafc] min-h-screen">
+            <div class="min-h-screen bg-slate-50 px-6 md:px-10 py-10 space-y-14">
 
                 {{-- Header --}}
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
                     <div>
-                        <h1 class="text-4xl font-black text-gray-900 tracking-tight mb-2">
+                        <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
                             Laporan <span class="text-teal-600">Penjualan</span>
                         </h1>
-                        <p class="text-gray-500 text-sm flex items-center gap-2">
-                            <span class="flex h-2 w-2 rounded-full bg-teal-500"></span>
-                            Data performa real-time untuk periode terpilih.
+                        <p class="mt-2 text-sm text-slate-500 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                            Data performa real-time untuk periode terpilih
                         </p>
                     </div>
 
-                    <a href="{{ route('seller.reports.download', ['month' => $selectedMonth, 'year' => $selectedYear]) }}"
-                        class="group flex items-center gap-3 bg-white border-2 border-teal-600 text-teal-600 hover:bg-teal-600 hover:text-white px-6 py-3 rounded-2xl font-bold transition-all duration-300 shadow-sm hover:shadow-teal-200">
-                        <i class="bi bi-file-earmark-pdf-fill text-xl"></i>
-                        <span>Export PDF</span>
-                    </a>
+                    <div class="flex flex-wrap gap-3">
+                        <a href="{{ route('seller.reports.download', ['month' => $selectedMonth, 'year' => $selectedYear]) }}"
+                            class="inline-flex items-center gap-2 rounded-xl border border-teal-600 px-5 py-3 text-sm font-bold text-teal-700 hover:bg-teal-600 hover:text-white transition">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            Export PDF
+                        </a>
+
+                        <a href="{{ route('reports.downloadAll') }}"
+                            class="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-teal-700 transition">
+                            <i class="bi bi-file-earmark-pdf-fill"></i>
+                            Download Semua
+                        </a>
+                    </div>
                 </div>
 
-                {{-- Filter Bar --}}
-                <div
-                    class="bg-white/70 backdrop-blur-md p-6 rounded-[2rem] border border-white shadow-xl shadow-gray-200/50 mb-10">
-                    <form action="{{ route('seller.reports.index') }}" method="GET"
-                        class="flex flex-col md:flex-row items-end gap-6">
-                        <div class="w-full md:w-64">
-                            <label class="block text-xs font-black text-teal-900 uppercase tracking-widest mb-2 ml-1">Pilih
-                                Bulan</label>
-                            <div class="relative">
-                                <select name="month"
-                                    class="w-full bg-gray-50 border-none ring-1 ring-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all">
-                                    @foreach (range(1, 12) as $m)
-                                        <option value="{{ $m }}" {{ $selectedMonth == $m ? 'selected' : '' }}>
-                                            {{ \Carbon\Carbon::createFromDate(null, $m, 1)->locale('id')->translatedFormat('F') }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <i
-                                    class="bi bi-chevron-down absolute right-4 top-3.5 text-gray-400 pointer-events-none"></i>
-                            </div>
+                {{-- Filter --}}
+                <div class="bg-white rounded-2xl border border-slate-100 p-6">
+                    <form method="GET" action="{{ route('seller.reports.index') }}"
+                        class="flex flex-col md:flex-row md:items-end gap-6">
+
+                        <div class="w-full md:w-56">
+                            <label class="text-xs font-bold uppercase text-slate-500">Bulan</label>
+                            <select name="month" class="mt-2 w-full rounded-xl border-slate-200 focus:ring-teal-500">
+                                @foreach (range(1, 12) as $m)
+                                    <option value="{{ $m }}" {{ $selectedMonth == $m ? 'selected' : '' }}>
+                                        {{ \Carbon\Carbon::createFromDate(null, $m, 1)->locale('id')->translatedFormat('F') }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
-                        <div class="w-full md:w-48">
-                            <label
-                                class="block text-xs font-black text-teal-900 uppercase tracking-widest mb-2 ml-1">Tahun</label>
-                            <div class="relative">
-                                <select name="year"
-                                    class="w-full bg-gray-50 border-none ring-1 ring-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-teal-500 appearance-none transition-all">
-                                    @foreach ($yearRange as $y)
-                                        <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>
-                                            {{ $y }}</option>
-                                    @endforeach
-                                </select>
-                                <i
-                                    class="bi bi-chevron-down absolute right-4 top-3.5 text-gray-400 pointer-events-none"></i>
-                            </div>
+                        <div class="w-full md:w-40">
+                            <label class="text-xs font-bold uppercase text-slate-500">Tahun</label>
+                            <select name="year" class="mt-2 w-full rounded-xl border-slate-200 focus:ring-teal-500">
+                                @foreach ($yearRange as $y)
+                                    <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>
+                                        {{ $y }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
-                        <div class="flex gap-3 w-full md:w-auto">
-                            <button type="submit"
-                                class="flex-1 md:flex-none bg-teal-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-teal-700 hover:scale-105 transition-all duration-300 shadow-lg shadow-teal-200">
+                        <div class="flex gap-3">
+                            <button
+                                class="rounded-xl bg-teal-600 px-8 py-3 text-sm font-bold text-white hover:bg-teal-700 transition">
                                 Terapkan
                             </button>
-
                             <a href="{{ route('seller.reports.index') }}"
-                                class="flex items-center justify-center bg-gray-100 text-gray-500 px-4 py-3 rounded-xl hover:bg-gray-200 transition-all">
+                                class="rounded-xl bg-slate-100 px-4 py-3 text-slate-500 hover:bg-slate-200">
                                 <i class="bi bi-arrow-clockwise"></i>
                             </a>
                         </div>
                     </form>
                 </div>
 
-                {{-- Statistik Cards --}}
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-                    {{-- Omzet --}}
-                    <div
-                        class="group bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
-                        <div class="flex justify-between items-start mb-6">
-                            <div
-                                class="w-14 h-14 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-teal-600 group-hover:text-white transition-colors duration-500">
-                                <i class="bi bi-wallet2"></i>
-                            </div>
-                            <span class="text-xs font-bold text-teal-500 bg-teal-50 px-3 py-1 rounded-full">Bulanan</span>
-                        </div>
-                        <p class="text-sm text-gray-400 font-medium mb-1">Total Omzet</p>
-                        <h3 class="text-3xl font-black text-gray-800">
-                            Rp {{ number_format($totalRevenue, 0, ',', '.') }}
-                        </h3>
-                    </div>
+                {{-- Ringkasan --}}
+                <section>
+                    <h2 class="text-xs font-extrabold tracking-widest uppercase text-slate-400 mb-4">
+                        Ringkasan Seluruh Waktu
+                    </h2>
 
-                    {{-- Profit --}}
-                    <div
-                        class="group bg-teal-600 p-8 rounded-[2rem] border border-teal-500 shadow-xl shadow-teal-100 hover:shadow-teal-300 hover:-translate-y-2 transition-all duration-500">
-                        <div class="flex justify-between items-start mb-6">
-                            <div
-                                class="w-14 h-14 bg-white/20 text-white rounded-2xl flex items-center justify-center text-2xl backdrop-blur-md">
-                                <i class="bi bi-graph-up-arrow"></i>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-2xl border border-slate-100 p-6 flex items-center gap-4">
+                            <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                                <i class="bi bi-cash-stack"></i>
                             </div>
-                            <span
-                                class="text-xs font-bold text-white/80 bg-white/10 px-3 py-1 rounded-full backdrop-blur-md border border-white/20">Net
-                                Profit</span>
-                        </div>
-                        <p class="text-sm text-white/70 font-medium mb-1">Keuntungan Bersih</p>
-                        <h3 class="text-3xl font-black text-white">
-                            Rp {{ number_format($totalProfit, 0, ',', '.') }}
-                        </h3>
-                    </div>
-
-                    {{-- Terjual --}}
-                    <div
-                        class="group bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
-                        <div class="flex justify-between items-start mb-6">
-                            <div
-                                class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-500">
-                                <i class="bi bi-cart-check"></i>
+                            <div>
+                                <p class="text-xs uppercase text-slate-400 font-bold">Total Omzet</p>
+                                <p class="text-xl font-extrabold text-slate-800">
+                                    Rp {{ number_format($grandTotalRevenue, 0, ',', '.') }}
+                                </p>
                             </div>
-                            <span class="text-xs font-bold text-blue-500 bg-blue-50 px-3 py-1 rounded-full">Volume</span>
                         </div>
-                        <p class="text-sm text-gray-400 font-medium mb-1">Buku Terjual</p>
-                        <h3 class="text-3xl font-black text-gray-800">
-                            {{ $totalSold }} <span class="text-lg font-bold text-gray-300 ml-1 uppercase">Pcs</span>
-                        </h3>
-                    </div>
-                </div>
 
-                {{-- Grafik Section --}}
-                <div class="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm mb-10">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+                        <div class="bg-white rounded-2xl border border-slate-100 p-6 flex items-center gap-4">
+                            <div
+                                class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                <i class="bi bi-piggy-bank"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs uppercase text-slate-400 font-bold">Total Profit</p>
+                                <p class="text-xl font-extrabold text-slate-800">
+                                    Rp {{ number_format($grandTotalProfit, 0, ',', '.') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {{-- Statistik Bulanan --}}
+                <section>
+                    <h2 class="text-xs font-extrabold tracking-widest uppercase text-slate-400 mb-4">
+                        Statistik Bulan Ini
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                        <div class="bg-white rounded-2xl border border-slate-100 p-8">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+                                    <i class="bi bi-wallet2"></i>
+                                </div>
+                                <span class="text-sm font-semibold text-slate-500">Total Omzet</span>
+                            </div>
+                            <p class="text-3xl font-extrabold text-slate-800">
+                                Rp {{ number_format($totalRevenue, 0, ',', '.') }}
+                            </p>
+                        </div>
+
+                        <div class="bg-teal-600 rounded-2xl p-8 text-white">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                                    <i class="bi bi-graph-up-arrow"></i>
+                                </div>
+                                <span class="text-sm font-semibold text-white/80">Keuntungan Bersih</span>
+                            </div>
+                            <p class="text-3xl font-extrabold">
+                                Rp {{ number_format($totalProfit, 0, ',', '.') }}
+                            </p>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-slate-100 p-8">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                    <i class="bi bi-cart-check"></i>
+                                </div>
+                                <span class="text-sm font-semibold text-slate-500">Buku Terjual</span>
+                            </div>
+                            <p class="text-3xl font-extrabold text-slate-800">
+                                {{ $totalSold }} <span class="text-base text-slate-400">pcs</span>
+                            </p>
+                        </div>
+
+                    </div>
+                </section>
+
+                {{-- Chart --}}
+                <section class="bg-white rounded-3xl border border-slate-100 p-10">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
                         <div>
-                            <h2 class="text-2xl font-black text-gray-800">Trend Penjualan</h2>
-                            <p class="text-gray-400 text-sm">Visualisasi perbandingan Omzet dan Profit harian</p>
+                            <h2 class="text-xl font-extrabold text-slate-800">Trend Penjualan</h2>
+                            <p class="text-sm text-slate-400">Perbandingan omzet & profit harian</p>
                         </div>
-                        <div class="flex items-center gap-4">
+
+                        <div class="flex items-center gap-4 mt-4 md:mt-0">
                             <div class="flex items-center gap-2">
-                                <span class="w-3 h-3 rounded-full bg-teal-500"></span>
-                                <span class="text-xs font-bold text-gray-500 uppercase">Profit</span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-teal-600"></span>
+                                <span class="text-xs font-semibold text-slate-500 uppercase">Profit</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="w-3 h-3 rounded-full bg-teal-200"></span>
-                                <span class="text-xs font-bold text-gray-500 uppercase">Omzet</span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-teal-300"></span>
+                                <span class="text-xs font-semibold text-slate-500 uppercase">Omzet</span>
                             </div>
                         </div>
                     </div>
-
-                    <div class="h-[450px]">
+                    <div class="h-[420px]">
                         <canvas id="salesChart"></canvas>
                     </div>
-                </div>
-
+                </section>
             </div>
 
-            {{-- Script Chart (Tetap Sama Namun dengan Penyesuaian Visual) --}}
+            {{-- Chart JS --}}
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script>
-                const ctx = document.getElementById('salesChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'bar',
+                new Chart(document.getElementById('salesChart'), {
                     data: {
                         labels: @json($days),
                         datasets: [{
-                                label: 'Profit',
                                 type: 'line',
+                                label: 'Profit',
                                 data: @json($profits),
-                                borderColor: '#0d9488',
-                                backgroundColor: 'transparent',
-                                borderWidth: 4,
-                                pointBackgroundColor: '#ffffff',
-                                pointBorderColor: '#0d9488',
-                                pointBorderWidth: 3,
-                                pointRadius: 6,
-                                pointHoverRadius: 8,
-                                tension: 0.4,
-                                order: 1
+                                borderColor: '#0f766e',
+                                borderWidth: 3,
+                                tension: .4,
+                                pointRadius: 4
                             },
                             {
+                                type: 'bar',
                                 label: 'Omzet',
                                 data: @json($revenues),
-                                backgroundColor: 'rgba(20, 184, 166, 0.15)',
-                                borderColor: 'transparent',
-                                borderRadius: 12,
-                                borderSkipped: false,
-                                barPercentage: 0.6,
-                                order: 2
+                                backgroundColor: 'rgba(15,118,110,.15)',
+                                borderRadius: 10
                             }
                         ]
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false,
                         plugins: {
                             legend: {
                                 display: false
-                            },
-                            tooltip: {
-                                backgroundColor: '#1e293b',
-                                padding: 15,
-                                titleFont: {
-                                    size: 14,
-                                    weight: 'bold'
-                                },
-                                bodyFont: {
-                                    size: 13
-                                },
-                                cornerRadius: 12,
-                                displayColors: true,
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.dataset.label || '';
-                                        if (label) label += ': ';
-                                        if (context.parsed.y !== null) {
-                                            label += new Intl.NumberFormat('id-ID', {
-                                                style: 'currency',
-                                                currency: 'IDR',
-                                                maximumFractionDigits: 0
-                                            }).format(context.parsed.y);
-                                        }
-                                        return label;
-                                    }
-                                }
                             }
                         },
                         scales: {
                             y: {
-                                beginAtZero: true,
-                                grid: {
-                                    color: '#f1f5f9',
-                                    drawBorder: false
-                                },
                                 ticks: {
-                                    callback: v => 'Rp ' + v.toLocaleString('id-ID'),
-                                    color: '#94a3b8',
-                                    font: {
-                                        size: 11,
-                                        weight: 'bold'
-                                    }
-                                }
-                            },
-                            x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    color: '#94a3b8',
-                                    font: {
-                                        size: 11,
-                                        weight: 'bold'
-                                    }
+                                    callback: v => 'Rp ' + v.toLocaleString('id-ID')
                                 }
                             }
                         }

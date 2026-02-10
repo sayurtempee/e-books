@@ -18,19 +18,25 @@ class ReportController extends Controller
         $selectedMonth = $request->get('month', now()->month);
         $selectedYear = $request->get('year', now()->year);
 
-        // 1. Ambil data berdasarkan filter untuk Statistik Ringkas
+        // --- 1. Data Berdasarkan Filter (Bulanan) ---
         $query = OrderItem::where('seller_id', $sellerId)
-            ->whereIn('status', ['shipping', 'selesai'])
-            ->whereMonth('created_at', $selectedMonth)
-            ->whereYear('created_at', $selectedYear);
+            ->whereIn('status', ['shipping', 'selesai']);
 
-        $sellerItems = $query->get();
+        // Clone query untuk menghitung Grand Total (Semua Waktu) sebelum difilter bulan/tahun
+        $grandTotalQuery = clone $query;
+        $grandTotalRevenue = $grandTotalQuery->get()->sum(fn($item) => $item->price * $item->qty);
+        $grandTotalProfit  = $grandTotalQuery->sum('profit');
+
+        // Lanjutkan filter bulanan untuk statistik ringkas
+        $sellerItems = $query->whereMonth('created_at', $selectedMonth)
+            ->whereYear('created_at', $selectedYear)
+            ->get();
 
         $totalRevenue = $sellerItems->sum(fn($item) => $item->price * $item->qty);
         $totalProfit  = $sellerItems->sum('profit');
         $totalSold    = $sellerItems->sum('qty');
 
-        // 2. Menyiapkan data untuk Grafik (Berdasarkan jumlah hari dalam bulan terpilih)
+        // --- 2. Menyiapkan data untuk Grafik ---
         $days = collect();
         $profits = collect();
         $revenues = collect();
@@ -39,7 +45,7 @@ class ReportController extends Controller
 
         for ($d = 1; $d <= $daysInMonth; $d++) {
             $date = sprintf('%04d-%02d-%02d', $selectedYear, $selectedMonth, $d);
-            $days->push($d); // Label sumbu X cukup tanggalnya saja (1-31)
+            $days->push($d);
 
             $dailyItems = OrderItem::where('seller_id', $sellerId)
                 ->whereDate('created_at', $date)
@@ -50,13 +56,14 @@ class ReportController extends Controller
             $profits->push($dailyItems->sum('profit'));
         }
 
-        // Untuk dropdown tahun (5 tahun terakhir)
         $yearRange = range(now()->year, now()->year - 5);
 
         return view('seller.report.index', compact(
             'totalRevenue',
             'totalProfit',
             'totalSold',
+            'grandTotalRevenue', // Data baru
+            'grandTotalProfit',  // Data baru
             'days',
             'profits',
             'revenues',
@@ -114,6 +121,38 @@ class ReportController extends Controller
         ])->setPaper('A4', 'portrait');
 
         $filename = 'laporan-penjualan-' . str_replace(' ', '-', strtolower($periode)) . '.pdf';
+        return $pdf->download($filename);
+    }
+
+    public function downloadAll()
+    {
+        $sellerId = Auth::id();
+
+        // Ambil semua data tanpa filter bulan/tahun
+        $items = OrderItem::with(['order.user', 'book'])
+            ->where('seller_id', $sellerId)
+            ->whereIn('status', ['shipping', 'selesai'])
+            ->get();
+
+        // Hitung total
+        $totalRevenue = $items->sum(fn($i) => $i->price * $i->qty);
+        $totalProfit  = $items->sum('profit');
+
+        // Kelompokkan berdasarkan order_id untuk tampilan tabel di PDF
+        $orders = $items->groupBy('order_id');
+
+        $periode = "Semua Waktu";
+
+        // Load view PDF yang sama
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('seller.report.pdf', [
+            'orders'       => $orders,
+            'totalRevenue' => $totalRevenue,
+            'totalProfit'  => $totalProfit,
+            'periode'      => $periode,
+        ])->setPaper('A4', 'portrait');
+
+        $filename = 'laporan-penjualan-keseluruhan-' . now()->format('Y-m-d') . '.pdf';
+
         return $pdf->download($filename);
     }
 }

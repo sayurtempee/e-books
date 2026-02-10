@@ -75,21 +75,11 @@ class AuthController extends Controller
 
         if ($user && Hash::check($request->password, $user->password)) {
 
-            // LOGIKA SINGLE LOGIN
-            // Cek jika isOnline true DAN aktivitas terakhir masih di bawah 30 menit
-            $isReallyOnline = $user->isOnline &&
-                $user->last_activity_at &&
-                $user->last_activity_at->diffInMinutes(now()) < 30;
-
-            if ($isReallyOnline) {
-                return back()->withErrors([
-                    'login' => 'Akun ini sedang aktif di perangkat lain. Silakan logout terlebih dahulu.'
-                ]);
-            }
-
-            // Jalankan Login jika lolos pengecekan
+            // Jalankan Login
             if (Auth::attempt($credentials)) {
                 $request->session()->regenerate();
+
+                Auth::logoutOtherDevices($request->password);
 
                 $user = Auth::user();
                 $user->update([
@@ -97,14 +87,14 @@ class AuthController extends Controller
                     'last_activity_at' => now(),
                 ]);
 
-                // Set session awal agar middleware langsung mengenalinya
+                // Set session awal dengan KEY yang sama seperti di Middleware AutoLogout
                 session(['last_activity' => now()]);
 
-                // Notifikasi (Opsional)
+                // Notifikasi Login Baru
                 $user->notify(new GeneralNotification([
-                    'title' => 'Selamat Datang!',
-                    'message' => "Halo {$user->name}, Anda berhasil masuk.",
-                    'icon' => '👋',
+                    'title' => 'Login Berhasil',
+                    'message' => "Halo {$user->name}, Anda masuk dari perangkat baru. Sesi di perangkat lain telah dihentikan.",
+                    'icon' => '📱',
                     'color' => 'bg-teal-100 text-teal-600',
                     'url' => '#',
                 ]));
