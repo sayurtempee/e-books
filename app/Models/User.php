@@ -3,10 +3,12 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Models\Book;
+use App\Models\Order;
 use App\Models\OrderItem;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
@@ -60,6 +62,19 @@ class User extends Authenticatable
     {
         // Asumsi: Di tabel 'books' ada kolom 'user_id' untuk menandai pemilik buku
         return $this->hasMany(Book::class, 'user_id');
+    }
+
+
+    public function boughtItems(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(
+            OrderItem::class,
+            Order::class,     // Buyer punya Order, Order punya OrderItem
+            'user_id',        // Foreign key di tabel orders
+            'order_id',       // Foreign key di tabel order_items
+            'id',             // Local key di tabel users
+            'id'              // Local key di tabel orders
+        );
     }
 
     public function orderItems()

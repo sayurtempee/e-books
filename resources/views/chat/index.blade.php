@@ -269,7 +269,7 @@
                 const activeChatId = "{{ $activeChat->id ?? 0 }}";
                 if (activeChatId > 0 && window.Echo) {
                     window.Echo.private(`chat.${activeChatId}`)
-                        .listen('MessageSent', (e) => {
+                        .listen('.MessageSent', (e) => {
                             if (e.message.user_id != "{{ auth()->id() }}") {
                                 const incomingHtml = `<div class="flex items-end animate-fade-in">
                                     <div class="bg-white text-gray-800 p-3 rounded-2xl rounded-bl-none shadow-md max-w-md border border-gray-100">
@@ -279,6 +279,67 @@
                                 </div>`;
                                 chatMessages.insertAdjacentHTML('beforeend', incomingHtml);
                                 chatMessages.scrollTop = chatMessages.scrollHeight;
+                            }
+                        });
+                }
+
+                const userId = "{{ Auth::id() }}";
+                if (window.Echo) {
+                    window.Echo.leave(`App.Models.User.${userId}`);
+
+                    window.Echo.private(`App.Models.User.${userId}`)
+                        .notification((notification) => {
+                            if (typeof activeChatId !== 'undefined') {
+                                console.log("User sedang di room chat, skip notifikasi lonceng.");
+                                return;
+                            }
+
+                            console.log("Notifikasi Baru Diterima:", notification);
+
+                            const badge = document.getElementById('notification-count');
+                            if (badge) {
+                                let currentCount = parseInt(badge.innerText) || 0;
+                                badge.innerText = currentCount + 1;
+                                badge.classList.remove('hidden');
+                            }
+
+                            const notificationList = document.querySelector('.divide-y');
+                            if (notificationList) {
+                                // Hapus state kosong
+                                const emptyState = notificationList.querySelector('.py-12');
+                                if (emptyState) emptyState.remove();
+
+                                const readUrl = '/notifications/read/${notification.id}';
+                                const deleteUrl = '/notifications/delete/${notification.id}';
+
+                                const newNotificationHtml = `
+    <div class="group relative flex items-start gap-3 px-5 py-4 hover:bg-teal-50 transition">
+        <a href="${readUrl}" class="flex flex-1 gap-3">
+            <div class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-teal-100 text-teal-600">
+                ${notification.icon || '🔔'}
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="font-medium text-gray-800 font-bold text-teal-900">
+                    ${notification.title || 'Pesan Baru'}
+                </p>
+                <p class="text-[11px] text-gray-500 line-clamp-2">
+                    ${notification.message || ''}
+                </p>
+                <p class="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                    <i class="bi bi-clock"></i> Baru saja
+                </p>
+            </div>
+        </a>
+        <form action="${deleteUrl}" method="POST" class="opacity-0 group-hover:opacity-100 transition">
+            <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]').content}">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="text-gray-400 hover:text-red-500 p-1">
+                <i class="bi bi-trash3 text-sm"></i>
+            </button>
+        </form>
+    </div>`;
+
+                                notificationList.insertAdjacentHTML('afterbegin', newNotificationHtml);
                             }
                         });
                 }

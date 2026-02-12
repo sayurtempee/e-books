@@ -104,20 +104,32 @@
                                                     </div>
 
                                                     {{-- Delete --}}
-                                                    <form id="deleteSellerForm-{{ $user->id }}" method="POST"
-                                                        action="{{ route('admin.sellers.delete', $user->id) }}"
-                                                        class="inline">
-                                                        @csrf
-                                                        @method('DELETE')
-
+                                                    @if ($user->books_count > 0)
                                                         <button type="button"
-                                                            onclick="confirmDeleteSeller({{ $user->id }}, '{{ $user->name }}')"
-                                                            class="text-red-500 hover:text-red-600 transition"
-                                                            title="Delete">
-                                                            <i class="bi bi-trash cursor-pointer"></i>
+                                                            class="text-gray-300 cursor-not-allowed group relative"
+                                                            onclick="alert('Seller tidak bisa dihapus karena masih memiliki {{ $user->books_count }} buku aktif.')">
+                                                            <i class="bi bi-trash"></i>
+                                                            {{-- Tooltip sederhana --}}
+                                                            <span
+                                                                class="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-xs p-1 rounded">
+                                                                Masih ada {{ $user->books_count }} buku
+                                                            </span>
                                                         </button>
-                                                    </form>
+                                                    @else
+                                                        <form id="deleteSellerForm-{{ $user->id }}" method="POST"
+                                                            action="{{ route('admin.sellers.delete', $user->id) }}"
+                                                            class="inline">
+                                                            @csrf
+                                                            @method('DELETE')
 
+                                                            <button type="button"
+                                                                onclick="confirmDeleteSeller({{ $user->id }}, '{{ $user->name }}')"
+                                                                class="text-red-500 hover:text-red-600 transition"
+                                                                title="Delete">
+                                                                <i class="bi bi-trash cursor-pointer"></i>
+                                                            </button>
+                                                        </form>
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>

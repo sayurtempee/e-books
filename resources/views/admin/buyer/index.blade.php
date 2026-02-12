@@ -104,20 +104,30 @@
                                                     </div>
 
                                                     {{-- Delete --}}
-                                                    <form id="deleteBuyerForm-{{ $user->id }}" method="POST"
-                                                        action="{{ route('admin.buyers.delete', $user->id) }}"
-                                                        class="inline">
-                                                        @csrf
-                                                        @method('DELETE')
-
+                                                    @if ($user->active_items_count > 0)
                                                         <button type="button"
-                                                            onclick="confirmDeleteBuyer({{ $user->id }}, '{{ $user->name }}')"
-                                                            class="text-red-500 hover:text-red-600 transition"
-                                                            title="Delete">
-                                                            <i class="bi bi-trash cursor-pointer"></i>
+                                                            class="text-gray-300 cursor-not-allowed group relative"
+                                                            onclick="alert('Buyer tidak bisa dihapus karena masih memiliki {{ $user->active_items_count }} item transaksi aktif.')">
+                                                            <i class="bi bi-trash"></i>
+                                                            <span
+                                                                class="absolute bottom-full mb-2 hidden group-hover:block bg-gray-800 text-white text-xs p-1 rounded">
+                                                                Masih ada {{ $user->active_items_count }} item transaksi
+                                                            </span>
                                                         </button>
-                                                    </form>
-
+                                                    @else
+                                                        {{-- Form Delete muncul HANYA jika active_items_count adalah 0 --}}
+                                                        <form id="deleteBuyerForm-{{ $user->id }}" method="POST"
+                                                            action="{{ route('admin.buyers.delete', $user->id) }}"
+                                                            class="inline">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="button"
+                                                                onclick="confirmDeleteBuyer({{ $user->id }}, '{{ $user->name }}')"
+                                                                class="text-red-500 hover:text-red-600 transition">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>

@@ -18,17 +18,28 @@
                     </div>
 
                     <div class="flex flex-wrap gap-3">
-                        <a href="{{ route('seller.reports.download', ['month' => $selectedMonth, 'year' => $selectedYear]) }}"
-                            class="inline-flex items-center gap-2 rounded-xl border border-teal-600 px-5 py-3 text-sm font-bold text-teal-700 hover:bg-teal-600 hover:text-white transition">
-                            <i class="bi bi-file-earmark-pdf"></i>
-                            Export PDF (Filter)
-                        </a>
+                        <form id="pdfDownloadForm" action="{{ route('seller.reports.download') }}" method="POST"
+                            class="inline">
+                            @csrf
+                            <input type="hidden" name="month" value="{{ $selectedMonth }}">
+                            <input type="hidden" name="year" value="{{ $selectedYear }}">
+                            <input type="hidden" name="chart_image" id="chart_image_input">
 
-                        <a href="{{ route('reports.downloadAll') }}"
-                            class="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-teal-700 transition">
-                            <i class="bi bi-file-earmark-pdf-fill"></i>
-                            Download Semua Waktu
-                        </a>
+                            @if ($selectedMonth === 'all')
+                                <button type="button" onclick="submitPdfWithChart()"
+                                    class="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-teal-700 transition">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                                    Download Laporan (Semua Bulan)
+                                </button>
+                            @else
+                                <button type="button" onclick="submitPdfWithChart()"
+                                    class="inline-flex items-center gap-2 rounded-xl border border-teal-600 px-5 py-3 text-sm font-bold text-teal-700 hover:bg-teal-600 hover:text-white transition">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                    Download Laporan
+                                    ({{ \Carbon\Carbon::createFromDate(null, $selectedMonth, 1)->locale('id')->translatedFormat('F') }})
+                                </button>
+                            @endif
+                        </form>
                     </div>
                 </div>
 
@@ -204,45 +215,82 @@
             {{-- Chart JS --}}
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script>
-                new Chart(document.getElementById('salesChart'), {
-                    data: {
-                        labels: @json($days),
-                        datasets: [{
-                                type: 'line',
-                                label: 'Profit',
-                                data: @json($profits),
-                                borderColor: '#0f766e',
-                                borderWidth: 3,
-                                tension: .4,
-                                pointRadius: 4
-                            },
-                            {
-                                type: 'bar',
-                                label: 'Omzet',
-                                data: @json($revenues),
-                                backgroundColor: 'rgba(15,118,110,.15)',
-                                borderRadius: 10
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
+                document.addEventListener('DOMContentLoaded', function() {
+                    const ctx = document.getElementById('salesChart');
+
+                    window.myChart = new Chart(ctx, {
+                        data: {
+                            labels: @json($days),
+                            datasets: [{
+                                    type: 'line',
+                                    label: 'Profit',
+                                    data: @json($profits),
+                                    borderColor: '#0f766e',
+                                    backgroundColor: '#0f766e',
+                                    borderWidth: 3,
+                                    tension: .4,
+                                    pointRadius: 4,
+                                    fill: false
+                                },
+                                {
+                                    type: 'bar',
+                                    label: 'Omzet',
+                                    data: @json($revenues),
+                                    backgroundColor: 'rgba(15,118,110,.25)',
+                                    borderRadius: 5
+                                }
+                            ]
                         },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    callback: v => 'Rp ' + v.toLocaleString('id-ID')
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: false, // Wajib false agar capture instan
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return 'Rp ' + value.toLocaleString('id-ID');
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    }
+                        },
+                        plugins: [{
+                            beforeDraw: (chart) => {
+                                const {
+                                    ctx
+                                } = chart;
+                                ctx.save();
+                                ctx.globalCompositeOperation = 'destination-over';
+                                ctx.fillStyle = 'white';
+                                ctx.fillRect(0, 0, chart.width, chart.height);
+                                ctx.restore();
+                            }
+                        }]
+                    });
                 });
+
+                // NAMA FUNGSI INI HARUS SAMA DENGAN ONCLICK DI TOMBOL
+                function submitPdfWithChart() {
+                    if (window.myChart) {
+                        // 1. Ambil gambar dari chart
+                        const chartBase64 = window.myChart.toBase64Image('image/png', 1);
+
+                        // 2. Isi hidden input
+                        document.getElementById('chart_image_input').value = chartBase64;
+
+                        // 3. Submit form dengan ID yang benar (pdfDownloadForm)
+                        document.getElementById('pdfDownloadForm').submit();
+                    } else {
+                        alert('Grafik belum siap, silakan tunggu sebentar.');
+                    }
+                }
             </script>
         </x-sidebar>
     @endsection

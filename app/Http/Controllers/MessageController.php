@@ -4,19 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Message;
-use App\Events\UserTyping;
-use App\Events\MessageRead;
 use App\Events\MessageSent;
+use Illuminate\Support\Str;
 use App\Models\Conversation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
+use App\Notifications\GeneralNotification;
+
 
 class MessageController extends Controller
 {
     public function index($user_id = null)
     {
-        $authId = auth()->id();
+        $authId = Auth::id();
 
         // 1. Ambil semua daftar percakapan untuk sidebar
         $conversations = Conversation::with(['sender', 'receiver', 'messages'])
@@ -51,26 +51,46 @@ class MessageController extends Controller
 
     public function store(Request $request, $conversation_id)
     {
-        $request->validate([
-            'body' => 'required|string',
-        ]);
+        try {
+            $request->validate(['body' => 'required|string']);
 
-        $message = Message::create([
-            'conversation_id' => $conversation_id,
-            'user_id' => auth()->id(),
-            'body' => $request->body,
-        ]);
+            $message = Message::create([
+                'conversation_id' => $conversation_id,
+                'user_id' => Auth::id(),
+                'body' => $request->body,
+            ]);
 
-        // Update timestamp percakapan agar naik ke paling atas di sidebar
-        $message->conversation()->update(['last_message_at' => now()]);
+            $conversation = $message->conversation;
+            $conversation->update(['last_message_at' => now()]);
 
-        broadcast(new MessageSent($message))->toOthers();
+            // LOGIKA RECIPIENT: Sesuaikan dengan kolom di tabel conversations Anda
+            $recipientId = ($conversation->sender_id == Auth::id())
+                ? $conversation->receiver_id
+                : $conversation->sender_id;
 
-        return response()->json([
-            'status' => 'success',
-            'message' => $message,
-            // Format waktu untuk dikirim ke UI
-            'time' => $message->created_at->format('H:i')
-        ]);
+            $recipient = User::find($recipientId);
+
+            if ($recipient && $recipient->id !== Auth::id()) {
+                $recipient->notify(new GeneralNotification([
+                    'title'   => 'Pesan Baru dari ' . Auth::user()->name,
+                    'message' => Str::limit($message->body, 50),
+                    'icon'    => '💬',
+                    'color'   => 'bg-blue-100 text-blue-700',
+                    'url'     => route('chat.index', ['user_id' => Auth::id()]),
+                ]));
+            }
+
+            // Jalankan Broadcast
+            broadcast(new MessageSent($message))->toOthers();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => $message,
+                'time' => $message->created_at->format('H:i')
+            ]);
+        } catch (\Exception $e) {
+            // Jika ada error, kirim pesan errornya ke console browser
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

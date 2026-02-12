@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\OrderItem;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use App\Notifications\GeneralNotification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
@@ -29,7 +31,7 @@ class AdminController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'address' => 'nullable|string',
-            'no_rek' => 'nullable|string|min:10|max:20|unique:users,no_rek',
+            'no_rek' => 'nullable|string|unique:users,no_rek',
             'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
         ]);
 
@@ -76,7 +78,7 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'address' => 'nullable|string',
-            'no_rek' => 'nullable|string|min:10|max:20|unique:users,no_rek',
+            'no_rek' => 'nullable|string',
             'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
         ]);
 
@@ -103,18 +105,31 @@ class AdminController extends Controller
 
     public function deleteSeller($id)
     {
-        $seller = User::findOrFail($id);
-        if ($seller->role === 'seller') {
-            $seller->delete();
-            return redirect()->route('admin.sellers')->with('success', 'Seller deleted successfully.');
+        $seller = User::withCount('books')->findOrFail($id);
+        if ($seller->role !== 'seller') {
+            return redirect()->route('admin.sellers')->with('error', 'User is not a seller.');
         }
-        return redirect()->route('admin.sellers')->with('error', 'User is not a seller.');
-    }
 
+        if ($seller->books_count == 0) {
+            return redirect()->route('admin.sellers')->with('error', 'Cannot delete seller with existing books.');
+        }
+
+        $pendingOrders = $seller->orderItems()->where('status', '!=', 'selesai')->count();
+        if ($pendingOrders == 0) {
+            return redirect()->route('admin.sellers')->with('error', 'Cannot delete seller with pending orders.');
+        }
+
+        $seller->delete();
+        return redirect()->route('admin.sellers')->with('success', 'Seller deleted successfully.');
+    }
 
     public function listBuyers()
     {
-        $users = User::where('role', 'buyer')->get();
+        $users = User::where('role', 'buyer')
+            ->withCount(['boughtItems as active_items_count' => function ($query) {
+                $query->whereNotIn('status', ['selesai', 'refunded', 'pending']);
+            }])
+            ->get();
         return view('admin.buyer.index', compact('users'));
     }
 
@@ -126,7 +141,7 @@ class AdminController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'address' => 'nullable|string',
-            'no_rek' => 'nullable|string|min:10|max:20|unique:users,no_rek',
+            'no_rek' => 'nullable|string|unique:users,no_rek',
             'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
         ]);
 
@@ -161,7 +176,7 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'address' => 'nullable|string',
-            'no_rek' => 'nullable|string|min:10|max:20|unique:users,no_rek',
+            'no_rek' => 'nullable|string',
             'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
         ]);
 
@@ -180,10 +195,30 @@ class AdminController extends Controller
     public function deleteBuyer($id)
     {
         $buyer = User::findOrFail($id);
-        if ($buyer->role === 'buyer') {
-            $buyer->delete();
-            return redirect()->route('admin.buyers')->with('success', 'Buyer deleted successfully.');
+
+        // Cek yang login harus buyer
+        if ($buyer->role !== 'buyer') {
+            return redirect()->route('admin.buyers')->with('error', 'User is not a buyer.');
         }
-        return redirect()->route('admin.buyers')->with('error', 'User is not a buyer.');
+
+        $activeItemsCount = $buyer->boughtItems()
+            ->whereNotIn('status', ['selesai', 'refunded', 'pending'])
+            ->count();
+
+        if ($activeItemsCount > 0) {
+            return redirect()->route('admin.buyers')->with('error', "Gagal! Buyer memiliki $activeItemsCount transaksi aktif.");
+        }
+
+        DB::table('conversations')->where('sender_id', $id)->orWhere('receiver_id', $id)->delete();
+
+        $buyer->delete();
+        return redirect()->route('admin.buyers')->with('success', 'Buyer deleted successfully.');
+    }
+
+    // Seller melihat Seller
+    public function sellerToSeller()
+    {
+        $sellers = User::where('role', 'seller')->get();
+        return view('seller.seller_views', compact('sellers'));
     }
 }

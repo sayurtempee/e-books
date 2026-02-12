@@ -59,15 +59,13 @@
 
                     {{-- New Password --}}
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">
-                            New Password
-                        </label>
+                        <label class="block text-sm font-medium text-gray-700">New Password</label>
                         <input type="password" name="password"
-                            class="w-full mt-1 px-4 py-2 rounded-lg
-                            bg-white/70 focus:bg-white
-                            border border-gray-300
-                            focus:ring-2 focus:ring-teal-400 focus:outline-none"
+                            class="w-full mt-1 px-4 py-2 rounded-lg bg-white/70 border @error('password') border-red-500 @else border-gray-300 @enderror focus:ring-2 focus:ring-teal-400 focus:outline-none"
                             placeholder="Minimum 8 characters" autofocus required>
+                        @error('password')
+                            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     {{-- Confirm Password --}}

@@ -165,14 +165,6 @@
                             <p class="text-lg font-bold text-teal-600">{{ $user->books_count ?? 0 }}</p>
                             <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Total Buku</p>
                         </div>
-
-                        <div class="w-px h-8 bg-gray-200"></div>
-
-                        <div>
-                            {{-- items_sold_sum_qty otomatis ada karena kita pakai ->withSum(..., 'qty') di Controller --}}
-                            <p class="text-lg font-bold text-cyan-600">{{ $user->items_sold_sum_qty ?? 0 }}</p>
-                            <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Item Terjual</p>
-                        </div>
                     </div>
                 </div>
             </div>

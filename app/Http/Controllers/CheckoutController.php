@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Notifications\GeneralNotification;
 
 class CheckoutController extends Controller
@@ -70,7 +71,7 @@ class CheckoutController extends Controller
             });
 
             session()->put('order_id', $order->id);
-            auth()->user()->notify(new GeneralNotification([
+            Auth::user()->notify(new GeneralNotification([
                 'title' => 'Checkout Berhasil 🛒',
                 'message' => "Pesanan #ORD-{$order->id} berhasil dibuat.",
                 'icon' => '🧾',

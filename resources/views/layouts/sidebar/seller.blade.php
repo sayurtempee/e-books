@@ -6,6 +6,13 @@
         <span>Dashboard</span>
     </a>
 
+    <a href="{{ route('list.sellers') }}"
+        class="flex items-center gap-3 px-4 py-2 rounded-lg
+    {{ request()->routeIs('list.sellers') ? $activeClass : $inactiveClass }}">
+        <i class="bi bi-people-fill"></i>
+        <span>Daftar Rekan Seller</span>
+    </a>
+
     <a href="{{ route('seller.book.index') }}"
         class="flex items-center gap-3 px-4 py-2 rounded-lg
         {{ request()->routeIs('seller.book.index') ? $activeClass : $inactiveClass }}">

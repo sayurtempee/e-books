@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderItem;
-use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ReportController extends Controller
@@ -107,83 +108,42 @@ class ReportController extends Controller
     public function download(Request $request)
     {
         $sellerId = Auth::id();
-        $month = $request->get('month');
-        $year = $request->get('year');
+        $month = $request->input('month'); // Bisa berisi 'all' atau angka 1-12
+        $year = $request->input('year');
+        $chartImage = $request->input('chart_image');
 
-        // Inisialisasi query
         $query = OrderItem::with(['order.user', 'book'])
             ->where('seller_id', $sellerId)
             ->whereIn('status', ['shipping', 'selesai']);
 
-        // Filter berdasarkan Tahun jika ada
-        $query->when($year, function ($q) use ($year) {
-            return $q->whereYear('created_at', $year);
-        });
+        // Filter Tahun
+        $query->whereYear('created_at', $year);
 
-        // Filter berdasarkan Bulan jika ada
-        $query->when($month, function ($q) use ($month) {
-            return $q->whereMonth('created_at', $month);
-        });
+        // Filter Bulan (Jika bukan 'all')
+        if ($month && $month !== 'all') {
+            $query->whereMonth('created_at', $month);
+            $namaBulan = Carbon::createFromDate($year, $month, 1)->locale('id')->translatedFormat('F');
+            $periode = $namaBulan . ' ' . $year;
+        } else {
+            $periode = "Semua Bulan di Tahun " . $year;
+        }
 
         $items = $query->get();
 
+        // Hitung statistik untuk dikirim ke PDF
         $totalRevenue = $items->sum(fn($i) => $i->price * $i->qty);
         $totalProfit  = $items->sum('profit');
         $orders = $items->groupBy('order_id');
-
-        // Menyiapkan teks periode untuk ditampilkan di PDF
-        if ($month && $year) {
-            // Buat objek carbon dari bulan & tahun, lalu ubah ke bahasa Indonesia
-            $namaBulan = \Carbon\Carbon::createFromDate($year, $month, 1)
-                ->locale('id')
-                ->translatedFormat('F');
-            $periode = $namaBulan . ' ' . $year;
-        } elseif ($year) {
-            $periode = "Tahun " . $year;
-        } else {
-            $periode = "Semua Waktu";
-        }
 
         $pdf = Pdf::loadView('seller.report.pdf', [
             'orders'       => $orders,
             'totalRevenue' => $totalRevenue,
             'totalProfit'  => $totalProfit,
-            'periode'      => $periode, // Kirim variabel periode
+            'periode'      => $periode,
+            'chartImage'   => $chartImage
         ])->setPaper('A4', 'portrait');
 
         $filename = 'laporan-penjualan-' . str_replace(' ', '-', strtolower($periode)) . '.pdf';
-        return $pdf->download($filename);
-    }
-
-    public function downloadAll()
-    {
-        $sellerId = Auth::id();
-
-        // Ambil semua data tanpa filter bulan/tahun
-        $items = OrderItem::with(['order.user', 'book'])
-            ->where('seller_id', $sellerId)
-            ->whereIn('status', ['shipping', 'selesai'])
-            ->get();
-
-        // Hitung total
-        $totalRevenue = $items->sum(fn($i) => $i->price * $i->qty);
-        $totalProfit  = $items->sum('profit');
-
-        // Kelompokkan berdasarkan order_id untuk tampilan tabel di PDF
-        $orders = $items->groupBy('order_id');
-
-        $periode = "Semua Waktu";
-
-        // Load view PDF yang sama
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('seller.report.pdf', [
-            'orders'       => $orders,
-            'totalRevenue' => $totalRevenue,
-            'totalProfit'  => $totalProfit,
-            'periode'      => $periode,
-        ])->setPaper('A4', 'portrait');
-
-        $filename = 'laporan-penjualan-keseluruhan-' . now()->format('Y-m-d') . '.pdf';
-
         return $pdf->download($filename);
     }
 }

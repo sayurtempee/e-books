@@ -138,6 +138,9 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
     Route::middleware(['role:seller'])->group(function () {
         Route::get('/seller/dashboard', [DashboardController::class, 'seller'])->name('seller.dashboard');
 
+        // seller melihat seller
+        Route::get('/list-sellers', [AdminController::class, 'sellerToSeller'])->name('list.sellers');
+
         // Book Management
         Route::get('/seller/book', [BookController::class, 'index'])->name('seller.book.index');
         Route::post('/seller/book', [BookController::class, 'store'])->middleware('throttle:60,1')->name('seller.book.store');
@@ -150,8 +153,8 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
 
         // Laporan
         Route::get('/seller/reports', [ReportController::class, 'index'])->name('seller.reports.index');
-        Route::get('/seller/reports/download', [ReportController::class, 'download'])->name('seller.reports.download');
-        Route::get('/seller/reports/downloadAll', [ReportController::class, 'downloadAll'])->name('reports.downloadAll');
+        Route::post('/seller/reports/download', [ReportController::class, 'download'])->name('seller.reports.download');
+        // Route::get('/seller/reports/downloadAll', [ReportController::class, 'downloadAll'])->name('reports.downloadAll');
     });
 
     // --- BUYER ---
