@@ -33,10 +33,16 @@
                             <a href="{{ route('chat.index', $user->id) }}"
                                 class="flex items-center p-4 cursor-pointer transition-all border-l-4 {{ $isActive ? 'bg-teal-50 border-teal-500' : 'hover:bg-gray-50 border-transparent' }}">
                                 <div class="relative mr-3">
-                                    <div
-                                        class="w-12 h-12 bg-gradient-to-tr from-teal-500 to-emerald-400 rounded-full flex items-center justify-center text-white font-bold uppercase shadow-md">
-                                        {{ substr($user->name, 0, 2) }}
-                                    </div>
+                                    @if ($user->foto_profile)
+                                        <img src="{{ asset('storage/' . $user->foto_profile) }}"
+                                            class="w-12 h-12 rounded-full object-cover shadow-md border-2 border-white">
+                                    @else
+                                        <div
+                                            class="w-12 h-12 bg-gradient-to-tr from-teal-500 to-emerald-400 rounded-full flex items-center justify-center text-white font-bold uppercase shadow-md">
+                                            {{ substr($user->name, 0, 2) }}
+                                        </div>
+                                    @endif
+
                                     @if ($user->isOnline)
                                         <span
                                             class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
@@ -70,10 +76,16 @@
                         <div
                             class="p-4 bg-white/90 backdrop-blur-md shadow-sm flex items-center justify-between z-10 border-b border-gray-100">
                             <div class="flex items-center">
-                                <div
-                                    class="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center text-white font-bold mr-3 uppercase shadow-md">
-                                    {{ substr($activeUser->name, 0, 2) }}
-                                </div>
+                                @if ($activeUser->foto_profile)
+                                    <img src="{{ asset('storage/' . $activeUser->foto_profile) }}"
+                                        class="w-10 h-10 rounded-full object-cover mr-3 shadow-md border border-gray-100">
+                                @else
+                                    <div
+                                        class="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center text-white font-bold mr-3 uppercase shadow-md">
+                                        {{ substr($activeUser->name, 0, 2) }}
+                                    </div>
+                                @endif
+
                                 <div>
                                     <h4 class="font-bold text-gray-800 leading-tight">{{ $activeUser->name }}</h4>
                                     <p
