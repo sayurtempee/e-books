@@ -39,26 +39,38 @@
                                             {{-- Photo Profile --}}
                                             <td class="px-4 py-3">
                                                 @php
+                                                    // 1. Buat Inisial
                                                     $initials = collect(explode(' ', $user->name))
                                                         ->map(fn($word) => strtoupper(substr($word, 0, 1)))
                                                         ->take(2)
                                                         ->implode('');
 
+                                                    // 2. Buat URL Gravatar (s=100 untuk ukuran, d=404 agar memicu error jika tidak ada foto)
                                                     $gravatar =
                                                         'https://www.gravatar.com/avatar/' .
                                                         md5(strtolower(trim($user->email))) .
-                                                        '?d=404';
+                                                        '?s=100&d=404';
                                                 @endphp
 
-                                                @if ($user->profile_photo_path)
-                                                    <img src="{{ asset('storage/' . $user->profile_photo_path) }}"
-                                                        alt="Profile Photo" class="w-10 h-10 rounded-full object-cover">
-                                                @else
-                                                    <div class="w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center font-semibold text-sm"
-                                                        title="{{ $user->name }}">
-                                                        {{ $initials }}
-                                                    </div>
-                                                @endif
+                                                <div class="flex items-center justify-center w-10 h-10">
+                                                    @if ($user->foto_profile)
+                                                        {{-- Prioritas 1: Foto dari Storage --}}
+                                                        <img src="{{ asset('storage/' . $user->foto_profile) }}"
+                                                            alt="{{ $user->name }}"
+                                                            class="w-10 h-10 rounded-full object-cover shadow-sm">
+                                                    @else
+                                                        {{-- Prioritas 2: Gravatar dengan Fallback ke Inisial --}}
+                                                        <img src="{{ $gravatar }}" alt="{{ $user->name }}"
+                                                            class="w-10 h-10 rounded-full object-cover shadow-sm"
+                                                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+                                                        {{-- Prioritas 3: Inisial (Muncul jika Gravatar 404) --}}
+                                                        <div class="hidden w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center font-semibold text-xs uppercase"
+                                                            title="{{ $user->name }}">
+                                                            {{ $initials }}
+                                                        </div>
+                                                    @endif
+                                                </div>
                                             </td>
 
                                             <td class="px-4 py-3 font-medium text-gray-800">

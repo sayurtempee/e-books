@@ -8,6 +8,7 @@ use App\Notifications\GeneralNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -33,7 +34,13 @@ class AdminController extends Controller
             'address' => 'nullable|string',
             'no_rek' => 'nullable|string|unique:users,no_rek',
             'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
+            'foto_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        $fotoPath = null;
+        if ($request->hasFile('foto_profile')) {
+            $fotoPath = $request->file('foto_profile')->store('foto_profile', 'public');
+        }
 
         // dd($validated);
 
@@ -46,16 +53,8 @@ class AdminController extends Controller
             'address' => $validated['address'] ?? 'Address has not been entered',
             'no_rek' => $validated['no_rek'] ?? 'Belum Buat Nomor Rekening',
             'bank_name' => $validated['bank_name'] ?? 'Belum Membuat Bank',
+            'foto_profile' => $fotoPath,
         ]);
-
-        // $user = User::create([
-        //     'nik' => $validated['nik'],
-        //     'name' => $validated['name'],
-        //     'email' => $validated['email'],
-        //     'password' => Hash::make($validated['password']),
-        //     'role' => 'seller',
-        //     'address' => $validated['address'] ?? 'Address has not been entered',
-        // ]);
 
         // NOTIFIKASI KE SELLER BARU (Welcome Message)
         $user->notify(new GeneralNotification([
@@ -80,7 +79,21 @@ class AdminController extends Controller
             'address' => 'nullable|string',
             'no_rek' => 'nullable|string',
             'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
+            'foto_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        // Handle Upload File
+        $fotoPath = $user->foto_profile;
+
+        if ($request->hasFile('foto_profile')) {
+            // Hapus foto lama jika ada
+            if ($user->foto_profile && Storage::disk('public')->exists($user->foto_profile)) {
+                Storage::disk('public')->delete($user->foto_profile);
+            }
+            // Simpan foto baru
+            $fotoPath = $request->file('foto_profile')->store('foto_profile', 'public');
+        }
+        // dd($validated);
 
         $user->update([
             'nik' => $validated['nik'],
@@ -89,6 +102,7 @@ class AdminController extends Controller
             'address' => $validated['address'] ?? 'Address has not been entered',
             'no_rek' => $validated['no_rek'] ?? 'Belum Buat Nomor Rekening',
             'bank_name' => $validated['bank_name'] ?? 'Belum Membuat Bank',
+            'foto_profile' => $fotoPath,
         ]);
 
         // NOTIFIKASI KE SELLER (Info Update)
@@ -110,12 +124,12 @@ class AdminController extends Controller
             return redirect()->route('admin.sellers')->with('error', 'User is not a seller.');
         }
 
-        if ($seller->books_count == 0) {
+        if ($seller->books_count > 0) {
             return redirect()->route('admin.sellers')->with('error', 'Cannot delete seller with existing books.');
         }
 
         $pendingOrders = $seller->orderItems()->where('status', '!=', 'selesai')->count();
-        if ($pendingOrders == 0) {
+        if ($pendingOrders > 0) {
             return redirect()->route('admin.sellers')->with('error', 'Cannot delete seller with pending orders.');
         }
 
@@ -143,6 +157,7 @@ class AdminController extends Controller
             'address' => 'nullable|string',
             'no_rek' => 'nullable|string|unique:users,no_rek',
             'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
+            'foto_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $user = User::create([
@@ -154,6 +169,7 @@ class AdminController extends Controller
             'address' => $validated['address'] ?? 'Address has not been entered',
             'no_rek' => $validated['no_rek'] ?? 'Belum Buat Nomor Rekening',
             'bank_name' => $validated['bank_name'] ?? 'Belum Membuat Bank',
+            'foto_profile' => $validated['foto_profile'] ?? null,
         ]);
 
         $user->notify(new GeneralNotification([
@@ -178,6 +194,7 @@ class AdminController extends Controller
             'address' => 'nullable|string',
             'no_rek' => 'nullable|string',
             'bank_name' => 'nullable|string|in:BCA,Mandiri,BNI,BRI',
+            'foto_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $user->update([

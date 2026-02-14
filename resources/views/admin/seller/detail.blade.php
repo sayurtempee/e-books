@@ -43,22 +43,30 @@
                         ->map(fn($word) => strtoupper(substr($word, 0, 1)))
                         ->take(2)
                         ->implode('');
+
+                    $gravatar =
+                        'https://www.gravatar.com/avatar/' . md5(strtolower(trim($user->email))) . '?s=200&d=404';
                 @endphp
 
                 <div class="flex justify-center -mt-14 mb-4">
                     <div class="relative">
-                        @if ($user->profile_photo_path)
-                            <img src="{{ asset('storage/' . $user->profile_photo_path) }}"
-                                class="w-28 h-28 rounded-full object-cover
-                                        border-4 border-white shadow-xl"
+                        @if ($user->foto_profile)
+                            {{-- Foto Upload Lokal --}}
+                            <img src="{{ asset('storage/' . $user->foto_profile) }}"
+                                class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl"
                                 alt="Profile Photo">
                         @else
-                            <div class="w-28 h-28 rounded-full
+                            {{-- Coba Gravatar, Jika Gagal tampilkan Inisial --}}
+                            <img src="{{ $gravatar }}"
+                                class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+                            <div
+                                class="hidden w-28 h-28 rounded-full
                                        bg-gradient-to-br from-teal-400 to-cyan-500
                                        border-4 border-white shadow-xl
                                        flex items-center justify-center
-                                       text-3xl font-bold text-white"
-                                title="{{ $user->name }}">
+                                       text-3xl font-bold text-white">
                                 {{ $initials }}
                             </div>
                         @endif
