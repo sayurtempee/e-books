@@ -160,6 +160,13 @@ class AdminController extends Controller
             'foto_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        $photoPath = null;
+        if ($request->hasFile('foto_profile')) {
+            $photoPath = $request->file('foto_profile')->store('foto_profile', 'public');
+        }
+
+        // dd($validated);
+
         $user = User::create([
             'nik' => $validated['nik'],
             'name' => $validated['name'],
@@ -169,7 +176,7 @@ class AdminController extends Controller
             'address' => $validated['address'] ?? 'Address has not been entered',
             'no_rek' => $validated['no_rek'] ?? 'Belum Buat Nomor Rekening',
             'bank_name' => $validated['bank_name'] ?? 'Belum Membuat Bank',
-            'foto_profile' => $validated['foto_profile'] ?? null,
+            'foto_profile' => $photoPath,
         ]);
 
         $user->notify(new GeneralNotification([
@@ -197,6 +204,16 @@ class AdminController extends Controller
             'foto_profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        $fotoPath = $user->foto_profile;
+        if ($request->hasFile('foto_profile')) {
+            // Hapus foto lama jika ada
+            if ($user->foto_profile && Storage::disk('public')->exists($user->foto_profile)) {
+                Storage::disk('public')->delete($user->foto_profile);
+            }
+            // Simpan foto baru
+            $fotoPath = $request->file('foto_profile')->store('foto_profile', 'public');
+        }
+
         $user->update([
             'nik' => $validated['nik'],
             'name' => $validated['name'],
@@ -204,6 +221,7 @@ class AdminController extends Controller
             'address' => $validated['address'] ?? 'Address has not been entered',
             'no_rek' => $validated['no_rek'] ?? 'Belum Buat Nomor Rekening',
             'bank_name' => $validated['bank_name'] ?? 'Belum Membuat Bank',
+            'foto_profile' => $fotoPath,
         ]);
 
         return redirect()->route('admin.buyers')->with('success', 'Buyer updated successfully.');
