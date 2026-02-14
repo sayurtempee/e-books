@@ -61,7 +61,12 @@
                                 {{-- AVATAR DENGAN INISIAL & STATUS --}}
                                 <div
                                     class="relative w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-md">
-                                    {{ $initials }}
+                                    @if ($seller->foto_profile)
+                                        <img src="{{ asset('storage/' . $seller->foto_profile) }}" alt="Profile"
+                                            class="w-full h-full object-cover rounded-full">
+                                    @else
+                                        <span>{{ $initials }}</span>
+                                    @endif
 
                                     {{-- GREEN/GRAY DOT (Berdasarkan kolom isOnline) --}}
                                     @if ($seller->isOnline == 1)
@@ -134,8 +139,20 @@
                         </button>
 
                         {{-- HEADER --}}
-                        <div class="flex items-center gap-2 mb-6">
-                            <i class="bi bi-person-circle text-teal-600 text-xl"></i>
+                        <div class="flex items-center gap-3 mb-6">
+                            {{-- FOTO PROFILE / INITIALS --}}
+                            <div
+                                class="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-teal-100 flex items-center justify-center bg-teal-50">
+                                @if (auth()->user()->foto_profile)
+                                    <img src="{{ asset('storage/' . auth()->user()->foto_profile) }}" alt="Profile"
+                                        class="w-full h-full object-cover">
+                                @else
+                                    <span class="text-teal-600 font-bold text-sm">
+                                        {{ collect(explode(' ', auth()->user()->name))->map(fn($w) => strtoupper(substr($w, 0, 1)))->take(2)->implode('') }}
+                                    </span>
+                                @endif
+                            </div>
+
                             <h4 class="text-base font-semibold text-gray-800">
                                 Account Information
                             </h4>

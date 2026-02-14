@@ -5,9 +5,9 @@
     x-transition:leave-end="opacity-0 scale-95"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px]" style="display: none;">
 
-    {{-- MODAL BOX - max-w-md untuk ukuran lebih slim --}}
+    {{-- MODAL BOX --}}
     <div @click.away="openEditModal = false"
-        class="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-gray-100">
+        class="relative w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-gray-100 max-h-[95vh] overflow-y-auto">
 
         {{-- HEADER --}}
         <div class="flex items-center justify-between mb-5">
@@ -22,31 +22,79 @@
             </button>
         </div>
 
-        {{-- FORM --}}
-        <form method="POST" action="{{ route('account.update') }}" x-data="{ loading: false }" @submit="loading = true"
-            class="space-y-4 text-xs">
+        {{-- FORM UTAMA --}}
+        <form method="POST" action="{{ route('account.update') }}" x-data="{ loading: false, photoPreview: null }" @submit="loading = true"
+            class="space-y-4 text-xs" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
-            {{-- GRID UNTUK DATA READONLY --}}
-            <div class="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+            {{-- FOTO PROFILE SECTION --}}
+            <div
+                class="flex flex-col items-center gap-3 p-3 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                <div class="relative group">
+                    {{-- Preview Foto Baru (Saat Upload) --}}
+                    <template x-if="photoPreview">
+                        <div class="relative">
+                            <img :src="photoPreview"
+                                class="w-20 h-20 rounded-2xl object-cover shadow-md border-2 border-teal-500">
+                            {{-- Tombol Batal Preview --}}
+                            <button type="button"
+                                @click="photoPreview = null; document.getElementById('foto_profile_input').value = ''"
+                                class="absolute -top-2 -right-2 bg-gray-800 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg hover:bg-gray-900 transition">
+                                <i class="bi bi-x text-sm"></i>
+                            </button>
+                        </div>
+                    </template>
+
+                    {{-- Foto Lama / Inisial --}}
+                    <template x-if="!photoPreview">
+                        <div class="relative">
+                            @if (auth()->user()->foto_profile)
+                                <img src="{{ asset('storage/' . auth()->user()->foto_profile) }}"
+                                    class="w-20 h-20 rounded-2xl object-cover shadow-sm border-2 border-white">
+
+                                {{-- TOMBOL HAPUS FOTO (Memicu form di bawah) --}}
+                                <button type="button"
+                                    onclick="if(confirm('Hapus foto profil?')) { document.getElementById('delete-photo-form').submit(); }"
+                                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg hover:bg-red-600 transition">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            @else
+                                <div
+                                    class="w-20 h-20 rounded-2xl bg-teal-100 text-teal-600 flex items-center justify-center text-2xl font-bold border-2 border-white shadow-sm">
+                                    {{ collect(explode(' ', auth()->user()->name))->map(fn($word) => strtoupper(substr($word, 0, 1)))->take(2)->implode('') }}
+                                </div>
+                            @endif
+                        </div>
+                    </template>
+                </div>
+
+                {{-- INPUT FILE --}}
+                <div class="w-full">
+                    <input type="file" id="foto_profile_input" name="foto_profile" accept="image/*"
+                        @change="
+                            const file = $event.target.files[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (e) => { photoPreview = e.target.result; };
+                                reader.readAsDataURL(file);
+                            }
+                        "
+                        class="w-full text-[10px] text-gray-500 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 transition cursor-pointer">
+                </div>
+            </div>
+
+            {{-- INFORMASI AKUN (READONLY GRID) --}}
+            <div class="grid grid-cols-2 gap-x-4 gap-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <div class="col-span-1">
-                    <label class="text-gray-500 mb-1 block uppercase text-[10px] font-bold">NIK</label>
-                    <p class="text-gray-700 font-medium">{{ auth()->user()->nik }}</p>
+                    <label class="text-gray-400 block uppercase text-[10px] font-bold tracking-tight">NIK</label>
+                    <p class="text-gray-700 font-medium truncate">{{ auth()->user()->nik }}</p>
                 </div>
                 <div class="col-span-1">
-                    <label class="text-gray-500 mb-1 block uppercase text-[10px] font-bold">Level Role</label>
-                    <span class="px-2 py-0.5 rounded-md bg-teal-100 text-teal-700 font-bold capitalize">
+                    <label class="text-gray-400 block uppercase text-[10px] font-bold tracking-tight">Level</label>
+                    <span class="px-1.5 py-0.5 rounded bg-teal-100 text-teal-700 font-bold capitalize text-[10px]">
                         {{ auth()->user()->role }}
                     </span>
-                </div>
-                <div class="col-span-1 mt-1">
-                    <label class="text-gray-500 mb-1 block uppercase text-[10px] font-bold">Bank</label>
-                    <p class="text-gray-600">{{ auth()->user()->bank_name ?? '-' }}</p>
-                </div>
-                <div class="col-span-1 mt-1">
-                    <label class="text-gray-500 mb-1 block uppercase text-[10px] font-bold">No. Rekening</label>
-                    <p class="text-gray-600 tracking-wider">{{ auth()->user()->no_rek ?? '-' }}</p>
                 </div>
             </div>
 
@@ -54,40 +102,35 @@
             <div class="space-y-3">
                 <div>
                     <label class="block text-gray-600 font-semibold mb-1 ml-1">Nama Lengkap</label>
-                    <input type="text" name="name" x-ref="nameInput" x-init="$watch('openEditModal', v => v && $nextTick(() => $refs.nameInput.focus()))"
+                    <input type="text" name="name"
                         class="w-full h-9 px-3 rounded-lg border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition"
                         value="{{ old('name', auth()->user()->name) }}">
                 </div>
-
                 <div>
                     <label class="block text-gray-600 font-semibold mb-1 ml-1">Email</label>
                     <input type="email" name="email"
                         class="w-full h-9 px-3 rounded-lg border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition"
                         value="{{ old('email', auth()->user()->email) }}">
                 </div>
-
                 <div>
                     <label class="block text-gray-600 font-semibold mb-1 ml-1">Alamat</label>
                     <textarea name="address" rows="2"
-                        class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition ring-inset"
+                        class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition"
                         placeholder="Masukkan alamat lengkap...">{{ old('address', auth()->user()->address) }}</textarea>
                 </div>
             </div>
 
             {{-- ACTION --}}
-            <div class="flex justify-end gap-2 pt-2">
+            <div class="flex justify-end gap-2 pt-2 border-t border-gray-50">
                 <button type="button" @click="openEditModal = false"
-                    class="px-4 py-2 font-medium rounded-lg text-gray-500 hover:bg-gray-100 transition">
-                    Batal
-                </button>
-
+                    class="px-4 py-2 font-medium rounded-lg text-gray-500 hover:bg-gray-100 transition">Batal</button>
                 <button type="submit" :disabled="loading"
-                    class="px-5 py-2 rounded-lg bg-teal-600 text-white font-bold shadow-md shadow-teal-200 hover:bg-teal-700 disabled:opacity-50 transition flex items-center gap-2">
+                    class="px-5 py-2 rounded-lg bg-teal-600 text-white font-bold shadow-md hover:bg-teal-700 disabled:opacity-50 transition flex items-center gap-2">
                     <span x-show="!loading">Simpan Perubahan</span>
                     <span x-show="loading" class="flex items-center">
-                        <svg class="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24">
+                        <svg class="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24" fill="none">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                stroke-width="4" fill="none"></circle>
+                                stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor"
                                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
@@ -96,5 +139,12 @@
                 </button>
             </div>
         </form>
+
+        {{-- FORM HAPUS (PINDAHKAN KE SINI - LUAR FORM UTAMA) --}}
+        <form id="delete-photo-form" action="{{ route('account.delete-photo') }}" method="POST" class="hidden">
+            @csrf
+            @method('DELETE')
+        </form>
+
     </div>
 </div>

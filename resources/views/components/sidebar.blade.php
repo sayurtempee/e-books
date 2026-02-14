@@ -89,21 +89,33 @@
                 }
             }">
                 {{-- PROFILE BUTTON --}}
-                <button @click="openProfile = !openProfile" class="flex items-center gap-3 focus:outline-none">
+                <button @click="openProfile = !openProfile" class="flex items-center gap-3 focus:outline-none group">
                     <div class="text-right hidden sm:block">
-                        <p class="text-sm font-medium text-gray-800">{{ $name }}</p>
+                        <p class="text-sm font-bold text-gray-800 group-hover:text-teal-600 transition">
+                            {{ $name }}</p>
                         <p class="text-xs text-gray-500 capitalize">{{ auth()->user()->role ?? 'User' }}</p>
                     </div>
 
-                    <div
-                        class="relative w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-white">
-                        {{ $initials }}
+                    <div class="relative">
+                        <div
+                            class="w-10 h-10 rounded-full overflow-hidden bg-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-white group-hover:ring-teal-100 transition-all">
+                            @if (auth()->user()->foto_profile)
+                                {{-- Tampilkan Foto Profil jika ada --}}
+                                <img src="{{ asset('storage/' . auth()->user()->foto_profile) }}"
+                                    alt="{{ $name }}" class="w-full h-full object-cover">
+                            @else
+                                {{-- Tampilkan Inisial jika foto tidak ada --}}
+                                {{ $initials }}
+                            @endif
+                        </div>
+
+                        {{-- Badge Notifikasi --}}
                         <template x-if="unreadCount > 0">
                             <span class="absolute -top-1 -right-1 flex h-4 w-4">
                                 <span
                                     class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                 <span
-                                    class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-[10px] items-center justify-center border border-white"
+                                    class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-[10px] items-center justify-center border border-white text-white font-bold"
                                     x-text="unreadCount"></span>
                             </span>
                         </template>

@@ -49,6 +49,8 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         return view('help.index');
     })->name('help.index');
 
+    Route::delete('/account/delete-photo', [AccountController::class, 'deletePhoto'])->name('account.delete-photo');
+
     Route::prefix('notifications')->name('notifications.')->middleware('auth')->group(function () {
 
         // Unread Count
