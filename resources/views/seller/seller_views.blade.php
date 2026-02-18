@@ -21,17 +21,21 @@
                                     {{-- Kolom Foto Profile --}}
                                     <td class="px-6 py-4">
                                         @php
+                                            // Logika inisial tetap digunakan sebagai cadangan (fallback)
                                             $initials = collect(explode(' ', $seller->name))
                                                 ->map(fn($word) => strtoupper(substr($word, 0, 1)))
                                                 ->take(2)
                                                 ->implode('');
                                         @endphp
 
-                                        @if ($seller->profile_photo_path)
-                                            <img src="{{ asset('storage/' . $seller->profile_photo_path) }}"
-                                                class="w-10 h-10 rounded-full object-cover border border-gray-200">
+                                        @if ($seller->foto_profile)
+                                            {{-- Menggunakan foto_profile sesuai field di database --}}
+                                            <img src="{{ asset('storage/' . $seller->foto_profile) }}"
+                                                class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                                                alt="{{ $seller->name }}">
                                         @else
-                                            <div class="w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-sm"
+                                            {{-- Tampilan inisial jika foto tidak ada --}}
+                                            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-teal-500 to-teal-600 text-white flex items-center justify-center font-bold text-sm shadow-sm"
                                                 title="{{ $seller->name }}">
                                                 {{ $initials }}
                                             </div>
