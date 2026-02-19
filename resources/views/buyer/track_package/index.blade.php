@@ -225,11 +225,19 @@
                                                         <span class="hidden sm:inline">Invoice</span>
                                                     </a>
                                                 @endif
+                                                @if ($status == 'shipping')
+                                                    <a href="https://jne.co.id/tracking-package" target="_blank"
+                                                        class="px-4 py-3 bg-blue-50 text-blue-600 rounded-2xl font-bold text-xs hover:bg-blue-100 transition-all border border-blue-200 flex items-center gap-2">
+                                                        <i class="bi bi-geo-fill"></i>
+                                                        <span class="hidden sm:inline">Lacak Paket</span>
+                                                    </a>
+                                                @endif
                                             </div>
 
                                             @if (!$hasProof)
-                                                <button onclick="openUploadModal('{{ $firstItem->order_id }}')"
-                                                    class="px-8 py-3 bg-red-500 text-white rounded-2xl font-black text-xs hover:bg-red-600 transition-all shadow-lg shadow-red-100 flex items-center gap-2 animate-pulse hover:animate-none">
+                                                <button
+                                                    onclick="openUploadModal('{{ $firstItem->order_id }}', '{{ $firstItem->seller_id }}')"
+                                                    class="px-8 py-3 bg-red-500 ...">
                                                     <i class="bi bi-cloud-arrow-up-fill text-base"></i>
                                                     BAYAR SEKARANG
                                                 </button>
@@ -277,6 +285,7 @@
                     enctype="multipart/form-data" class="p-6">
                     @csrf
                     <input type="hidden" name="order_id" id="modal_order_id">
+                    <input type="hidden" name="seller_id" id="modal_seller_id">
 
                     <div class="mb-6">
                         <div class="relative group">

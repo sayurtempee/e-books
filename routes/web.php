@@ -183,6 +183,9 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         Route::post('/buyer/carts', [CartController::class, 'store'])->middleware('throttle:60,1')->name('buyer.carts.store');
         Route::delete('/buyer/carts/{id}', [CartController::class, 'destroy'])->middleware('throttle:60,1')->name('buyer.carts.destroy');
 
+        // History
+        Route::get('/buyer/history', [TransactionController::class, 'purchaseHistory'])->name('buyer.history');
+
         // Track Package
         Route::get('/track-package', function (Illuminate\Http\Request $request) {
             $search = $request->query('tracking_number'); // Mengambil input dari search bar

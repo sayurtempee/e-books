@@ -24,6 +24,7 @@ class OrderItem extends Model
         'tracking_number',
         'expedisi_name',
         'payment_proof',
+        'cancel_reason'
     ];
 
     public function order()

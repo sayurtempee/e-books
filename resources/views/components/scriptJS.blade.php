@@ -327,13 +327,15 @@
     });
 
     // FUNGSI UNTUK MEMBUKA MODAL UPLOAD
-    function openUploadModal(orderId) {
+    function openUploadModal(orderId, sellerId) {
         const modal = document.getElementById('uploadModal');
         const modalContent = document.getElementById('uploadModalContent');
         const inputOrderId = document.getElementById('modal_order_id');
+        const inputSellerId = document.getElementById('modal_seller_id');
 
         // Set Order ID ke hidden input
         inputOrderId.value = orderId;
+        inputSellerId.value = sellerId;
 
         // Tampilkan Modal
         modal.classList.remove('hidden');

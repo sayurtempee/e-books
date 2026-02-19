@@ -133,6 +133,14 @@
         </div>
     </div>
 
+    {{-- BAGIAN GRAFIK --}}
+    @if ($chartImage)
+        <div class="chart-section">
+            <div class="section-title">VISUALISASI TREN PENJUALAN</div>
+            <img src="{{ $chartImage }}" style="width: 100%; height: auto;">
+        </div>
+    @endif
+
     {{-- Tabel Transaksi Utama --}}
     <table>
         <thead>
@@ -170,14 +178,6 @@
             @endforeach
         </tbody>
     </table>
-
-    {{-- BAGIAN GRAFIK --}}
-    @if ($chartImage)
-        <div class="chart-section">
-            <div class="section-title">VISUALISASI TREN PENJUALAN</div>
-            <img src="{{ $chartImage }}" style="width: 100%; height: auto;">
-        </div>
-    @endif
 
     <div class="stats-container">
         {{-- Section: Top 5 Produk --}}

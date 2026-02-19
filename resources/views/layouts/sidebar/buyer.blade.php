@@ -24,7 +24,14 @@
         class="flex items-center gap-3 px-4 py-2 rounded-lg
         {{ request()->routeIs('buyer.orders.tracking') ? $activeClass : $inactiveClass }}">
         <i class="bi bi-truck"></i>
-        <span>Lacak Paket</span>
+        <span>Pesanan Saya</span>
+    </a>
+
+    <a href="{{ route('buyer.history') }}"
+        class="flex items-center gap-3 px-4 py-2 rounded-lg
+        {{ request()->routeIs('buyer.history') ? $activeClass : $inactiveClass }}">
+        <i class="bi bi-receipt"></i>
+        <span>Riwayat Transaksi</span>
     </a>
 
     <a href="{{ route('chat.index') }}"

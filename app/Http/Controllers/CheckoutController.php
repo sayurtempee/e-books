@@ -101,26 +101,33 @@ class CheckoutController extends Controller
     public function uploadProof(Request $request)
     {
         $request->validate([
-            'order_id' => 'required',
             'payment_proof' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-
+            'order_id' => 'required',
+            'seller_id' => 'required' // Pastikan seller_id dikirim dari form
         ]);
 
-        $items = OrderItem::where('order_id', $request->order_id)->get();
+        // 1. Filter hanya item yang sesuai dengan ORDER ID dan SELLER ID tersebut
+        $items = OrderItem::where('order_id', $request->order_id)
+            ->where('seller_id', $request->seller_id)
+            ->get();
+
         if ($items->isEmpty()) {
-            return back()->with('error', 'Pesanan tidak ditemukan.');
+            return back()->with('error', 'Pesanan untuk toko ini tidak ditemukan.');
         }
 
         if ($request->hasFile('payment_proof')) {
             $path = $request->file('payment_proof')->store('payment_proofs', 'public');
+
             foreach ($items as $item) {
                 $item->update([
                     'payment_proof' => $path,
-                    'status' => 'approved' // Otomatis berubah menjadi approved
+                    'status' => 'approved'
                 ]);
             }
-            return back()->with('success', 'Bukti berhasil diunggah. Status pesanan kini: APPROVED');
+
+            return back()->with('success', 'Bukti berhasil diunggah untuk toko ini. Status: APPROVED');
         }
+
         return back()->with('error', 'Gagal mengunggah file.');
     }
 }

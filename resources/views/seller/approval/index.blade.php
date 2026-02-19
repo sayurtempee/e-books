@@ -5,14 +5,20 @@
         <x-sidebar>
             <div class="p-8 bg-gray-50 min-h-screen" x-data="{
                 openShippingModal: false,
+                openRejectModal: false,
                 itemName: '',
                 actionUrl: '',
+                selectedStatus: '',
                 handleStatusChange(event, id, name) {
                     const status = event.target.value;
+                    this.selectedStatus = status;
+                    this.itemName = name;
+                    this.actionUrl = `/seller/approval/${id}`;
+            
                     if (status === 'shipping') {
                         this.openShippingModal = true;
-                        this.itemName = name;
-                        this.actionUrl = `/seller/approval/${id}`;
+                    } else if (status === 'tolak' || status === 'refunded') {
+                        this.openRejectModal = true;
                     } else {
                         event.target.form.submit();
                     }
@@ -64,6 +70,13 @@
                                                 {{ $oi->book->title }}
                                             </div>
                                         @endforeach
+                                        {{-- Tampilkan alasan jika ada --}}
+                                        @if ($firstItem->cancel_reason)
+                                            <div
+                                                class="mt-2 text-[10px] p-1.5 bg-red-50 text-red-600 rounded border border-red-100 leading-tight">
+                                                <strong>Alasan:</strong> {{ $firstItem->cancel_reason }}
+                                            </div>
+                                        @endif
                                     </td>
 
                                     <td class="px-6 py-4">
@@ -71,14 +84,12 @@
                                             <button type="button"
                                                 onclick="openModal('{{ asset('storage/' . $firstItem->payment_proof) }}')"
                                                 class="inline-flex items-center gap-2 px-3 py-2 bg-teal-50 text-teal-700 border border-teal-200 rounded-xl text-xs font-bold hover:bg-teal-600 hover:text-white transition-all shadow-sm">
-                                                <i class="bi bi-file-earmark-check-fill text-sm"></i>
-                                                Lihat Bukti
+                                                <i class="bi bi-file-earmark-check-fill text-sm"></i> Lihat Bukti
                                             </button>
                                         @else
                                             <span
                                                 class="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 text-gray-400 border border-gray-200 rounded-xl text-xs font-medium italic">
-                                                <i class="bi bi-x-circle text-sm"></i>
-                                                Belum Ada
+                                                <i class="bi bi-x-circle text-sm"></i> Belum Ada
                                             </span>
                                         @endif
                                     </td>
@@ -91,7 +102,7 @@
                                             <select name="status"
                                                 @change="handleStatusChange($event, '{{ $orderId }}', '{{ $allTitles }}')"
                                                 class="text-[11px] font-bold rounded-lg border-gray-200 py-1.5 px-2 bg-white outline-none focus:ring-2 focus:ring-teal-500/20">
-                                                @foreach (['pending', 'approved', 'shipping', 'selesai', 'refunded'] as $st)
+                                                @foreach (['tolak', 'pending', 'approved', 'shipping', 'selesai', 'refunded'] as $st)
                                                     <option value="{{ $st }}"
                                                         {{ $firstItem->status === $st ? 'selected' : '' }}>
                                                         {{ strtoupper($st) }}
@@ -122,7 +133,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-20 text-gray-400">Tidak ada pesanan.</td>
+                                    <td colspan="7" class="text-center py-20 text-gray-400">Tidak ada pesanan.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -141,9 +152,8 @@
                                 <input type="hidden" name="status" value="shipping">
                                 <input type="text" name="expedisi_name" required placeholder="Nama Ekspedisi (JNT, JNE)"
                                     class="w-full border rounded-xl p-2 text-sm">
-                                <input type="text" name="tracking_number"
-                                    placeholder="Isi Nomor Resi Pengiriman" required
-                                    class="w-full border rounded-xl p-2 text-sm font-mono">
+                                <input type="text" name="tracking_number" placeholder="Isi Nomor Resi Pengiriman"
+                                    required class="w-full border rounded-xl p-2 text-sm font-mono">
                                 <div class="flex gap-2">
                                     <button type="button" @click="openShippingModal = false"
                                         class="flex-1 py-2 text-gray-500">Batal</button>
@@ -154,22 +164,51 @@
                         </div>
                     </div>
                 </template>
+
+                {{-- MODAL REJECT / REFUND (TAMBAHAN) --}}
+                <template x-teleport="body">
+                    <div x-show="openRejectModal"
+                        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" x-cloak>
+                        <div @click.away="openRejectModal = false"
+                            class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border-t-4"
+                            :class="selectedStatus === 'tolak' ? 'border-red-500' : 'border-orange-500'">
+                            <h3 class="text-lg font-bold mb-2"
+                                x-text="selectedStatus === 'tolak' ? 'Tolak Pesanan' : 'Refund Pesanan'"></h3>
+                            <p class="text-[11px] text-gray-500 mb-4 italic" x-text="itemName"></p>
+                            <form :action="actionUrl" method="POST" class="space-y-4">
+                                @csrf @method('PUT')
+                                <input type="hidden" name="status" :value="selectedStatus">
+                                <div>
+                                    <label class="text-xs font-bold text-gray-600 uppercase">Alasan Penolakan/Refund</label>
+                                    <textarea name="cancel_reason" required placeholder="Berikan alasan yang jelas kepada pembeli..."
+                                        class="w-full border rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none" rows="3"></textarea>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button type="button" @click="openRejectModal = false"
+                                        class="flex-1 py-2 text-gray-500 font-medium">Batal</button>
+                                    <button type="submit"
+                                        :class="selectedStatus === 'tolak' ? 'bg-red-600' : 'bg-orange-600'"
+                                        class="flex-1 py-2 text-white rounded-xl font-bold shadow-sm transition-transform active:scale-95">
+                                        Konfirmasi
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </template>
+
             </div>
+
             @include('layouts.modal.bukti_pembayaran')
+
             <script>
                 function openModal(imageSrc) {
                     const modal = document.getElementById('imageModal');
                     const modalContent = document.getElementById('modalContent');
                     const modalImg = document.getElementById('modalImage');
-
-                    // Set sumber gambar
                     modalImg.src = imageSrc;
-
-                    // Tampilkan modal (hapus hidden, tambah flex)
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
-
-                    // Animasi masuk (sedikit delay agar transisi terlihat)
                     setTimeout(() => {
                         modalContent.classList.remove('scale-95', 'opacity-0');
                         modalContent.classList.add('scale-100', 'opacity-100');
@@ -179,12 +218,8 @@
                 function closeModal() {
                     const modal = document.getElementById('imageModal');
                     const modalContent = document.getElementById('modalContent');
-
-                    // Animasi keluar
                     modalContent.classList.remove('scale-100', 'opacity-100');
                     modalContent.classList.add('scale-95', 'opacity-0');
-
-                    // Sembunyikan setelah animasi selesai
                     setTimeout(() => {
                         modal.classList.add('hidden');
                         modal.classList.remove('flex');
