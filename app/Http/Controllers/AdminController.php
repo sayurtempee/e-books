@@ -141,7 +141,7 @@ class AdminController extends Controller
     {
         $users = User::where('role', 'buyer')
             ->withCount(['boughtItems as active_items_count' => function ($query) {
-                $query->whereNotIn('status', ['selesai', 'refunded', 'pending']);
+                $query->whereNotIn('status', ['tolak', 'selesai', 'refunded', 'pending']);
             }])
             ->get();
         return view('admin.buyer.index', compact('users'));
