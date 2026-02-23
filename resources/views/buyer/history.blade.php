@@ -114,12 +114,29 @@
                                 {{-- Loop Item hanya di toko ini --}}
                                 @foreach ($group as $item)
                                     <div class="flex gap-4 items-start mb-4">
-                                        <img src="{{ asset('storage/' . $item->book->photos_product) }}"
-                                            class="w-16 h-16 rounded-lg object-cover">
+                                        {{-- Gunakan pengecekan apakah book ada, lalu cek fotonya --}}
+                                        @php
+                                            $photo = $item->book?->photos_product;
+                                            $imagePath =
+                                                $photo && Storage::disk('public')->exists($photo)
+                                                    ? asset('storage/' . $photo)
+                                                    : asset('image/default-buku.avif' ?? 'Gambar Hilang'); // Sediakan gambar placeholder
+                                        @endphp
+
+                                        <img src="{{ $imagePath }}" alt="{{ $item->book?->title ?? 'Buku' }}"
+                                            class="w-16 h-16 rounded-lg object-cover bg-gray-100">
+
                                         <div class="flex-1">
-                                            <h4 class="font-bold text-gray-800">{{ $item->book->title }}</h4>
-                                            <p class="text-sm text-gray-500">{{ $item->qty }} x Rp
-                                                {{ number_format($item->price, 0, ',', '.') }}</p>
+                                            <h4 class="font-bold text-gray-800">
+                                                {{ $item->book?->title ?? 'Judul Tidak Tersedia' }}
+                                                @if ($item->book?->trashed())
+                                                    <span
+                                                        class="text-[10px] bg-red-100 text-red-600 px-1 rounded ml-1">Dihapus</span>
+                                                @endif
+                                            </h4>
+                                            <p class="text-sm text-gray-500">
+                                                {{ $item->qty }} x Rp {{ number_format($item->price, 0, ',', '.') }}
+                                            </p>
                                         </div>
                                     </div>
                                 @endforeach

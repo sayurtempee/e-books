@@ -52,22 +52,23 @@
                             @forelse ($groupedItems as $orderId => $orderItems)
                                 @php
                                     $firstItem = $orderItems->first();
-                                    $allTitles = $orderItems->pluck('book.title')->join(', ');
+                                    $allTitles = $orderItems->pluck('book.title')->filter()->join(', ');
                                 @endphp
                                 <tr class="hover:bg-gray-50/50 transition">
                                     <td class="px-6 py-4">
                                         <div class="font-mono text-[10px] text-teal-600 font-bold">#ORD-{{ $orderId }}
                                         </div>
-                                        <div class="font-bold text-gray-800">{{ $firstItem->order->user->name }}</div>
+                                        <div class="font-bold text-gray-800">
+                                            {{ $firstItem->order->user->name ?? 'Nama User Terhapus' }}</div>
                                         <div class="text-[11px] text-gray-500 truncate max-w-[150px]">
-                                            {{ $firstItem->order->user->address }}</div>
+                                            {{ $firstItem->order->user->address ?? 'tidak menerapkan lokasi' }}</div>
                                     </td>
 
                                     <td class="px-6 py-4">
                                         @foreach ($orderItems as $oi)
                                             <div
                                                 class="text-gray-700 font-medium text-xs border-l-2 border-teal-500 pl-2 mb-1">
-                                                {{ $oi->book->title }}
+                                                {{ $oi->book->title ?? 'judul buku tidak ada' }}
                                             </div>
                                         @endforeach
                                         {{-- Tampilkan alasan jika ada --}}

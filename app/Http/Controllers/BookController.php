@@ -112,9 +112,10 @@ class BookController extends Controller
 
         $title = $book->title;
 
-        if ($book->photos_product) {
-            Storage::disk('public')->delete($book->photos_product);
-        }
+        // bagian untuk menghapus foto dari bukunya.
+        // if ($book->photos_product) {
+        //     Storage::disk('public')->delete($book->photos_product);
+        // }
 
         $book->delete();
 

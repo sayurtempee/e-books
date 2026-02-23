@@ -18,7 +18,12 @@ class TransactionController extends Controller
         // Ambil data dan kelompokkan berdasarkan order_id
         $groupedItems = OrderItem::where('seller_id', Auth::id())
             // ->where('status', '!=', 'refunded') // ini itu untuk menghilangkan refunded status di views nya.
-            ->with(['order.user', 'book'])
+            ->with([
+                'order.user',
+                'book' => function ($query) {
+                    $query->withTrashed();
+                }
+            ])
             ->latest()
             ->get()
             ->groupBy('order_id');
