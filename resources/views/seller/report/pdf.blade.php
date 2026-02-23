@@ -164,7 +164,7 @@
                     <td>
                         @foreach ($items as $item)
                             <div class="product-item">
-                                • {{ $item->book->title }}
+                                • {{ $item->book->title ?? 'Produk Dihapus' }}
                                 <span class="product-qty">({{ $item->qty }}x)</span>
                             </div>
                         @endforeach

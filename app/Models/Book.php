@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 
 
 class Book extends Model
 {
-    use Notifiable;
+    use Notifiable, SoftDeletes;
+
+    protected $dates = ['deleted_at'];
 
     protected $fillable = [
         'user_id',
@@ -21,6 +24,7 @@ class Book extends Model
         'capital',
         'price',
         'margin',
+        'delete_at'
     ];
 
     // Belongs To Category

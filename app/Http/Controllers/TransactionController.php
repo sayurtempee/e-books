@@ -95,8 +95,11 @@ class TransactionController extends Controller
 
     public function purchaseHistory(Request $request)
     {
-        // 1. Inisialisasi query dari OrderItem agar bisa grouping per seller
-        $query = OrderItem::with(['order', 'book.user'])
+        // 1. Inisialisasi query dengan Eager Loading
+        // Kita tambahkan withTrashed() pada relasi 'book' agar data tetap muncul meski dihapus
+        $query = OrderItem::with(['order', 'book' => function ($q) {
+            $q->withTrashed();
+        }, 'book.user'])
             ->whereHas('order', function ($q) {
                 $q->where('user_id', Auth::id());
             });
@@ -104,16 +107,18 @@ class TransactionController extends Controller
         // 2. Filter berdasarkan Judul Buku
         if ($request->filled('title')) {
             $query->whereHas('book', function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->title . '%');
+                // Kita juga gunakan withTrashed() di filter agar user tetap bisa
+                // mencari riwayat buku lama yang sudah dihapus berdasarkan judulnya
+                $q->withTrashed()->where('title', 'like', '%' . $request->title . '%');
             });
         }
 
-        // 3. Filter berdasarkan Status Pesanan
+        // 3. Filter berdasarkan Status Pesanan (dari tabel order_items)
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // 4. Filter berdasarkan Rentang Tanggal
+        // 4. Filter berdasarkan Rentang Tanggal Pesanan
         if ($request->filled('start_date') || $request->filled('end_date')) {
             $query->whereHas('order', function ($q) use ($request) {
                 if ($request->filled('start_date') && $request->filled('end_date')) {
@@ -129,21 +134,22 @@ class TransactionController extends Controller
         }
 
         // 5. Eksekusi Query dan Grouping secara Manual
-        // Grouping berdasarkan kombinasi order_id dan seller_id
+        // Kita ambil semua item dulu karena grouping manual dilakukan pada Collection Laravel
         $items = $query->latest()->get();
 
         $groupedData = $items->groupBy(function ($item) {
+            // Grouping berdasarkan kombinasi order_id dan seller_id (untuk memisahkan pesanan per toko)
             return $item->order_id . '-' . $item->seller_id;
         });
 
-        // 6. Logika Manual Pagination (Agar bisa pakai ->links() di Blade)
+        // 6. Logika Manual Pagination
         $currentPage = Paginator::resolveCurrentPage() ?: 1;
         $perPage = 10; // Jumlah kartu pesanan per halaman
 
-        // Memotong collection sesuai halaman yang sedang dibuka
+        // Memotong collection (slice) sesuai halaman aktif
         $currentItems = $groupedData->slice(($currentPage - 1) * $perPage, $perPage)->all();
 
-        // Membuat objek Paginator
+        // Membuat objek Paginator agar bisa menggunakan {{ $purchases->links() }} di Blade
         $purchases = new LengthAwarePaginator(
             $currentItems,
             $groupedData->count(),
@@ -151,7 +157,7 @@ class TransactionController extends Controller
             $currentPage,
             [
                 'path' => Paginator::resolveCurrentPath(),
-                'query' => $request->query(), // Menjaga filter tetap ada di URL saat ganti halaman
+                'query' => $request->query(), // Memastikan filter tetap ada saat navigasi halaman
             ]
         );
 

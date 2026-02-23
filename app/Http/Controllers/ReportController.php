@@ -13,8 +13,6 @@ class ReportController extends Controller
 {
     public function index(Request $request)
     {
-        // --- PENAMBAHAN: Force Default Redirect ---
-        // Jika user mengakses /seller/reports tanpa parameter, arahkan ke all & 2026
         if (!$request->has('month')) {
             return redirect()->route('seller.reports.index', [
                 'month' => 'all',
@@ -23,16 +21,19 @@ class ReportController extends Controller
         }
 
         $sellerId = Auth::id();
-
-        // Ambil input filter
         $selectedMonth = $request->get('month');
         $selectedYear = $request->get('year', 2026);
 
         // --- 1. Data Berdasarkan Filter ---
-        $query = OrderItem::where('seller_id', $sellerId)
+        // Tambahkan withTrashed() pada relasi book agar jika ada logika yang memanggil
+        // properti buku di view index (misal: judul buku terlaris), datanya tidak null.
+        $query = OrderItem::with(['book' => function($q) {
+                $q->withTrashed();
+            }])
+            ->where('seller_id', $sellerId)
             ->whereIn('status', ['shipping', 'selesai']);
 
-        // Ringkasan Seluruh Waktu (Tidak terpengaruh filter)
+        // Ringkasan Seluruh Waktu
         $grandTotalQuery = clone $query;
         $grandTotalRevenue = $grandTotalQuery->get()->sum(fn($item) => $item->price * $item->qty);
         $grandTotalProfit  = $grandTotalQuery->sum('profit');
@@ -40,7 +41,6 @@ class ReportController extends Controller
         // Filter berdasarkan Tahun
         $query->whereYear('created_at', $selectedYear);
 
-        // Filter berdasarkan Bulan (Hanya jika bukan 'all')
         if ($selectedMonth !== 'all') {
             $query->whereMonth('created_at', $selectedMonth);
         }
@@ -57,9 +57,8 @@ class ReportController extends Controller
         $revenues = collect();
 
         if ($selectedMonth === 'all') {
-            // Jika SEMUA BULAN, tampilkan grafik Jan - Des
             for ($m = 1; $m <= 12; $m++) {
-                $monthName = \Carbon\Carbon::createFromDate(null, $m, 1)->locale('id')->translatedFormat('M');
+                $monthName = Carbon::createFromDate(null, $m, 1)->locale('id')->translatedFormat('M');
                 $days->push($monthName);
 
                 $monthlyData = OrderItem::where('seller_id', $sellerId)
@@ -69,10 +68,9 @@ class ReportController extends Controller
                     ->get();
 
                 $revenues->push($monthlyData->sum(fn($item) => $item->price * $item->qty));
-                $profits->push($monthlyData->sum('profit'));
+                $profits->push($monthlyData->push($monthlyData->sum('profit')));
             }
         } else {
-            // Jika BULAN TERTENTU, tampilkan grafik harian
             $daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$selectedMonth, (int)$selectedYear);
             for ($d = 1; $d <= $daysInMonth; $d++) {
                 $date = sprintf('%04d-%02d-%02d', $selectedYear, $selectedMonth, $d);
@@ -88,38 +86,33 @@ class ReportController extends Controller
             }
         }
 
-        $yearRange = range(2026, 2021); // Tahun tetap ke 2026 sebagai start
+        $yearRange = range(2026, 2021);
 
         return view('seller.report.index', compact(
-            'totalRevenue',
-            'totalProfit',
-            'totalSold',
-            'grandTotalRevenue',
-            'grandTotalProfit',
-            'days',
-            'profits',
-            'revenues',
-            'selectedMonth',
-            'selectedYear',
-            'yearRange'
+            'totalRevenue', 'totalProfit', 'totalSold',
+            'grandTotalRevenue', 'grandTotalProfit',
+            'days', 'profits', 'revenues',
+            'selectedMonth', 'selectedYear', 'yearRange'
         ));
     }
 
     public function download(Request $request)
     {
         $sellerId = Auth::id();
-        $month = $request->input('month'); // Bisa berisi 'all' atau angka 1-12
+        $month = $request->input('month');
         $year = $request->input('year');
         $chartImage = $request->input('chart_image');
 
-        $query = OrderItem::with(['order.user', 'book'])
+        // PENTING: Di sini kita harus menggunakan withTrashed()
+        // agar di dalam PDF nama buku tidak kosong/error
+        $query = OrderItem::with(['order.user', 'book' => function($q) {
+                $q->withTrashed();
+            }])
             ->where('seller_id', $sellerId)
             ->whereIn('status', ['shipping', 'selesai']);
 
-        // Filter Tahun
         $query->whereYear('created_at', $year);
 
-        // Filter Bulan (Jika bukan 'all')
         if ($month && $month !== 'all') {
             $query->whereMonth('created_at', $month);
             $namaBulan = Carbon::createFromDate($year, $month, 1)->locale('id')->translatedFormat('F');
@@ -130,9 +123,10 @@ class ReportController extends Controller
 
         $items = $query->get();
 
-        // Hitung statistik untuk dikirim ke PDF
         $totalRevenue = $items->sum(fn($i) => $i->price * $i->qty);
         $totalProfit  = $items->sum('profit');
+
+        // Grouping items berdasarkan order_id untuk tampilan tabel di PDF
         $orders = $items->groupBy('order_id');
 
         $pdf = Pdf::loadView('seller.report.pdf', [

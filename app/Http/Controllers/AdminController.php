@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\OrderItem;
 use App\Models\User;
 use App\Notifications\GeneralNotification;
 use Illuminate\Http\Request;
