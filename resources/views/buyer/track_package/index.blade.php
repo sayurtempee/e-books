@@ -161,107 +161,108 @@
                                     @foreach ($group as $subItem)
                                         <div
                                             class="flex items-center gap-5 bg-gray-50/50 p-4 rounded-3xl border border-gray-100 hover:bg-white hover:shadow-md transition-all">
-                                            <img src="{{ asset('storage/' . $subItem->book->photos_product) }}"
-                                                class="w-20 h-20 rounded-2xl object-cover shadow-sm">
-                                            <div class="flex-1">
-                                                <h4 class="font-bold text-gray-800 text-lg leading-tight">
-                                                    {{ $subItem->book->title }}</h4>
-                                                <p class="text-xs font-bold text-teal-600 mt-1 uppercase tracking-wider">
-                                                    {{ $subItem->qty }} x
-                                                    Rp{{ number_format($subItem->price, 0, ',', '.') }}
-                                                </p>
-                                            </div>
-                                            <div class="text-right">
-                                                <p class="text-lg font-black text-gray-900 italic">
-                                                    Rp{{ number_format($subItem->qty * $subItem->price, 0, ',', '.') }}
-                                                </p>
-                                            </div>
+                                            <img src="{{ asset('storage/' . $subItem->book->photos_product) ?? (asset('image/default-buku.avif') ?? 'Gambar Hilang') }}"
+                                                class="w-20 h-20 rounded-2xl object-cover shadow-sm"
+                                                onerror="this.src='{{ asset('image/default-buku.avif') }}'; this.onerror=null;">
                                         </div>
-                                    @endforeach
-                                </div>
-
-                                {{-- Card Footer: Total & Actions --}}
-                                <div
-                                    class="mt-10 pt-8 border-t border-dashed border-gray-200 flex flex-col lg:flex-row justify-between items-center gap-8">
-
-                                    {{-- Address Info --}}
-                                    <div class="flex gap-4 items-start w-full lg:w-1/3">
-                                        <div
-                                            class="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-600 shrink-0">
-                                            <i class="bi bi-geo-alt-fill"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Alamat
-                                                Pengiriman</p>
-                                            <p class="text-xs font-bold text-gray-600 leading-relaxed">
-                                                {{ Auth::user()->address }}</p>
-                                        </div>
-                                    </div>
-
-                                    {{-- Total & Buttons --}}
-                                    <div class="flex flex-col sm:flex-row items-center gap-6 w-full lg:w-auto">
-                                        <div class="text-center sm:text-right">
-                                            <p class="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em] mb-1">
-                                                Total Pembayaran</p>
-                                            <p class="text-3xl font-black text-teal-600 tracking-tighter">
-                                                <span
-                                                    class="text-sm mr-1">Rp</span>{{ number_format($group->sum(fn($i) => $i->qty * $i->price), 0, ',', '.') }}
+                                        <div class="flex-1">
+                                            <h4 class="font-bold text-gray-800 text-lg leading-tight">
+                                                {{ $subItem->book->title }}</h4>
+                                            <p class="text-xs font-bold text-teal-600 mt-1 uppercase tracking-wider">
+                                                {{ $subItem->qty }} x
+                                                Rp{{ number_format($subItem->price, 0, ',', '.') }}
                                             </p>
                                         </div>
-
-                                        <div class="flex flex-wrap justify-center gap-3">
-                                            {{-- Button Group --}}
-                                            <div class="flex gap-2">
-                                                <a href="{{ route('chat.index', $firstItem->seller_id) }}"
-                                                    class="px-5 py-3 bg-white border-2 border-teal-600 rounded-2xl text-teal-600 font-bold text-xs hover:bg-teal-600 hover:text-white transition-all flex items-center gap-2">
-                                                    <i class="bi bi-chat-left-dots-fill"></i>
-                                                    Chat
-                                                </a>
-
-                                                @if (in_array($status, ['approved', 'shipping', 'selesai']))
-                                                    <a href="{{ route('buyer.invoice.download', $firstItem->order_id) }}"
-                                                        class="px-4 py-3 bg-gray-50 text-gray-600 rounded-2xl font-bold text-xs hover:bg-gray-100 transition-all border border-gray-200 flex items-center gap-2">
-                                                        <i class="bi bi-file-earmark-pdf-fill"></i>
-                                                        <span class="hidden sm:inline">Invoice</span>
-                                                    </a>
-                                                @endif
-                                                @if ($status == 'shipping')
-                                                    <a href="https://jne.co.id/tracking-package" target="_blank"
-                                                        class="px-4 py-3 bg-blue-50 text-blue-600 rounded-2xl font-bold text-xs hover:bg-blue-100 transition-all border border-blue-200 flex items-center gap-2">
-                                                        <i class="bi bi-geo-fill"></i>
-                                                        <span class="hidden sm:inline">Lacak Paket</span>
-                                                    </a>
-                                                @endif
-                                            </div>
-
-                                            @if (!$hasProof)
-                                                <button
-                                                    onclick="openUploadModal('{{ $firstItem->order_id }}', '{{ $firstItem->seller_id }}')"
-                                                    class="px-8 py-3 bg-red-500 ...">
-                                                    <i class="bi bi-cloud-arrow-up-fill text-base"></i>
-                                                    BAYAR SEKARANG
-                                                </button>
-                                            @else
-                                                <button
-                                                    onclick="viewPaymentProof('{{ asset('storage/' . $firstItem->payment_proof) }}')"
-                                                    class="px-6 py-3 bg-gray-800 text-white rounded-2xl font-bold text-xs hover:bg-black transition-all flex items-center gap-2">
-                                                    <i class="bi bi-eye-fill"></i>
-                                                    Lihat Bukti
-                                                </button>
-                                            @endif
+                                        <div class="text-right">
+                                            <p class="text-lg font-black text-gray-900 italic">
+                                                Rp{{ number_format($subItem->qty * $subItem->price, 0, ',', '.') }}
+                                            </p>
                                         </div>
-                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    @empty
-                        {{-- Empty State Tetap Sama --}}
-                        <div class="py-32 bg-white rounded-[3rem] border-4 border-dashed border-gray-100 text-center">
-                            <i class="bi bi-box-seam text-6xl text-gray-200 mb-6 block"></i>
-                            <h3 class="text-xl font-bold text-gray-800">Tidak ada paket ditemukan</h3>
-                        </div>
-                    @endforelse
+                    @endforeach
                 </div>
+
+                {{-- Card Footer: Total & Actions --}}
+                <div
+                    class="mt-10 pt-8 border-t border-dashed border-gray-200 flex flex-col lg:flex-row justify-between items-center gap-8">
+
+                    {{-- Address Info --}}
+                    <div class="flex gap-4 items-start w-full lg:w-1/3">
+                        <div
+                            class="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center text-teal-600 shrink-0">
+                            <i class="bi bi-geo-alt-fill"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Alamat
+                                Pengiriman</p>
+                            <p class="text-xs font-bold text-gray-600 leading-relaxed">
+                                {{ Auth::user()->address }}</p>
+                        </div>
+                    </div>
+
+                    {{-- Total & Buttons --}}
+                    <div class="flex flex-col sm:flex-row items-center gap-6 w-full lg:w-auto">
+                        <div class="text-center sm:text-right">
+                            <p class="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em] mb-1">
+                                Total Pembayaran</p>
+                            <p class="text-3xl font-black text-teal-600 tracking-tighter">
+                                <span
+                                    class="text-sm mr-1">Rp</span>{{ number_format($group->sum(fn($i) => $i->qty * $i->price), 0, ',', '.') }}
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap justify-center gap-3">
+                            {{-- Button Group --}}
+                            <div class="flex gap-2">
+                                <a href="{{ route('chat.index', $firstItem->seller_id) }}"
+                                    class="px-5 py-3 bg-white border-2 border-teal-600 rounded-2xl text-teal-600 font-bold text-xs hover:bg-teal-600 hover:text-white transition-all flex items-center gap-2">
+                                    <i class="bi bi-chat-left-dots-fill"></i>
+                                    Chat
+                                </a>
+
+                                @if (in_array($status, ['approved', 'shipping', 'selesai']))
+                                    <a href="{{ route('buyer.invoice.download', $firstItem->order_id) }}"
+                                        class="px-4 py-3 bg-gray-50 text-gray-600 rounded-2xl font-bold text-xs hover:bg-gray-100 transition-all border border-gray-200 flex items-center gap-2">
+                                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                                        <span class="hidden sm:inline">Invoice</span>
+                                    </a>
+                                @endif
+                                @if ($status == 'shipping')
+                                    <a href="https://jne.co.id/tracking-package" target="_blank"
+                                        class="px-4 py-3 bg-blue-50 text-blue-600 rounded-2xl font-bold text-xs hover:bg-blue-100 transition-all border border-blue-200 flex items-center gap-2">
+                                        <i class="bi bi-geo-fill"></i>
+                                        <span class="hidden sm:inline">Lacak Paket</span>
+                                    </a>
+                                @endif
+                            </div>
+
+                            @if (!$hasProof)
+                                <button
+                                    onclick="openUploadModal('{{ $firstItem->order_id }}', '{{ $firstItem->seller_id }}')"
+                                    class="px-8 py-3 bg-red-500 ...">
+                                    <i class="bi bi-cloud-arrow-up-fill text-base"></i>
+                                    BAYAR SEKARANG
+                                </button>
+                            @else
+                                <button onclick="viewPaymentProof('{{ asset('storage/' . $firstItem->payment_proof) }}')"
+                                    class="px-6 py-3 bg-gray-800 text-white rounded-2xl font-bold text-xs hover:bg-black transition-all flex items-center gap-2">
+                                    <i class="bi bi-eye-fill"></i>
+                                    Lihat Bukti
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        @empty
+            {{-- Empty State Tetap Sama --}}
+            <div class="py-32 bg-white rounded-[3rem] border-4 border-dashed border-gray-100 text-center">
+                <i class="bi bi-box-seam text-6xl text-gray-200 mb-6 block"></i>
+                <h3 class="text-xl font-bold text-gray-800">Tidak ada paket ditemukan</h3>
+            </div>
+            @endforelse
+            </div>
             </div>
         </x-sidebar>
 
