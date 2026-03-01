@@ -35,8 +35,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
             'role' => 'admin',
             'isOnline' => false,
-            'address' => 'Ky Tinggi',
+            'address' => 'Jakarta Timur',
         ]);
     }
 }
-
