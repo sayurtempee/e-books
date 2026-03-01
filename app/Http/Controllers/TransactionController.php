@@ -33,7 +33,6 @@ class TransactionController extends Controller
 
     public function updateApproval(Request $request, $orderId)
     {
-        // 1. Ambil data items terlebih dahulu agar bisa digunakan di validasi
         $items = OrderItem::where('order_id', $orderId)
             ->where('seller_id', Auth::id())
             ->get();
@@ -42,7 +41,6 @@ class TransactionController extends Controller
             return back()->with('error', 'Pesanan tidak ditemukan.');
         }
 
-        // 2. Validasi
         $request->validate([
             'status' => 'required|in:tolak,pending,approved,shipping,refunded,selesai',
             'cancel_reason' => 'required_if:status,tolak|required_if:status,refunded|nullable|string|max:500',
@@ -64,28 +62,32 @@ class TransactionController extends Controller
             $status = $request->status;
 
             foreach ($items as $item) {
+                // Cek jika status sebelumnya sudah tolak/refunded agar tidak terjadi double increment stock
+                $alreadyCancelled = in_array($item->status, ['tolak', 'refunded']);
+
                 $updateData = ['status' => $status];
 
-                // Logika Approved
                 if ($status === 'approved') {
                     $updateData['approved_at'] = now();
                 }
 
-                // Logika Shipping
                 if ($status === 'shipping') {
                     $updateData['expedisi_name'] = $request->expedisi_name;
                     $updateData['tracking_number'] = $request->tracking_number;
                 }
 
-                // Logika Tolak & Refund (Tambah Alasan)
+                // Logika Tolak & Refund (Tambah Alasan & Kembalikan Stok)
                 if (in_array($status, ['tolak', 'refunded'])) {
                     $updateData['cancel_reason'] = $request->cancel_reason;
 
                     if ($status === 'refunded') {
                         $updateData['refunded_at'] = now();
-                        if ($item->book) {
-                            $item->book->increment('stock', (int) $item->qty);
-                        }
+                    }
+
+                    // KEMBALIKAN STOK:
+                    // Hanya jika status baru adalah tolak/refund DAN status lama BUKAN tolak/refund
+                    if ($item->book && !$alreadyCancelled) {
+                        $item->book->increment('stock', (int) $item->qty);
                     }
                 }
 

@@ -187,7 +187,7 @@
 
                                         {{-- Tombol Lacak Paket --}}
                                         @if ($firstItem->status === 'shipping')
-                                            <a href="{{ route('buyer.orders.tracking', ['tracking_number' => $firstItem->tracking_number]) }}"
+                                            <a href="https://www.jne.co.id/" target="_blank"
                                                 class="px-4 py-2 bg-blue-500 text-white rounded-xl text-xs font-bold hover:bg-blue-600 transition-all flex items-center gap-2">
                                                 <i class="bi bi-geo-fill"></i>
                                                 Lacak Paket
