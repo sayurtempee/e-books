@@ -111,10 +111,15 @@
                                         <div class="relative z-10 flex justify-between">
                                             @php
                                                 $steps = [
-                                                    ['label' => 'Dipesan', 'icon' => 'bi-cart-check', 'active' => true],
+                                                    [
+                                                        'label' => 'Dipesan',
+                                                        'icon' => 'bi-cart-check',
+                                                        'active' => true, // Selalu active karena sudah masuk list
+                                                    ],
                                                     [
                                                         'label' => 'Dibayar',
                                                         'icon' => 'bi-cash-stack',
+                                                        // Active jika sudah ada bukti ATAU sudah di-approve/lebih lanjut
                                                         'active' =>
                                                             $hasProof ||
                                                             in_array($status, ['approved', 'shipping', 'selesai']),
@@ -122,6 +127,7 @@
                                                     [
                                                         'label' => 'Diproses',
                                                         'icon' => 'bi-gear-wide-connected',
+                                                        // Active jika status sudah approved ke atas
                                                         'active' => in_array($status, [
                                                             'approved',
                                                             'shipping',
@@ -131,9 +137,8 @@
                                                     [
                                                         'label' => 'Dikirim',
                                                         'icon' => 'bi-truck',
-                                                        'active' =>
-                                                            ($status === 'shipping' && $hasResi) ||
-                                                            $status === 'selesai',
+                                                        // Active jika status shipping (dan idealnya punya resi)
+                                                        'active' => in_array($status, ['shipping', 'selesai']),
                                                     ],
                                                     [
                                                         'label' => 'Selesai',
@@ -251,6 +256,15 @@
                                                         <i class="bi bi-eye"></i> Bukti Bayar
                                                     </button>
                                                 @endif
+                                            @endif
+
+                                            {{-- Tombol Lacak Paket --}}
+                                            @if ($firstItem->status === 'shipping')
+                                                <a href="https://www.jne.co.id/" target="_blank"
+                                                    class="px-4 py-2 bg-blue-500 text-white rounded-xl text-xs font-bold hover:bg-blue-600 transition-all flex items-center gap-2">
+                                                    <i class="bi bi-geo-fill"></i>
+                                                    Lacak Paket
+                                                </a>
                                             @endif
                                         </div>
                                     </div>

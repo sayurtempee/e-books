@@ -187,7 +187,7 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         Route::get('/buyer/history', [TransactionController::class, 'purchaseHistory'])->name('buyer.history');
 
         // Track Package
-        Route::get('/track-package', function (Illuminate\Http\Request $request) {
+        Route::get('/buyer/track-package', function (Illuminate\Http\Request $request) {
             $search = $request->query('tracking_number'); // Mengambil input dari search bar
 
             $items = \App\Models\OrderItem::whereHas('order', function ($q) {
