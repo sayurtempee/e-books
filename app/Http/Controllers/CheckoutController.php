@@ -87,7 +87,7 @@ class CheckoutController extends Controller
                         if ($seller) {
                             $seller->notify(new GeneralNotification([
                                 'title' => 'Pesanan Baru Masuk! 📦',
-                                'message' => "Hore! Produk Anda dipesan dalam order #ORD-{$order->id}.",
+                                'message' => "Hore! Produk {$book->title} dipesan dalam order #ORD-{$order->id}.",
                                 'icon' => '🛍️',
                                 'color' => 'bg-blue-100 text-blue-700',
                                 'url' => route('seller.approval.index'), // Sesuaikan dengan route dashboard penjual Anda
