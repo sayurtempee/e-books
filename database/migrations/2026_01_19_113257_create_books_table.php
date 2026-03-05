@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('photos_product');
             $table->string('title');
             $table->integer('stock')->default(0);
-            $table->string('unit', 20);
+            $table->string('unit', 20); // enum dengan isi
             $table->text('description');
             $table->decimal('capital', 10, 2); // harga modal
             $table->decimal('price', 10, 2);   // harga jual

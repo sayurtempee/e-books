@@ -141,7 +141,7 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
         Route::get('/seller/dashboard', [DashboardController::class, 'seller'])->name('seller.dashboard');
 
         // seller melihat seller
-        Route::get('/list-sellers', [AdminController::class, 'sellerToSeller'])->name('list.sellers');
+        Route::get('/seller/list-sellers', [AdminController::class, 'sellerToSeller'])->name('seller.list.sellers');
 
         // Book Management
         Route::get('/seller/book', [BookController::class, 'index'])->name('seller.book.index');

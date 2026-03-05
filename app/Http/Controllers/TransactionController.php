@@ -13,20 +13,38 @@ use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
-    public function indexApproval()
+    public function indexApproval(Request $request)
     {
-        // Ambil data dan kelompokkan berdasarkan order_id
-        $groupedItems = OrderItem::where('seller_id', Auth::id())
-            // ->where('status', '!=', 'refunded') // ini itu untuk menghilangkan refunded status di views nya.
+        $search = $request->input('search');
+        $statusFilter = $request->input('status'); // Filter kategori: tolak, refunded, selesai
+
+        $query = OrderItem::where('seller_id', Auth::id())
             ->with([
                 'order.user',
-                'book' => function ($query) {
-                    $query->withTrashed();
+                'book' => function ($q) {
+                    $q->withTrashed();
                 }
-            ])
-            ->latest()
-            ->get()
-            ->groupBy('order_id');
+            ]);
+
+        // Fitur Search (Order ID, Nama Pembeli, Judul Buku)
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('order_id', 'like', "%{$search}%")
+                    ->orWhereHas('order.user', function ($qu) use ($search) {
+                        $qu->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('book', function ($qb) use ($search) {
+                        $qb->where('title', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Fitur Filter Status (Kategori)
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+
+        $groupedItems = $query->latest()->get()->groupBy('order_id');
 
         return view('seller.approval.index', compact('groupedItems'));
     }

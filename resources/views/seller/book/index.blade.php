@@ -6,21 +6,59 @@
             <div class="p-8 bg-gray-50 min-h-screen">
 
                 {{-- Header Section --}}
-                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                    <div>
-                        <h1 class="text-3xl font-black text-gray-800 tracking-tight">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-6">
+
+                    {{-- Left: Title & Subtitle --}}
+                    <div class="space-y-1">
+                        <h1 class="text-3xl font-black text-gray-800 tracking-tight flex items-center gap-3">
+                            <span class="p-2 bg-teal-50 rounded-lg">
+                                <i class="bi bi-journal-bookmark-fill text-teal-600 text-2xl"></i>
+                            </span>
                             Manajemen <span class="text-teal-600">Buku</span>
                         </h1>
-                        <p class="text-gray-500 text-sm">Kelola stok dan pantau keuntungan penjualan Anda.</p>
+                        <p class="text-gray-500 text-sm pl-1">
+                            Kelola stok dan pantau keuntungan penjualan Anda secara real-time.
+                        </p>
                     </div>
 
-                    <div x-data="{ openAddBookModal: false }">
-                        @include('seller.book.add')
-                        <button @click="openAddBookModal = true"
-                            class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-xl shadow-lg shadow-teal-200 font-bold transition-all active:scale-95">
-                            <i class="bi bi-plus-circle-fill"></i>
-                            Tambah Produk Baru
-                        </button>
+                    {{-- Right: Actions (Add Button & Search) --}}
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+
+                        {{-- Search Input Group --}}
+                        <div class="relative min-w-[280px]">
+                            <form action="{{ route('seller.book.index') }}" method="GET" class="relative group">
+                                <input type="text" name="search" value="{{ request('search') }}"
+                                    placeholder="Cari Judul atau Kategori..."
+                                    class="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 bg-white focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm shadow-sm group-hover:border-gray-300">
+
+                                <div
+                                    class="absolute left-3.5 top-3.5 text-gray-400 group-focus-within:text-teal-500 transition-colors">
+                                    <i class="bi bi-search"></i>
+                                </div>
+
+                                @if (request('search'))
+                                    <a href="{{ route('seller.book.index') }}"
+                                        class="absolute right-3 top-2.5 text-gray-300 hover:text-rose-500 transition-colors p-1">
+                                        <i class="bi bi-x-circle-fill text-lg"></i>
+                                    </a>
+                                @endif
+                                <button type="submit" class="hidden">Search</button>
+                            </form>
+                        </div>
+
+                        {{-- Divider (Desktop Only) --}}
+                        <div class="hidden sm:block w-px h-8 bg-gray-200 mx-1"></div>
+
+                        {{-- Add Product Button --}}
+                        <div x-data="{ openAddBookModal: false }">
+                            @include('seller.book.add')
+                            <button @click="openAddBookModal = true"
+                                class="w-full inline-flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-xl shadow-lg shadow-teal-200/50 font-bold transition-all active:scale-95 whitespace-nowrap">
+                                <i class="bi bi-plus-lg"></i>
+                                Tambah Produk
+                            </button>
+                        </div>
+
                     </div>
                 </div>
 
@@ -148,11 +186,18 @@
                                                 {{-- Delete --}}
                                                 <form id="deleteBookForm-{{ $book->id }}" method="POST"
                                                     action="{{ route('seller.book.delete', $book->id) }}">
+
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="button"
-                                                        onclick="confirmDeleteBook({{ $book->id }}, '{{ $book->title }}')"
-                                                        class="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all">
+
+                                                    <button type="button" {{-- Disable jika stok masih ada --}}
+                                                        {{ $book->stock > 0 ? 'disabled' : '' }} {{-- Hanya aktifkan confirm jika stok habis --}}
+                                                        @if ($book->stock <= 0) onclick="confirmDeleteBook({{ $book->id }}, '{{ $book->title }}')" @endif
+                                                        class="w-8 h-8 flex items-center justify-center rounded-lg transition-all shadow-sm
+                                                        {{ $book->stock > 0
+                                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                                                            : 'bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white active:scale-95' }}"
+                                                        title="{{ $book->stock > 0 ? 'Habiskan stok dahulu untuk menghapus' : 'Hapus Buku' }}">
                                                         <i class="bi bi-trash-fill"></i>
                                                     </button>
                                                 </form>

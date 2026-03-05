@@ -260,9 +260,21 @@ class AdminController extends Controller
     }
 
     // Seller melihat Seller
-    public function sellerToSeller()
+    public function sellerToSeller(Request $request)
     {
-        $sellers = User::where('role', 'seller')->get();
+        // Mengambil input search
+        $search = $request->input('search');
+
+        $sellers = User::where('role', 'seller')
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('nik', 'like', "%{$search}%");
+                });
+            })
+            ->get();
+
         return view('seller.seller_views', compact('sellers'));
     }
 }

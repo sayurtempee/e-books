@@ -15,12 +15,38 @@
                                 <i class="bi bi-pencil-square"></i>
                             </button>
                         </div>
-                        <div class="relative">
-                            <input type="text" placeholder="Cari pesan..."
-                                class="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-10 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm">
-                            <span class="absolute left-3.5 top-3 text-gray-400">
-                                <i class="bi bi-search"></i>
-                            </span>
+                        <div class="relative mb-4">
+                            <form action="{{ route('chat.index') }}" method="GET">
+                                {{-- Jika sedang membuka chat tertentu, pastikan form mengarah ke ID tersebut --}}
+                                @if (isset($activeChat))
+                                    @php
+                                        $otherUser =
+                                            $activeChat->sender_id == auth()->id()
+                                                ? $activeChat->receiver_id
+                                                : $activeChat->sender_id;
+                                    @endphp
+                                    <input type="hidden" name="user_id" value="{{ $otherUser }}">
+                                @endif
+
+                                <div class="relative group">
+                                    <input type="text" name="search" value="{{ request('search') }}"
+                                        placeholder="Cari nama kontak..."
+                                        class="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-10 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all shadow-sm outline-none">
+
+                                    <span
+                                        class="absolute left-3.5 top-3 text-gray-400 group-focus-within:text-teal-500 transition-colors">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+
+                                    @if (request('search'))
+                                        <a href="{{ route('chat.index', isset($otherUser) ? $otherUser : '') }}"
+                                            class="absolute right-3.5 top-2.5 text-gray-300 hover:text-gray-600 transition-colors">
+                                            <i class="bi bi-x-circle-fill text-lg"></i>
+                                        </a>
+                                    @endif
+                                </div>
+                                <button type="submit" class="hidden">Cari</button>
+                            </form>
                         </div>
                     </div>
 

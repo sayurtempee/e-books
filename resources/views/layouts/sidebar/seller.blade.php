@@ -6,9 +6,9 @@
         <span>Dashboard</span>
     </a>
 
-    <a href="{{ route('list.sellers') }}"
+    <a href="{{ route('seller.list.sellers') }}"
         class="flex items-center gap-3 px-4 py-2 rounded-lg
-    {{ request()->routeIs('list.sellers') ? $activeClass : $inactiveClass }}">
+    {{ request()->routeIs('seller.list.sellers') ? $activeClass : $inactiveClass }}">
         <i class="bi bi-people-fill"></i>
         <span>Daftar Rekan Seller</span>
     </a>

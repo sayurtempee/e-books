@@ -31,6 +31,13 @@
 
         {{-- FOOTER SIDEBAR --}}
         <div class="flex flex-col gap-1 p-4 border-t border-teal-100">
+            <a href="{{ route('help.index') }}"
+                class="w-full flex items-center gap-3 px-4 py-2 rounded-lg
+                {{ request()->routeIs('help.index') ? 'bg-teal-100 text-teal-700' : 'text-teal-600 hover:bg-teal-100' }}
+                font-semibold transition">
+                <i class="bi bi-question-circle-fill text-lg"></i>
+                <span>Help</span>
+            </a>
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
                 <button type="button" onclick="confirmLogout()"
@@ -40,14 +47,6 @@
                     <span>Sign Out</span>
                 </button>
             </form>
-
-            <a href="{{ route('help.index') }}"
-                class="w-full flex items-center gap-3 px-4 py-2 rounded-lg
-                {{ request()->routeIs('help.index') ? 'bg-teal-100 text-teal-700' : 'text-teal-600 hover:bg-teal-100' }}
-                font-semibold transition">
-                <i class="bi bi-question-circle-fill text-lg"></i>
-                <span>Help</span>
-            </a>
         </div>
     </aside>
 

@@ -14,14 +14,31 @@ use App\Notifications\GeneralNotification;
 
 class MessageController extends Controller
 {
-    public function index($user_id = null)
+    public function index(Request $request, $user_id = null)
     {
         $authId = Auth::id();
+        $search = $request->input('search');
 
-        // 1. Ambil semua daftar percakapan untuk sidebar
+        // 1. Ambil semua daftar percakapan untuk sidebar dengan filter pencarian
         $conversations = Conversation::with(['sender', 'receiver', 'messages'])
-            ->where('sender_id', $authId)
-            ->orWhere('receiver_id', $authId)
+            ->where(function ($query) use ($authId) {
+                $query->where('sender_id', $authId)
+                    ->orWhere('receiver_id', $authId);
+            })
+            ->when($search, function ($query) use ($search, $authId) {
+                $query->where(function ($q) use ($search, $authId) {
+                    // Cari di nama pengirim (jika kita penerima)
+                    $q->whereHas('sender', function ($qs) use ($search, $authId) {
+                        $qs->where('name', 'like', "%{$search}%")
+                            ->where('id', '!=', $authId);
+                    })
+                        // ATAU cari di nama penerima (jika kita pengirim)
+                        ->orWhereHas('receiver', function ($qr) use ($search, $authId) {
+                            $qr->where('name', 'like', "%{$search}%")
+                                ->where('id', '!=', $authId);
+                        });
+                });
+            })
             ->orderBy('last_message_at', 'desc')
             ->get();
 
@@ -41,7 +58,6 @@ class MessageController extends Controller
                     'receiver_id' => $user_id,
                     'last_message_at' => now(),
                 ]);
-                // Refresh daftar agar chat baru muncul di sidebar
                 return redirect()->route('chat.index', $user_id);
             }
         }

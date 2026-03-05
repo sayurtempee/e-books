@@ -19,13 +19,30 @@
                             class="px-4 py-2 bg-white text-teal-600 rounded-lg font-semibold">
                             Get Started
                         </a>
-                        <button class="px-4 py-2 border border-white rounded-lg cursor-pointer" onclick="openHelpModal()">
-                            Learn More
-                        </button>
+                        <a href="{{ route('help.index') }}"
+                            class="px-4 py-2 border border-white rounded-lg cursor-pointer">Learn More Help</a>
                     </div>
                 </div>
 
                 <img src="{{ asset('image/people-image.svg') }}" class="w-32 hidden md:block">
+            </div>
+
+            {{--  Category Section  --}}
+            <div class="mb-8">
+                <h3 class="text-sm font-semibold text-gray-700 mb-4">
+                    Your Category Book
+                </h3>
+                <div class="flex gap-4">
+                    @foreach ($categories as $category)
+                        <a href="{{ route('seller.book.index', ['category' => $category->id]) }}"
+                            class="flex flex-col items-center bg-white rounded-xl w-30 h-auto px-4 py-3 shadow hover:shadow-md hover:bg-teal-50 transition cursor-pointer">
+                            <i class="bi bi-{{ $category->getIconClass() }} text-teal-600 text-2xl mb-2"></i>
+                            <p class="text-sm font-medium text-gray-700">
+                                {{ $category->title }}
+                            </p>
+                        </a>
+                    @endforeach
+                </div>
             </div>
 
             {{-- MY ACCOUNT --}}
@@ -121,24 +138,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            {{--  Category Section  --}}
-            <div class="mb-8">
-                <h3 class="text-sm font-semibold text-gray-700 mb-4">
-                    Your Category Book
-                </h3>
-                <div class="flex gap-4">
-                    @foreach ($categories as $category)
-                        <a href="{{ route('seller.book.index', ['category' => $category->id]) }}"
-                            class="flex flex-col items-center bg-white rounded-xl px-4 py-3 shadow hover:shadow-md hover:bg-teal-50 transition cursor-pointer">
-                            <i class="bi bi-{{ $category->getIconClass() }} text-teal-600 text-2xl mb-2"></i>
-                            <p class="text-sm font-medium text-gray-700">
-                                {{ $category->title }}
-                            </p>
-                        </a>
-                    @endforeach
                 </div>
             </div>
         </x-sidebar>

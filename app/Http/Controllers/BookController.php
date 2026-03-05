@@ -14,10 +14,22 @@ use Illuminate\Support\Facades\Notification;
 
 class BookController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->input('search');
+
         $books = Book::where('user_id', Auth::id())
             ->with(['category', 'item'])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    // Cari berdasarkan Judul Buku
+                    $q->where('title', 'like', "%{$search}%")
+                        // Cari berdasarkan Nama Kategori (relasi)
+                        ->orWhereHas('category', function ($subQuery) use ($search) {
+                            $subQuery->where('title', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->latest()
             ->get();
 

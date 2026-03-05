@@ -3,213 +3,197 @@
 
     @section('body-content')
         <x-sidebar>
-            <div class="min-h-screen bg-slate-50 px-6 md:px-10 py-10 space-y-14">
+            <div class="min-h-screen bg-[#f8fafc] px-6 md:px-10 py-10 space-y-10">
 
-                {{-- Header --}}
-                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
+                {{-- Header Section --}}
+                <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
                     <div>
-                        <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-                            Laporan <span class="text-teal-600">Penjualan</span>
+                        <nav class="flex mb-2" aria-label="Breadcrumb">
+                            <ol
+                                class="flex items-center space-x-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                <li>Analitik</li>
+                                <li><i class="bi bi-chevron-right text-[10px]"></i></li>
+                                <li class="text-teal-600">Laporan Penjualan</li>
+                            </ol>
+                        </nav>
+                        <h1 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+                            Performa <span class="text-teal-600">Bisnis</span>
                         </h1>
-                        <p class="mt-2 text-sm text-slate-500 flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
-                            Data performa untuk periode terpilih
+                        <p class="mt-2 text-sm text-slate-500 italic">
+                            Data komprehensif untuk evaluasi pertumbuhan toko Anda.
                         </p>
                     </div>
 
-                    <div class="flex flex-wrap gap-3">
-                        <form id="pdfDownloadForm" action="{{ route('seller.reports.download') }}" method="POST"
-                            class="inline">
+                    <div class="flex items-center gap-3">
+                        <form id="pdfDownloadForm" action="{{ route('seller.reports.download') }}" method="POST">
                             @csrf
                             <input type="hidden" name="month" value="{{ $selectedMonth }}">
                             <input type="hidden" name="year" value="{{ $selectedYear }}">
                             <input type="hidden" name="chart_image" id="chart_image_input">
 
-                            @if ($selectedMonth === 'all')
-                                <button type="button" onclick="submitPdfWithChart()"
-                                    class="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-teal-700 transition">
-                                    <i class="bi bi-file-earmark-pdf-fill"></i>
-                                    Download Laporan (Semua Bulan)
-                                </button>
-                            @else
-                                <button type="button" onclick="submitPdfWithChart()"
-                                    class="inline-flex items-center gap-2 rounded-xl border border-teal-600 px-5 py-3 text-sm font-bold text-teal-700 hover:bg-teal-600 hover:text-white transition">
-                                    <i class="bi bi-file-earmark-pdf"></i>
-                                    Download Laporan
-                                    ({{ \Carbon\Carbon::createFromDate(null, $selectedMonth, 1)->locale('id')->translatedFormat('F') }})
-                                </button>
-                            @endif
+                            <button type="button" onclick="submitPdfWithChart()"
+                                class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3.5 text-sm font-bold text-white shadow-xl shadow-slate-200 hover:bg-slate-800 transition active:scale-95">
+                                <i class="bi bi-cloud-arrow-down-fill text-lg"></i>
+                                Ekspor Laporan PDF
+                            </button>
                         </form>
                     </div>
                 </div>
 
-                {{-- Filter --}}
-                <div class="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+                {{-- Filter Card --}}
+                <div class="bg-white rounded-3xl border border-slate-200/60 p-2 shadow-sm">
                     <form method="GET" action="{{ route('seller.reports.index') }}"
-                        class="flex flex-col md:flex-row md:items-end gap-6">
+                        class="flex flex-col md:flex-row items-center gap-2">
 
-                        {{-- Input Hidden untuk memastikan parameter selalu terkirim jika diperlukan --}}
-                        <div class="w-full md:w-56">
-                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Filter
-                                Bulan</label>
-                            <select name="month"
-                                class="mt-2 w-full rounded-xl border-slate-200 focus:ring-teal-500 focus:border-teal-500 font-bold text-slate-700">
-                                <option value="all" {{ $selectedMonth == 'all' ? 'selected' : '' }}>✨ Semua Bulan
-                                </option>
-                                @foreach (range(1, 12) as $m)
-                                    <option value="{{ $m }}"
-                                        {{ $selectedMonth != 'all' && $selectedMonth == $m ? 'selected' : '' }}>
-                                        {{ \Carbon\Carbon::createFromDate(null, $m, 1)->locale('id')->translatedFormat('F') }}
+                        <div class="grid grid-cols-2 gap-2 w-full md:w-auto flex-1">
+                            <div class="relative">
+                                <select name="month"
+                                    class="w-full pl-11 pr-4 py-3.5 rounded-2xl border-none bg-slate-50 focus:ring-2 focus:ring-teal-500 font-bold text-slate-700 text-sm appearance-none">
+                                    <option value="all" {{ $selectedMonth == 'all' ? 'selected' : '' }}>Semua Bulan
                                     </option>
-                                @endforeach
-                            </select>
+                                    @foreach (range(1, 12) as $m)
+                                        <option value="{{ $m }}"
+                                            {{ $selectedMonth != 'all' && $selectedMonth == $m ? 'selected' : '' }}>
+                                            {{ \Carbon\Carbon::createFromDate(null, $m, 1)->locale('id')->translatedFormat('F') }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <i class="bi bi-calendar4-event absolute left-4 top-4 text-teal-600"></i>
+                            </div>
+
+                            <div class="relative">
+                                <select name="year"
+                                    class="w-full pl-11 pr-4 py-3.5 rounded-2xl border-none bg-slate-50 focus:ring-2 focus:ring-teal-500 font-bold text-slate-700 text-sm appearance-none">
+                                    @foreach ($yearRange as $y)
+                                        <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>
+                                            {{ $y }}</option>
+                                    @endforeach
+                                </select>
+                                <i class="bi bi-hash absolute left-4 top-4 text-teal-600"></i>
+                            </div>
                         </div>
 
-                        <div class="w-full md:w-40">
-                            <label
-                                class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Tahun</label>
-                            <select name="year"
-                                class="mt-2 w-full rounded-xl border-slate-200 focus:ring-teal-500 focus:border-teal-500 font-bold text-slate-700">
-                                @foreach ($yearRange as $y)
-                                    <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>
-                                        {{ $y }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="flex gap-3">
+                        <div class="flex gap-2 w-full md:w-auto p-1">
                             <button type="submit"
-                                class="rounded-xl bg-teal-600 px-8 py-3 text-sm font-bold text-white hover:bg-teal-700 transition shadow-lg shadow-teal-100 flex items-center gap-2">
-                                <i class="bi bi-filter"></i>
-                                Terapkan Filter
+                                class="flex-1 md:flex-none rounded-2xl bg-teal-600 px-8 py-3.5 text-sm font-bold text-white hover:bg-teal-700 transition shadow-lg shadow-teal-100">
+                                Filter Data
                             </button>
-
-                            {{-- Tombol Reset diarahkan kembali ke link default --}}
-                            <a href="{{ route('seller.reports.index', ['month' => 'all', 'year' => '2026']) }}"
-                                class="rounded-xl bg-slate-100 px-4 py-3 text-slate-500 hover:bg-slate-200 transition flex items-center justify-center"
-                                title="Reset Filter">
-                                <i class="bi bi-arrow-clockwise text-lg"></i>
+                            <a href="{{ route('seller.reports.index', ['month' => 'all', 'year' => date('Y')]) }}"
+                                class="rounded-2xl bg-white border border-slate-200 px-4 py-3.5 text-slate-400 hover:text-rose-500 hover:border-rose-100 transition shadow-sm">
+                                <i class="bi bi-arrow-counterclockwise text-lg"></i>
                             </a>
                         </div>
                     </form>
                 </div>
 
-                {{-- Statistik Terfilter --}}
-                <section>
-                    <div class="mb-4">
-                        <h2 class="text-xs font-extrabold tracking-widest uppercase text-slate-400">
-                            @if ($selectedMonth == 'all')
-                                Statistik Tahun {{ $selectedYear }}
-                            @else
-                                Statistik
-                                {{ \Carbon\Carbon::createFromDate(null, $selectedMonth, 1)->locale('id')->translatedFormat('F') }}
-                                {{ $selectedYear }}
-                            @endif
-                        </h2>
+                {{-- Stats Grid --}}
+                <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {{-- Omzet --}}
+                    <div
+                        class="relative overflow-hidden bg-white rounded-3xl border border-slate-200/60 p-8 shadow-sm group">
+                        <div
+                            class="absolute -right-4 -top-4 w-24 h-24 bg-teal-50 rounded-full opacity-50 group-hover:scale-110 transition-transform">
+                        </div>
+                        <div class="relative">
+                            <div
+                                class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mb-6">
+                                <i class="bi bi-currency-dollar text-xl"></i>
+                            </div>
+                            <p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Omzet Periode Ini
+                            </p>
+                            <p class="text-3xl font-black text-slate-800">
+                                <span class="text-sm font-medium text-slate-400">Rp</span>
+                                {{ number_format($totalRevenue, 0, ',', '.') }}
+                            </p>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white rounded-2xl border border-slate-100 p-8">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
-                                    <i class="bi bi-wallet2"></i>
-                                </div>
-                                <span class="text-sm font-semibold text-slate-500">Omzet Periode Ini</span>
+                    {{-- Profit --}}
+                    <div class="relative overflow-hidden bg-teal-600 rounded-3xl p-8 shadow-xl shadow-teal-100 group">
+                        <div
+                            class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full group-hover:scale-125 transition-transform">
+                        </div>
+                        <div class="relative">
+                            <div
+                                class="w-12 h-12 rounded-2xl bg-white/20 text-white flex items-center justify-center mb-6 backdrop-blur-md">
+                                <i class="bi bi-graph-up-arrow text-xl"></i>
                             </div>
-                            <p class="text-3xl font-extrabold text-slate-800">
-                                Rp {{ number_format($totalRevenue, 0, ',', '.') }}
+                            <p class="text-xs font-black uppercase tracking-widest text-teal-100 mb-1">Profit Bersih</p>
+                            <p class="text-3xl font-black text-white">
+                                <span class="text-sm font-medium text-teal-200">Rp</span>
+                                {{ number_format($totalProfit, 0, ',', '.') }}
                             </p>
                         </div>
+                    </div>
 
-                        <div class="bg-teal-600 rounded-2xl p-8 text-white">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                                    <i class="bi bi-graph-up-arrow"></i>
-                                </div>
-                                <span class="text-sm font-semibold text-white/80">Profit Periode Ini</span>
-                            </div>
-                            <p class="text-3xl font-extrabold">
-                                Rp {{ number_format($totalProfit, 0, ',', '.') }}
-                            </p>
+                    {{-- Terjual --}}
+                    <div
+                        class="relative overflow-hidden bg-white rounded-3xl border border-slate-200/60 p-8 shadow-sm group">
+                        <div
+                            class="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full opacity-50 group-hover:scale-110 transition-transform">
                         </div>
-
-                        <div class="bg-white rounded-2xl border border-slate-100 p-8">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                                    <i class="bi bi-cart-check"></i>
-                                </div>
-                                <span class="text-sm font-semibold text-slate-500">Buku Terjual</span>
+                        <div class="relative">
+                            <div
+                                class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-6">
+                                <i class="bi bi-box-seam text-xl"></i>
                             </div>
-                            <p class="text-3xl font-extrabold text-slate-800">
-                                {{ $totalSold }} <span class="text-base text-slate-400">pcs</span>
+                            <p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Volume Penjualan</p>
+                            <p class="text-3xl font-black text-slate-800">
+                                {{ $totalSold }} <span
+                                    class="text-sm font-medium text-slate-400 uppercase tracking-tighter">Produk
+                                    Terjual</span>
                             </p>
                         </div>
                     </div>
                 </section>
 
-                {{-- Chart --}}
-                <section class="bg-white rounded-3xl border border-slate-100 p-10">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+                {{-- Chart Section --}}
+                <section class="bg-white rounded-[2rem] border border-slate-200/60 p-8 md:p-12 shadow-sm">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
                         <div>
-                            <h2 class="text-xl font-extrabold text-slate-800">Trend Penjualan</h2>
-                            <p class="text-sm text-slate-400">
-                                {{ $selectedMonth == 'all' ? 'Data bulanan sepanjang tahun' : 'Data harian pada bulan terpilih' }}
+                            <h2 class="text-2xl font-black text-slate-800 tracking-tight">Grafik Fluktuasi</h2>
+                            <p class="text-sm text-slate-400 mt-1">
+                                Visualisasi {{ $selectedMonth == 'all' ? 'bulanan' : 'harian' }} omzet terhadap profit.
                             </p>
                         </div>
-
-                        <div class="flex items-center gap-4 mt-4 md:mt-0">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full bg-teal-600"></span>
-                                <span class="text-xs font-semibold text-slate-500 uppercase">Profit</span>
+                        <div class="flex items-center p-1 bg-slate-50 rounded-xl">
+                            <div class="flex items-center gap-2 px-4 py-2">
+                                <span class="w-3 h-3 rounded-full bg-teal-600"></span>
+                                <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Profit</span>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full bg-teal-300"></span>
-                                <span class="text-xs font-semibold text-slate-500 uppercase">Omzet</span>
+                            <div class="flex items-center gap-2 px-4 py-2 border-l border-slate-200">
+                                <span class="w-3 h-3 rounded-full bg-teal-200"></span>
+                                <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Omzet</span>
                             </div>
                         </div>
                     </div>
-                    <div class="h-[420px]">
+                    <div class="h-[450px] w-full">
                         <canvas id="salesChart"></canvas>
                     </div>
                 </section>
 
-                <hr class="border-slate-200">
-
-                {{-- Ringkasan Seluruh Waktu (Pindahkan ke bawah agar tidak membingungkan) --}}
-                <section>
-                    <h2 class="text-xs font-extrabold tracking-widest uppercase text-slate-400 mb-4">
-                        Akumulasi Seluruh Waktu
-                    </h2>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div
-                            class="bg-white/50 rounded-2xl border border-dashed border-slate-200 p-6 flex items-center gap-4">
-                            <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                                <i class="bi bi-cash-stack"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs uppercase text-slate-400 font-bold">Total Omzet (All Time)</p>
-                                <p class="text-xl font-extrabold text-slate-600">
-                                    Rp {{ number_format($grandTotalRevenue, 0, ',', '.') }}
-                                </p>
-                            </div>
+                {{-- All Time Summary --}}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
+                    <div class="bg-slate-900 rounded-[2rem] p-8 text-white flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Grand Total
+                                Omzet</p>
+                            <p class="text-2xl font-black tracking-tight italic">Rp
+                                {{ number_format($grandTotalRevenue, 0, ',', '.') }}</p>
                         </div>
-
-                        <div
-                            class="bg-white/50 rounded-2xl border border-dashed border-slate-200 p-6 flex items-center gap-4">
-                            <div
-                                class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                <i class="bi bi-piggy-bank"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs uppercase text-slate-400 font-bold">Total Profit (All Time)</p>
-                                <p class="text-xl font-extrabold text-slate-600">
-                                    Rp {{ number_format($grandTotalProfit, 0, ',', '.') }}
-                                </p>
-                            </div>
-                        </div>
+                        <i class="bi bi-layers text-4xl text-slate-700"></i>
                     </div>
-                </section>
+                    <div
+                        class="bg-white rounded-[2rem] border-2 border-dashed border-slate-200 p-8 flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Grand Total
+                                Profit</p>
+                            <p class="text-2xl font-black tracking-tight text-teal-600 italic">Rp
+                                {{ number_format($grandTotalProfit, 0, ',', '.') }}</p>
+                        </div>
+                        <i class="bi bi-trophy text-4xl text-slate-200"></i>
+                    </div>
+                </div>
             </div>
 
             {{-- Chart JS --}}
