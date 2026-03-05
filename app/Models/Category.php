@@ -22,7 +22,7 @@ class Category extends Model
     }
 
     // Hash Many Category
-    public function books()
+    public function book()
     {
         return $this->hasMany(Book::class);
     }

@@ -8,14 +8,37 @@
                     Halaman Daftar Seller
                 </h1>
 
-                {{-- Add Seller --}}
-                <div x-data="{ openAddSellerModal: false }">
-                    @include('admin.seller.add')
-                    <button @click="openAddSellerModal = true"
-                        class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg shadow cursor-pointer font-semibold">
-                        <i class="bi bi-plus-lg"></i>
-                        Tambah Seller
-                    </button>
+                {{-- Container Add Seller + Search --}}
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    {{-- Sisi Kiri: Tombol Tambah --}}
+                    <div x-data="{ openAddSellerModal: false }">
+                        @include('admin.seller.add')
+                        <button @click="openAddSellerModal = true"
+                            class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg shadow cursor-pointer font-semibold transition-colors">
+                            <i class="bi bi-plus-lg"></i>
+                            Tambah Seller
+                        </button>
+                    </div>
+
+                    {{-- Sisi Kanan: Search Bar --}}
+                    <div class="w-full md:w-72">
+                        <form action="{{ route('admin.sellers') }}" method="GET" class="relative">
+                            <input type="text" name="search" value="{{ request('search') }}"
+                                placeholder="Cari nama seller..."
+                                class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all">
+                            <div class="absolute left-3 top-2.5 text-gray-400">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            @if (request('search'))
+                                <button type="button"
+                                    onclick="document.querySelector('input[name=\'search\']').value=''; this.closest('form').submit()"
+                                    class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 transition">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </button>
+                            @endif
+                            <button type="submit" class="hidden">Search</button>
+                        </form>
+                    </div>
                 </div>
 
                 {{-- Seller Table --}}

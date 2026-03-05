@@ -8,9 +8,15 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::all();
+        $categories = Category::query()
+            ->withSum('book', 'stock')
+            ->when($request->input('search'), function ($query) use ($request) {
+                $query->where('title', 'like', "%{$request->input('search')}%");
+            })
+            ->latest()
+            ->get();
         return view('admin.category.index', compact('categories'));
     }
 
@@ -41,7 +47,7 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
 
-        if ($category->books()->exists()) {
+        if ($category->book()->exists()) {
             return back()->with('error', 'Mohon maaf, kategori masih memiliki produk buku.');
         }
 
@@ -69,7 +75,7 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
 
-        if ($category->books()->exists()) {
+        if ($category->book()->exists()) {
             return back()->with('error', 'Mohon maaf, kategori masih memiliki produk buku.');
         }
 

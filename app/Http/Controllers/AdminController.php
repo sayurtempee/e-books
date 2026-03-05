@@ -11,15 +11,20 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
-    public function listSellers()
+    public function listSellers(Request $request)
     {
         $users = User::where('role', 'seller')
-            ->withCount('books') // Menghitung baris di tabel books (Total Buku)
+            // Logika Pencarian
+            ->when($request->search, function ($query) use ($request) {
+                $query->where('name', 'like', "%{$request->search}%")
+                    ->orWhere('email', 'like', "%{$request->search}%");
+            })
+            ->withCount('books')
             ->withSum(['orderItems as items_sold' => function ($query) {
-                $query->where('status', 'selesai'); // Hanya yang statusnya sudah selesai
-            }], 'qty') // Menjumlahkan kolom 'qty' di tabel order_items (Item Terjual)
+                $query->where('status', 'selesai');
+            }], 'qty')
+            ->latest()
             ->get();
-
         return view('admin.seller.index', compact('users'));
     }
 
@@ -136,12 +141,17 @@ class AdminController extends Controller
         return redirect()->route('admin.sellers')->with('success', 'Seller deleted successfully.');
     }
 
-    public function listBuyers()
+    public function listBuyers(Request $request)
     {
         $users = User::where('role', 'buyer')
+            ->when($request->search, function ($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->search . '%')
+                    ->orWhere('email', 'like', "%{$request->search}%");;
+            })
             ->withCount(['boughtItems as active_items_count' => function ($query) {
                 $query->whereNotIn('status', ['tolak', 'selesai', 'refunded', 'pending']);
             }])
+            ->latest()
             ->get();
         return view('admin.buyer.index', compact('users'));
     }
