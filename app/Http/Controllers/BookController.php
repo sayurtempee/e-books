@@ -88,6 +88,9 @@ class BookController extends Controller
             ? round((($validated['price'] - $validated['capital']) / $validated['capital']) * 100, 2)
             : 0;
 
+        $newStock = $book->stock + $request->stock; // untuk stok akumulasi dari stok sebelumnya.
+        $validated['stock'] = $newStock;
+
         $book->update($validated);
 
         if ($book->stock <= 5 && $book->stock > 0) {
