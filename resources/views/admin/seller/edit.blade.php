@@ -32,48 +32,30 @@
 
             {{-- EDIT FOTO PROFILE DENGAN PREVIEW --}}
             <div
-                class="flex flex-col items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
+                class="flex flex-col items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-200 cursor-not-allowed">
                 <div class="relative">
-                    {{-- Preview Foto Baru --}}
-                    <template x-if="photoPreview">
-                        <img :src="photoPreview"
-                            class="w-24 h-24 rounded-2xl object-cover shadow-md border-2 border-teal-500">
-                    </template>
+                    {{-- Logika Tampilan Foto / Inisial --}}
+                    @if ($user->foto_profile)
+                        <img src="{{ asset('storage/' . $user->foto_profile) }}"
+                            class="w-24 h-24 rounded-2xl object-cover shadow-sm border-2 border-white">
+                    @else
+                        <div
+                            class="w-24 h-24 rounded-2xl bg-teal-100 text-teal-600 flex items-center justify-center text-2xl font-bold border-2 border-white shadow-sm">
+                            {{ collect(explode(' ', $user->name))->map(fn($word) => strtoupper(substr($word, 0, 1)))->take(2)->implode('') }}
+                        </div>
+                    @endif
 
-                    {{-- Foto Lama (Jika tidak ada preview baru) --}}
-                    <template x-if="!photoPreview">
-                        @if ($user->foto_profile)
-                            <img src="{{ asset('storage/' . $user->foto_profile) }}"
-                                class="w-24 h-24 rounded-2xl object-cover shadow-sm border-2 border-white">
-                        @else
-                            <div
-                                class="w-24 h-24 rounded-2xl bg-teal-100 text-teal-600 flex items-center justify-center text-2xl font-bold border-2 border-white shadow-sm">
-                                {{ collect(explode(' ', $user->name))->map(fn($word) => strtoupper(substr($word, 0, 1)))->take(2)->implode('') }}
-                            </div>
-                        @endif
-                    </template>
+                    {{-- Badge Status (Opsional, untuk mempercantik tampilan statis) --}}
+                    <div
+                        class="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm">
+                        <div class="w-3 h-3 {{ $user->isOnline ? 'bg-green-500' : 'bg-gray-300' }} rounded-full"></div>
+                    </div>
                 </div>
 
-                <div class="w-full">
-                    <label class="block text-gray-600 mb-1.5 font-medium text-center">Ganti Foto Profile</label>
-                    <input type="file" name="foto_profile" accept="image/*"
-                        @change="
-                            const file = $event.target.files[0];
-                            if (file) {
-                                const reader = new FileReader();
-                                reader.onload = (e) => { photoPreview = e.target.result; };
-                                reader.readAsDataURL(file);
-                            }
-                        "
-                        class="w-full text-xs text-gray-500
-                               file:mr-4 file:py-2 file:px-4
-                               file:rounded-full file:border-0
-                               file:text-xs file:font-semibold
-                               file:bg-teal-50 file:text-teal-700
-                               hover:file:bg-teal-100 transition cursor-pointer">
-                    @error('foto_profile')
-                        <p class="text-red-500 text-[10px] mt-1 text-center">{{ $message }}</p>
-                    @enderror
+                {{-- Keterangan Nama (Ganti label 'Ganti Foto' menjadi info user) --}}
+                <div class="text-center">
+                    <p class="text-sm font-bold text-gray-800">{{ $user->name }}</p>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">Profile Picture</p>
                 </div>
             </div>
 
@@ -81,8 +63,8 @@
                 {{-- NIK --}}
                 <div class="md:col-span-2">
                     <label class="block text-gray-600 mb-1 text-left font-medium">NIK</label>
-                    <input type="text" name="nik" value="{{ old('nik', $user->nik) }}" required
-                        class="w-full h-11 px-4 rounded-xl bg-gray-100/80 border border-gray-200 focus:border-teal-500 focus:ring-teal-500 transition-all">
+                    <input type="text" name="nik" value="{{ old('nik', $user->nik) }}" required disabled
+                        class="w-full h-11 px-4 rounded-xl bg-gray-100/80 border border-gray-200 focus:border-teal-500 focus:ring-teal-500 transition-all cursor-not-allowed hover:bg-red-200/50">
                 </div>
 
                 {{-- NAME --}}
@@ -102,21 +84,23 @@
                 {{-- BANK NAME --}}
                 <div>
                     <label class="block text-gray-600 mb-1 text-left font-medium">Bank Name</label>
-                    <select name="bank_name"
+                    {{--  <select name="bank_name"
                         class="w-full h-11 px-4 rounded-xl border border-gray-300 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
                         <option value="" disabled {{ !$user->bank_name ? 'selected' : '' }}>Pilih Bank</option>
                         @foreach (['BCA', 'Mandiri', 'BNI', 'BRI'] as $bank)
                             <option value="{{ $bank }}" {{ $user->bank_name == $bank ? 'selected' : '' }}>
                                 {{ $bank }}</option>
                         @endforeach
-                    </select>
+                    </select>  --}}
+                    <input type="text" name="bank_name" value="{{ $user->bank_name }}" disabled
+                        class="w-full h-11 px-4 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-teal-500 transition-all cursor-not-allowed hover:bg-red-200/50">
                 </div>
 
                 {{-- NO REKENING --}}
                 <div>
                     <label class="block text-gray-600 mb-1 text-left font-medium">No. Rekening</label>
-                    <input type="text" name="no_rek" value="{{ old('no_rek', $user->no_rek) }}"
-                        class="w-full h-11 px-4 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-teal-500 font-mono transition-all">
+                    <input type="text" name="no_rek" value="{{ old('no_rek', $user->no_rek) }}" disabled
+                        class="w-full h-11 px-4 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-teal-500 font-mono transition-all cursor-not-allowed hover:bg-red-200/50">
                 </div>
             </div>
 
