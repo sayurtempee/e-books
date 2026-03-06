@@ -21,7 +21,7 @@
                         <div class="w-full lg:w-1/3">
                             <form action="{{ route('buyer.orders.tracking') }}" method="GET" class="relative group">
                                 <input type="text" name="tracking_number" value="{{ request('tracking_number') }}"
-                                    placeholder="Cari No. Resi..."
+                                    placeholder="Cari Pesanan anda..."
                                     class="w-full pl-12 pr-24 py-4 bg-white border-none rounded-2xl shadow-sm focus:ring-4 focus:ring-teal-500/10 transition-all text-sm font-medium">
                                 <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                                     <i class="bi bi-search text-lg"></i>

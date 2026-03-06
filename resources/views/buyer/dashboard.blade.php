@@ -19,9 +19,8 @@
                             class="px-4 py-2 bg-white text-teal-600 rounded-lg font-semibold">
                             Get Started
                         </a>
-                        <button class="px-4 py-2 border border-white rounded-lg cursor-pointer" onclick="openHelpModal()">
-                            Learn More
-                        </button>
+                        <a href="{{ route('help.index') }}"
+                            class="px-4 py-2 border border-white rounded-lg cursor-pointer">Learn More Help</a>
                     </div>
                 </div>
 

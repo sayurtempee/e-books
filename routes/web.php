@@ -188,27 +188,30 @@ Route::middleware(['auth', 'user.exists'])->group(function () {
 
         // Track Package
         Route::get('/buyer/track-package', function (Illuminate\Http\Request $request) {
-            $search = $request->query('tracking_number'); // Mengambil input dari search bar
+            $search = $request->query('tracking_number');
 
             $items = \App\Models\OrderItem::whereHas('order', function ($q) {
                 $q->where('user_id', Auth::id());
             })
                 ->whereIn('status', ['pending', 'approved', 'shipping', 'selesai'])
-                // Filter Pencarian (Tracking Number atau Nama Ekspedisi)
+                // Filter Pencarian
                 ->when($search, function ($query) use ($search) {
                     $query->where(function ($q) use ($search) {
                         $q->where('tracking_number', 'LIKE', "%{$search}%")
-                            ->orWhere('expedisi_name', 'LIKE', "%{$search}%");
+                            ->orWhere('expedisi_name', 'LIKE', "%{$search}%")
+                            // Mencari di tabel 'books' melalui relasi 'book'
+                            ->orWhereHas('book', function ($qBook) use ($search) {
+                                $qBook->where('title', 'LIKE', "%{$search}%")
+                                    ->withTrashed(); // Agar buku yang di-soft delete tetap bisa dicari
+                            });
                     });
                 })
-                // 1. Tambahkan withTrashed() pada relasi book agar data tetap muncul
                 ->with(['order', 'book' => function ($q) {
                     $q->withTrashed();
                 }, 'book.user'])
                 ->latest()
                 ->get()
                 ->groupBy(function ($item) {
-                    // Grouping tetap berdasarkan kombinasi Order & Seller
                     return $item->order_id . '-' . $item->seller_id;
                 });
 
